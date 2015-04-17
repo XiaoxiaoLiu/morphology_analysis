@@ -2,7 +2,24 @@
 
 import psycopg2
 
-def get_specimen_info_from_lims(specimen):
+def get_ephys_id_from_lims(specimen_id):
+    conn = psycopg2.connect('host=limsdb2 dbname=lims2 user=limsreader password=limsro')
+    cur = conn.cursor()
+    cur.execute("SELECT s.name, s.ephys_roi_result_id FROM specimens s WHERE s.id=%s", (specimen_id,))
+    result = cur.fetchone()
+    if not result:
+        print "Could not find specimen ", specimen
+        return (None, None, None)
+
+    print "Specimen: " + result[0]
+    print "EphysRoiResult: " + str(result[1])
+    
+    cur.close()
+    conn.close()
+    
+    return result
+
+def wet_specimen_info_from_lims(specimen):
     conn = psycopg2.connect('host=limsdb2 dbname=lims2 user=limsreader password=limsro')
     cur = conn.cursor()
     cur.execute("SELECT s.name, s.ephys_roi_result_id, s.id FROM specimens s WHERE s.name LIKE %s", ('%' + specimen,))
