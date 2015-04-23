@@ -33,13 +33,16 @@ def get_cap_check_indices(i):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='analyze cap check sweep')
-    parser.add_argument('specimen')
+    parser.add_argument('specimen_id')
     parser.add_argument('--orca')
+    parser.add_argument('--noshow',dest="noshow",default=0)
     args = parser.parse_args()
     
+    NOSHOW = args.noshow
     conn = psycopg2.connect('host=limsdb2 dbname=lims2 user=limsreader password=limsro')
     cur = conn.cursor()
-    specimen_name, ephys_roi_result_id, specimen_id = lims_orca_utils.get_specimen_info_from_lims(args.specimen)
+    specimen_id = args.specimen_id;
+    specimen_name, ephys_roi_result_id = lims_orca_utils.get_ephys_id_from_lims(args.specimen_id)
 
     if args.orca:
         orca_path = args.orca
@@ -108,23 +111,26 @@ if __name__ == "__main__":
     grand_down /= len(sweeps)
     
     t = 0.005 * np.arange(len(grand_up))
-    with open("./results/data/" + args.specimen + '_upbase.dat', 'w') as f:
+    with open("./results/data/" + args.specimen_id + '_upbase.dat', 'w') as f:
         np.savetxt(f, np.column_stack((t, grand_up)))
-    with open("./results/data/" + args.specimen + '_downbase.dat', 'w') as f:
+    with open("./results/data/" + args.specimen_id + '_downbase.dat', 'w') as f:
         np.savetxt(f, np.column_stack((t, grand_down)))
 
     # Plot the traces
-    axes[1].plot(t, grand_up)
-    axes[1].plot(t, -grand_down)
+    axes[1].plot(t, grand_up,'r')
+    axes[1].plot(t, -grand_down,'b')
     axes[1].set_xlim(1, 4)
-    plt.suptitle(args.specimen)
-    plt.savefig("./results/test_pulse_plots/" + args.specimen + "_testpulseplot.png", bbox_inches="tight")
-    plt.show()
+    plt.suptitle(args.specimen_id)
+    plt.savefig("./results/test_pulse_plots/" + args.specimen_id + "_testpulseplot.png", bbox_inches="tight")
+    if not NOSHOW:
+      plt.show()
     
     plt.figure()
-    plt.plot(t, grand_up)
-    plt.plot(t, -grand_down)
+    plt.plot(t, grand_up,'r')
+    plt.plot(t, -grand_down,'b')
     plt.ylim(0.01, 10)
     plt.xlim(0, 100)
     plt.yscale('log')
-    plt.show()
+    if not NOSHOW:
+      plt.show()
+    

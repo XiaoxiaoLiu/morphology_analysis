@@ -17,18 +17,29 @@ def load_morphology(filename):
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='analyze cap check sweep')
-    parser.add_argument('specimen')
+    parser.add_argument('specimen_id')
     parser.add_argument('down_lim', type=float)
     parser.add_argument('up_lim', type=float)
     parser.add_argument('-p', dest='plot', action='store_true')
+    parser.add_argument('-i','-local_path', dest='local_path', default=none)
 
     args = parser.parse_args()
     
-    up_data = np.loadtxt("./results/data/" + args.specimen + '_upbase.dat')
-    down_data = np.loadtxt("./results/data/" + args.specimen + '_downbase.dat')
+    up_data = np.loadtxt("./results/data/" + args.specimen_id + '_upbase.dat')
+    down_data = np.loadtxt("./results/data/" + args.specimen_id + '_downbase.dat')
      
-    specimen_name, ephys_roi_result_id, specimen_id = get_specimen_info_from_lims(args.specimen)
+    specimen_id = args.specimen_id
+
+    specimen_name, ephys_roi_result_id = get_ephys_id_from_lims(args.specimen_id)
+    #specimen_name, ephys_roi_result_id, specimen_id = get_specimen_info_from_lims(args.specimen_id)
+
     swc_filename, swc_path = get_swc_from_lims(specimen_id)
+    local_path = args.local_path
+    if (local_path):
+       swc_file = local_path + '/'+ swc_filename
+    else:
+        swc_filename, swc_path = get_swc_from_lims(specimen_id)
+    
 
     h.load_file("stdgui.hoc")
     h.load_file("import3d.hoc")
