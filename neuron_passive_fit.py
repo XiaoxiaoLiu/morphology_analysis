@@ -17,11 +17,11 @@ def load_morphology(filename):
     
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='analyze cap check sweep')
-    parser.add_argument('specimen_id')
-    parser.add_argument('down_lim', type=float)
+    parser.add_argument('specimen_id',help='specimen_id')
+    parser.add_argument('down_lim', type=float,help='asdf')
     parser.add_argument('up_lim', type=float)
     parser.add_argument('-p', dest='plot', action='store_true')
-    parser.add_argument('-i','-local_path', dest='local_path', default=none)
+    parser.add_argument('-i','-local_path', dest='local_path', default = None)
 
     args = parser.parse_args()
     
@@ -91,12 +91,14 @@ if __name__ == "__main__":
     fit1.set_w()
 
     minerr = 1e12
-    for i in range(3):
+    for i in range(10):
         h.Ri = 100
         h.Cm = 1
         h.Rm = 10000
         mrf.randomize()
+        print h.Ri, h.Cm, h.Rm
         mrf.prun()
+
         if mrf.opt.minerr < minerr:
             fit_Ri = h.Ri
             fit_Cm = h.Cm
@@ -118,7 +120,7 @@ if __name__ == "__main__":
         plt.axvline(fit_start, color='gray')
         plt.axvline(args.up_lim, color='gray')
         plt.axvline(args.down_lim, color='gray')
-        plt.title("{:s} - Ri: {:.2f}, Rm: {:.2f}, Cm: {:.2f}".format(args.specimen, h.Ri, h.Rm, h.Cm))
+        plt.title("{:s} - Ri: {:.2f}, Rm: {:.2f}, Cm: {:.2f}".format(args.specimen_id, h.Ri, h.Rm, h.Cm))
         plt.xlim(0, 75)
         plt.savefig(args.specimen + "_pasfit.png", bbox_inches='tight')
         plt.show()
