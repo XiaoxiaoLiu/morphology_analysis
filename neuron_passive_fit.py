@@ -38,9 +38,8 @@ if __name__ == "__main__":
     swc_filename, swc_path = get_swc_from_lims(specimen_id)
     local_path = args.local_path
     if (local_path):
-       swc_file = local_path + '/'+ swc_filename
-    else:
-        swc_filename, swc_path = get_swc_from_lims(specimen_id)
+       swc_path = local_path + '/'+ swc_filename
+       print "using:" swc_path
     
 
     h.load_file("stdgui.hoc")
@@ -93,11 +92,15 @@ if __name__ == "__main__":
     fit1.set_w()
 
     minerr = 1e12
-    for i in range(10):
-        h.Ri = 100
-        h.Cm = 1
-        h.Rm = 10000
-        mrf.randomize(2)
+    N = 5
+    Ri =  range(0, 1000, 1000/N)
+    Cm =  range(0,10,10/N)
+    Rm = range(0, 20000, 20000/N)
+    for i in range(N):
+        h.Ri = Ri[i] 
+        h.Cm = Cm[i]
+        h.Rm = Rm[i]
+      #     mrf.randomize()
         print h.Ri, h.Cm, h.Rm
         mrf.prun()
 
