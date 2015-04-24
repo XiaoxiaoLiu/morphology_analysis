@@ -4,6 +4,7 @@ import argparse
 import psycopg2
 import h5py
 import sys
+import os
 import webbrowser
 import matplotlib.pyplot as plt
 import lims_orca_utils
@@ -34,9 +35,20 @@ def get_cap_check_indices(i):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='analyze cap check sweep')
     parser.add_argument('specimen_id')
+    parser.add_argument('-o', dest='outputDir', default='./result')
     parser.add_argument('--orca')
     parser.add_argument('--noshow',dest="noshow",default=0)
     args = parser.parse_args()
+    
+    outputDir = args.outputDir
+    output_png_path = outputDir + '/test_pulse_plots'
+    if not os.path.isdir(output_png_path):
+          os.system('mkdir -p '+ output_png_path)
+    
+    output_data_path = outputDir + '/data'
+    if not os.path.isdir(output_data_path):
+          os.system('mkdir -p '+ output_data_path)
+    
     
     NOSHOW = args.noshow
     conn = psycopg2.connect('host=limsdb2 dbname=lims2 user=limsreader password=limsro')
@@ -111,9 +123,9 @@ if __name__ == "__main__":
     grand_down /= len(sweeps)
     
     t = 0.005 * np.arange(len(grand_up))
-    with open("./results/data/" + args.specimen_id + '_upbase.dat', 'w') as f:
+    with open(output_data_path+"/" + args.specimen_id + '_upbase.dat', 'w') as f:
         np.savetxt(f, np.column_stack((t, grand_up)))
-    with open("./results/data/" + args.specimen_id + '_downbase.dat', 'w') as f:
+    with open(output_data_path +"/" + args.specimen_id + '_downbase.dat', 'w') as f:
         np.savetxt(f, np.column_stack((t, grand_down)))
 
     # Plot the traces
@@ -121,7 +133,7 @@ if __name__ == "__main__":
     axes[1].plot(t, -grand_down,'b')
     axes[1].set_xlim(1, 4)
     plt.suptitle(args.specimen_id)
-    plt.savefig("./results/test_pulse_plots/" + args.specimen_id + "_testpulseplot.png", bbox_inches="tight")
+    plt.savefig(output_png_path +"/" + args.specimen_id + "_testpulseplot.png", bbox_inches="tight")
     if not NOSHOW:
       plt.show()
     

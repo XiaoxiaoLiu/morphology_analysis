@@ -21,12 +21,14 @@ if __name__ == "__main__":
     parser.add_argument('down_lim', type=float,help='asdf')
     parser.add_argument('up_lim', type=float)
     parser.add_argument('-p', dest='plot', action='store_true')
+    parser.add_argument('-o', dest='outputDir', default='./result')
     parser.add_argument('-i','-local_path', dest='local_path', default = None)
 
     args = parser.parse_args()
+    outputDir = args.outputDir
     
-    up_data = np.loadtxt("./results/data/" + args.specimen_id + '_upbase.dat')
-    down_data = np.loadtxt("./results/data/" + args.specimen_id + '_downbase.dat')
+    up_data = np.loadtxt(outputDir + "/data/" + args.specimen_id + '_upbase.dat')
+    down_data = np.loadtxt(outputDir + "/data/" + args.specimen_id + '_downbase.dat')
      
     specimen_id = args.specimen_id
 
@@ -95,7 +97,7 @@ if __name__ == "__main__":
         h.Ri = 100
         h.Cm = 1
         h.Rm = 10000
-        mrf.randomize()
+        mrf.randomize(2)
         print h.Ri, h.Cm, h.Rm
         mrf.prun()
 
@@ -122,6 +124,6 @@ if __name__ == "__main__":
         plt.axvline(args.down_lim, color='gray')
         plt.title("{:s} - Ri: {:.2f}, Rm: {:.2f}, Cm: {:.2f}".format(args.specimen_id, h.Ri, h.Rm, h.Cm))
         plt.xlim(0, 75)
-        plt.savefig(args.specimen + "_pasfit.png", bbox_inches='tight')
+        plt.savefig(outputDir + '/'+ args.specimen_id + "_pasfit.png", bbox_inches='tight')
         plt.show()
     
