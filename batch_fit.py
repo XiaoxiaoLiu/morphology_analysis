@@ -2,7 +2,7 @@
 
 import os
 import argparse
-
+from subprocess import call
 
 def run_one_fit(specimen_id, down, up, result_dir, local_path = None):
 	cmd ='python neuron_passive_fit.py ' + specimen_id + ' ' + down + ' ' + up + ' -o '+ result_dir
@@ -10,6 +10,9 @@ def run_one_fit(specimen_id, down, up, result_dir, local_path = None):
            cmd += ' -i '+ local_path
         cmd += ' >' +result_dir+ '/'+specimen_id+'.log'
         os.system(cmd)
+       # file_out = result_dir+ '/'+specimen_id+'.log'
+       # err_out = result_dir+ '/'+specimen_id+'.err.log'
+	#call(cmd, stdout = file_out)
         return
  
 def run_check(specimen_id, result_dir):
@@ -19,8 +22,8 @@ def run_check(specimen_id, result_dir):
 
 if __name__ == "__main__":
     default_input_para_file = '/local1/xiaoxiaol/work/data/lims2/usable_ephys_para.txt'
-    default_result_dir = '/local1/xiaoxiaol/work/data/lims2/ephys_fit_result_modified'
-    default_local_path = '/home/xiaoxiaol/work/data/lims2/modified_neurons/r0.5_x1.0_y1.0_z1.0_p0'
+    default_result_dir = '/local1/xiaoxiaol/work/data/lims2/ephys_fit_result'
+    #default_local_path = '/home/xiaoxiaol/work/data/lims2/modified_neurons/r0.5_x1.0_y1.0_z1.0_p0'
 
     parser = argparse.ArgumentParser(description='passive model fitting batch script ')
 

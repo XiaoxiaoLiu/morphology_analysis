@@ -28,7 +28,7 @@ def collect_fit_results(specimen_id, result_dir):
         return (float(Ri), float(Cm),float(Ci),float(err))
 
 if __name__ == "__main__":
-    default_result_dir = '/local1/xiaoxiaol/work/data/lims2/ephys_fit_result2' 
+    default_result_dir = '/local1/xiaoxiaol/work/data/lims2/ephys_fit_result4' 
     default_input_para_file = '/local1/xiaoxiaol/work/data/lims2/usable_ephys_para.txt'
     parser = argparse.ArgumentParser(description='passive model fitting batch script ')
 

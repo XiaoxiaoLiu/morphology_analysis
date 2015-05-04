@@ -39,7 +39,7 @@ if __name__ == "__main__":
     local_path = args.local_path
     if (local_path):
        swc_path = local_path + '/'+ swc_filename
-       print "using:" swc_path
+       print "using:",swc_path
     
 
     h.load_file("stdgui.hoc")
@@ -92,23 +92,25 @@ if __name__ == "__main__":
     fit1.set_w()
 
     minerr = 1e12
-    N = 5
+    N = 3
     Ri =  range(0, 1000, 1000/N)
     Cm =  range(0,10,10/N)
     Rm = range(0, 20000, 20000/N)
     for i in range(N):
-        h.Ri = Ri[i] 
-        h.Cm = Cm[i]
-        h.Rm = Rm[i]
+      for j in range(N):
+        for k in range(N):
+           h.Ri = Ri[i] 
+           h.Cm = Cm[j]
+           h.Rm = Rm[k]
       #     mrf.randomize()
-        print h.Ri, h.Cm, h.Rm
-        mrf.prun()
+	   print h.Ri, h.Cm, h.Rm
+           mrf.prun()
 
-        if mrf.opt.minerr < minerr:
-            fit_Ri = h.Ri
-            fit_Cm = h.Cm
-            fit_Rm = h.Rm
-            minerr = mrf.opt.minerr
+           if mrf.opt.minerr < minerr:
+               fit_Ri = h.Ri
+               fit_Cm = h.Cm
+               fit_Rm = h.Rm
+               minerr = mrf.opt.minerr
             
     h.region_areas()
     print "Ri ", fit_Ri
