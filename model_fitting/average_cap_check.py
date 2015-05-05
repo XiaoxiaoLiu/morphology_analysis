@@ -7,7 +7,7 @@ import sys
 import os
 import webbrowser
 import matplotlib.pyplot as plt
-import lims_orca_utils
+import ../utilities/lims_orca_utils
 import numpy as np
 
 def get_sweep_from_orca(orca_path, sweep_num):

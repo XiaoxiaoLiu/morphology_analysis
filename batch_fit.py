@@ -5,7 +5,7 @@ import argparse
 from subprocess import call
 
 def run_one_fit(specimen_id, down, up, result_dir, local_path = None):
-	cmd ='python neuron_passive_fit.py ' + specimen_id + ' ' + down + ' ' + up + ' -o '+ result_dir
+	cmd ='python model_fitting/neuron_passive_fit.py ' + specimen_id + ' ' + down + ' ' + up + ' -o '+ result_dir
         if local_path:
            cmd += ' -i '+ local_path
         cmd += ' >' +result_dir+ '/'+specimen_id+'.log'
@@ -16,7 +16,7 @@ def run_one_fit(specimen_id, down, up, result_dir, local_path = None):
         return
  
 def run_check(specimen_id, result_dir):
-	cmd ='python average_cap_check.py '+specimen_id +' --noshow 1'+ ' -o '+ result_dir
+	cmd ='python model_fitting/average_cap_check.py '+specimen_id +' --noshow 1'+ ' -o '+ result_dir
         os.system(cmd)
         return
 
