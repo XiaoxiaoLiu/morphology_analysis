@@ -50,5 +50,4 @@ if __name__ == "__main__":
 	          run_one_fit(specimen_id, down,up, result_dir, local_path)
               else:
 	          run_one_fit(specimen_id, down,up, result_dir)
-              sys.exit(1)
 
