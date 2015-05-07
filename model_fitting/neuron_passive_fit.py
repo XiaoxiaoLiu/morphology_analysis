@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from ../utilities/lims_orca_utils import *
+from utilities.lims_orca_utils import *
 from neuron import h
 import numpy as np
 import argparse

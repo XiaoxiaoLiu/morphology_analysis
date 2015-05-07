@@ -28,8 +28,6 @@ def  plotResults(data,result_path, XLABEL = "X", YLABEL = "Y",):
 
 
 
-
-
 param_names =['PID','Ri','Cm','Rm','error']
 sample_size = 55
 r_values = [0.5,0.7,0.9,1.0,1.1,1.3,1.5]

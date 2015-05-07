@@ -1,13 +1,6 @@
 #!/usr/bin/env python
 
-import argparse
-import psycopg2
-import h5py
-import sys
-import os
-import webbrowser
-import matplotlib.pyplot as plt
-import ../utilities/lims_orca_utils
+from utilities.lims_orca_utils import *
 import numpy as np
 
 def get_sweep_from_orca(orca_path, sweep_num):
