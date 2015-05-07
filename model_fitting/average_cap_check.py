@@ -1,7 +1,21 @@
 #!/usr/bin/env python
 
-from utilities.lims_orca_utils import *
+
+from os import sys, path
+p = path.dirname(path.dirname(path.abspath(__file__)))
+sys.path.append(p)
+sys.path.append(p+'/utilities')
+
 import numpy as np
+import os
+import lims_orca_utils
+import argparse
+import psycopg2
+import h5py
+import sys
+import os
+import webbrowser
+import matplotlib.pyplot as plt
 
 def get_sweep_from_orca(orca_path, sweep_num):
     exp_f = h5py.File(orca_path, 'r')

@@ -8,7 +8,7 @@ def get_ephys_id_from_lims(specimen_id):
     cur.execute("SELECT s.name, s.ephys_roi_result_id FROM specimens s WHERE s.id=%s", (specimen_id,))
     result = cur.fetchone()
     if not result:
-        print "Could not find specimen ", specimen
+        print "Could not find specimen ", specimen_id
         return (None, None, None)
 
     print "Specimen: " + result[0]

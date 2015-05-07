@@ -3,6 +3,7 @@
 import os
 import argparse
 from subprocess import call
+import sys
 
 def run_one_fit(specimen_id, down, up, result_dir, local_path = None):
 	cmd ='python model_fitting/neuron_passive_fit.py ' + specimen_id + ' ' + down + ' ' + up + ' -o '+ result_dir
@@ -17,6 +18,7 @@ def run_one_fit(specimen_id, down, up, result_dir, local_path = None):
  
 def run_check(specimen_id, result_dir):
 	cmd ='python model_fitting/average_cap_check.py '+specimen_id +' --noshow 1'+ ' -o '+ result_dir
+
         os.system(cmd)
         return
 
@@ -29,7 +31,7 @@ if __name__ == "__main__":
 
     parser.add_argument('-i','-input_para_file',dest="input_para_file",default = default_input_para_file)
     parser.add_argument('-o','-result_dir', dest="result_dir",default = default_result_dir)
-    parser.add_argument('-ii','-local_path', dest="local_path", default = None) # modified data
+    parser.add_argument('-l','-local_path', dest="local_path", default = None) # modified data
     args = parser.parse_args()
      
     input_para_file = args.input_para_file
@@ -48,4 +50,5 @@ if __name__ == "__main__":
 	          run_one_fit(specimen_id, down,up, result_dir, local_path)
               else:
 	          run_one_fit(specimen_id, down,up, result_dir)
+              sys.exit(1)
 

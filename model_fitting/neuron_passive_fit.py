@@ -1,16 +1,23 @@
 #!/usr/bin/env python
 
-from utilities.lims_orca_utils import *
+from os import sys, path
+p = path.dirname(path.dirname(path.abspath(__file__)))
+sys.path.append(p)
+sys.path.append(p+'/utilities')
+
 from neuron import h
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
+import os
+import lims_orca_utils
 
 # Load the morphology
 
 def load_morphology(filename):
     swc = h.Import3d_SWC_read()
     swc.input(filename)
+
     imprt = h.Import3d_GUI(swc, 0)
     h("objref this")
     imprt.instantiate(h.this)
@@ -32,18 +39,18 @@ if __name__ == "__main__":
      
     specimen_id = args.specimen_id
 
-    specimen_name, ephys_roi_result_id = get_ephys_id_from_lims(args.specimen_id)
+    specimen_name, ephys_roi_result_id = lims_orca_utils.get_ephys_id_from_lims(args.specimen_id)
     #specimen_name, ephys_roi_result_id, specimen_id = get_specimen_info_from_lims(args.specimen_id)
 
-    swc_filename, swc_path = get_swc_from_lims(specimen_id)
+    swc_filename, swc_path = lims_orca_utils.get_swc_from_lims(specimen_id)
     local_path = args.local_path
     if (local_path):
        swc_path = local_path + '/'+ swc_filename
        print "using:",swc_path
-    
 
     h.load_file("stdgui.hoc")
     h.load_file("import3d.hoc")
+
     load_morphology(swc_path)
     
     for sec in h.allsec():
@@ -51,10 +58,10 @@ if __name__ == "__main__":
         for seg in sec:
             seg.pas.e = 0
     
-    h.load_file("passive_props/fixnseg.hoc")
-    h.load_file("passive_props/iclamp.ses")
-    h.load_file("passive_props/params.hoc")
-    h.load_file("passive_props/mrf.ses")
+    h.load_file( p+ "/model_fitting/passive_props/fixnseg.hoc")
+    h.load_file(p+"/model_fitting/passive_props/iclamp.ses")
+    h.load_file(p+"/model_fitting/passive_props/params.hoc")
+    h.load_file(p+"/model_fitting/passive_props/mrf.ses")
 
     h.v_init = 0
     h.tstop = 100

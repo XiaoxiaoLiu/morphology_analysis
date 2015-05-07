@@ -17,6 +17,13 @@ def run_radius_modifier(inputSWC_file, outputSWC_file,r_scale, x_scale, y_scale,
         os.system(cmd)
         return
 
+def run_resort_swc(inputSWC_file, outputSWC_file):
+        cmd =VAA3D_EXE + ' -x sort_neuron_swc -f sort_swc -i ' \
+               + inputSWC_file + ' '+ '-o '+ outputSWC_file
+        print cmd
+        os.system(cmd)
+        return
+  
 def run_prune_modifier(inputSWC_file, outputSWC_file, prune_thres):
         cmd =PRUNNING_EXE + ' -i ' \
                + inputSWC_file + ' '+ '-o '+ outputSWC_file + \
@@ -75,4 +82,5 @@ if __name__ == "__main__":
                     inputSWC_file = swc_path
                     outputSWC_file = outputfolder +'/'+swc_filename
                     run_prune_modifier(inputSWC_file, outputSWC_file, prune_level)
+                    run_resort_swc(outputSWC_file, outputSWC_file)
 
