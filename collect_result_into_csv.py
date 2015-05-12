@@ -8,6 +8,8 @@ import numpy as np
 
 def collect_fit_results(specimen_id, result_dir):
         logfile= result_dir+ '/'+specimen_id+'.log'
+        A1=0
+        A2=0
         Ri=0
         Cm=0
         Ci=0
