@@ -7,12 +7,19 @@ import numpy as np
 
 
 def collect_fit_results(specimen_id, result_dir):
+#A1 704.61622
+#A2 5516.1984
+#Ri  19.9924145757
+#Cm  1.70331967752
+#Rm  3887.19792588
+#Final error  0.00178677466492
+
         logfile= result_dir+ '/'+specimen_id+'.log'
         A1=0
         A2=0
         Ri=0
         Cm=0
-        Ci=0
+        Rm=0
         err=0
         print logfile
         try:
@@ -24,12 +31,12 @@ def collect_fit_results(specimen_id, result_dir):
                     t,A2 = lines[-5].split() 
 	    	    t,Ri = lines[-4].split() 
 		    t,Cm = lines[-3].split() 
-		    t,Ci = lines[-2].split() 
+		    t,Rm = lines[-2].split() 
 		    t,s,err = lines[-1].split() 
         except :
             print "not found"
 
-        return (float(A1), float(A2),float(Ri), float(Cm),float(Ci),float(err))
+        return (float(A1), float(A2),float(Ri), float(Cm),float(Rm),float(err))
 
 if __name__ == "__main__":
     default_result_dir = '/local1/xiaoxiaol/work/data/lims2/ephys_fit_result4' 
@@ -48,8 +55,8 @@ if __name__ == "__main__":
     with open(input_para_file,'r') as f:
          for line in f:
               specimen_id, down, up = line.split()
-              a1, a2, ri, cm, ci,err = collect_fit_results(specimen_id, result_dir)
-              paras_all.append([int(specimen_id),ri, cm,ci,err,a1,a2])
+              a1, a2, ri, cm, rm,err = collect_fit_results(specimen_id, result_dir)
+              paras_all.append([int(specimen_id),a1,a2,ri, cm,rm,err])
         
     paras_matrix = np.array(paras_all)     
     np.set_printoptions(precision=5) 
@@ -57,10 +64,10 @@ if __name__ == "__main__":
     print (paras_matrix)
     np.savetxt(result_dir +"/passive_paras_results.csv",paras_matrix,delimiter=",")
     print "    mean   std"
-    print "A1:",np.mean(paras_matrix[:,5]),np.std(paras_matrix[:,5])
-    print "A2:",np.mean(paras_matrix[:,6]),np.std(paras_matrix[:,6])
-    print "Ri:",np.mean(paras_matrix[:,1]),np.std(paras_matrix[:,1])
-    print "Cm: ", np.mean(paras_matrix[:,2]),np.std(paras_matrix[:,2])
-    print "Rm:",np.mean(paras_matrix[:,3]),np.std(paras_matrix[:,3])
-    print "Err:",np.mean(paras_matrix[:,4]),np.std(paras_matrix[:,4])
+    print "A1:",np.mean(paras_matrix[:,1]),np.std(paras_matrix[:,1])
+    print "A2:",np.mean(paras_matrix[:,2]),np.std(paras_matrix[:,2])
+    print "Ri:",np.mean(paras_matrix[:,3]),np.std(paras_matrix[:,3])
+    print "Cm: ", np.mean(paras_matrix[:,4]),np.std(paras_matrix[:,4])
+    print "Rm:",np.mean(paras_matrix[:,5]),np.std(paras_matrix[:,5])
+    print "Err:",np.mean(paras_matrix[:,6]),np.std(paras_matrix[:,6])
 

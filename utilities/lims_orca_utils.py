@@ -19,7 +19,7 @@ def get_ephys_id_from_lims(specimen_id):
     
     return result
 
-def wet_specimen_info_from_lims(specimen):
+def get_specimen_info_from_lims(specimen):
     conn = psycopg2.connect('host=limsdb2 dbname=lims2 user=limsreader password=limsro')
     cur = conn.cursor()
     cur.execute("SELECT s.name, s.ephys_roi_result_id, s.id FROM specimens s WHERE s.name LIKE %s", ('%' + specimen,))
@@ -72,3 +72,51 @@ def get_swc_from_lims(specimen_id):
     cur.close()
     conn.close()
     return swc_filename, swc_path
+
+def get_swc_from_lims_by_specimen_name(specimen_name):
+    conn = psycopg2.connect('host=limsdb2 dbname=lims2 user=limsreader password=limsro')
+    cur = conn.cursor()
+
+    SQL = "SELECT f.filename, f.storage_directory FROM \
+     neuron_reconstructions n JOIN well_known_files f ON n.id = f.attachable_id \
+     AND n.specimen_name = %s AND n.manual AND NOT n.superseded"
+    cur.execute(SQL, (specimen_name,))
+    result = cur.fetchone()
+    swc_filename = result[0]
+    swc_path = result[1] + result[0]
+    print "SWC file: " + swc_path
+    
+    cur.close()
+    conn.close()
+    return swc_filename, swc_path
+
+def get_swc_from_lims_by_nrid(id):
+    conn = psycopg2.connect('host=limsdb2 dbname=lims2 user=limsreader password=limsro')
+    cur = conn.cursor()
+
+    SQL = "SELECT f.filename, f.storage_directory FROM \
+     neuron_reconstructions n JOIN well_known_files f ON n.id = f.attachable_id \
+     AND n.id = %s AND n.manual AND NOT n.superseded"
+    cur.execute(SQL, (id,))
+    result = cur.fetchone()
+    swc_filename = result[0]
+    swc_path = result[1] + result[0]
+    print "SWC file: " + swc_path
+    
+    cur.close()
+    conn.close()
+    return swc_filename, swc_path
+
+def get_specimen_name_from_lims(specimen_id):
+    conn = psycopg2.connect('host=limsdb2 dbname=lims2 user=limsreader password=limsro')
+    cur = conn.cursor()
+    cur.execute("SELECT s.name FROM specimens s WHERE s.id = %s", (specimen_id,))
+    result = cur.fetchone()
+    if not result:
+        print "Could not find specimen with specimen_id: ", specimen_id
+        return (None)
+
+    cur.close()
+    conn.close()
+    
+    return result[0]
