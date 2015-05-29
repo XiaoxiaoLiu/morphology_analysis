@@ -9,3 +9,4 @@ help(heatmap.2)
 heatmap.2(d, col=redgreen(75), scale="row", key=T, keysize=1.5,
 density.info="none", trace="none",cexCol=0.9)
 savehistory("~/work/v3d/vaa3d_tools/blastneuron/scripts/heatmap_r.Rhistory")
+

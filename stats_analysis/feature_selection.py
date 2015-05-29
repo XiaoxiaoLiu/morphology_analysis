@@ -8,8 +8,8 @@ from mpl_toolkits.mplot3d import Axes3D
 
 
 #===================== DATA PATH ==============================================
-
-data_DIR = "/Users/xiaoxiaoliu/work/data/lims2/manual"
+#WORK_PATH= "/Users
+data_DIR = "/Users/xiaoxiaoliu/work/data/lims2/neuron_recon_2"
 fn = data_DIR+'/zscore_glFeatures_subtypes.csv'
 #fn = data_DIR+'/zscore_ei_glFeatures.csv'
 
