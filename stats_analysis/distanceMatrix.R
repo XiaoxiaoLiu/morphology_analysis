@@ -29,7 +29,7 @@ hm =heatmap(m,
             symm=TRUE,
             col=redgreen(95),
             margins=c(12,15), 
-            method='ward'
+            hclustfun=function(d) hclust(d, method='ward')
             )
 
 title('GMI Feature Distance Matrix')
