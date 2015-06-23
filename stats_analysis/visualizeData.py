@@ -26,13 +26,13 @@ V3D="qv3d"
 # data dir
 data_DIR= WORK_PATH+"/data/lims2/neuron_recon_2"
 
-list_csv_file =  data_DIR+'/list.csv'
+LIST_CSV_FILE =  data_DIR+'/list.csv'
 
 data_linker_file =  data_DIR+'/original/mylinker.ano'
 preprocessed_data_linker_file = data_DIR+'/preprocessed/mylinker.ano'
-feature_file = data_DIR + '/preprocessed/prep_features.nfb'
+FEATURE_FILE = data_DIR + '/preprocessed/prep_features.nfb'
 gl_feature_names= np.array(['num_nodes', 'soma_surface', 'num_stems','num_bifurcations', 'num_branches', 'num_of_tips',  'overall_width', 'overall_height',  'overall_depth', 'average_diameter',    'total_length', 'total_surface', 'total_volume', 'max_euclidean_distance',       'max_path_distance', 'max_branch_order',  'average_contraction', 'average fragmentation', 'parent_daughter_ratio', 'bifurcation_angle_local', 'bifurcation_angle_remote'])
-gmi_feature_names = np.array(['moment1', 'moment2', 'moment3','moment4', 'moment5', 'moment6',  'moment7', 'moment8',  'moment9', 'moment10',    'moment11', 'moment12', 'moment13', 'moment14'])
+gmi_feature_names = np.array(['moment1', 'moment2', 'moment3','moment4', 'moment5', 'moment6',  'moment7', 'moment8',  'moment9', 'moment10',    'moment11', 'moment12', 'moment13', 'avgR'])
 
 selected_features=['max_euclidean_distance','num_stems','num_bifurcations','average_contraction','parent_daughter_ratio']
 
@@ -204,11 +204,11 @@ def selectFeatures_MRMR(featureArray, threshold=0, number_of_features=5, selecti
     #os.system(cmd)
     return
 
-def readDBFeatures(feature_file):
+def readDBFeatures(FEATURE_FILE):
     # TODO: detect nan values
     glf_featureList = []  # each row is a feature vector
     gmi_featureList = []
-    with open (feature_file,'r') as  f:
+    with open (FEATURE_FILE,'r') as  f:
         for fn_line in f: # ignore the SWCFILE=* line
             line_globalFeature = (f.next()).strip()
             glf = map(float,line_globalFeature.split('\t'))
@@ -248,14 +248,34 @@ def saveScoreMatrix(featureArray,scoreMatrix_file, REMOVE_OUTLIER=1):
     df = pd.DataFrame(scoreMatrix)
     df.to_csv(scoreMatrix_file)
 
+def  generateALLFeatureCSV(new_csv_file):
+    feature_csv_file= data_DIR+"/allFeatures.csv"  # mid result
+
+    glfFeatures, gmiFeatures = readDBFeatures(FEATURE_FILE)
+
+    # attacheh specimen id, nrrd id to the tabe
+    list_df = pd.read_csv(LIST_CSV_FILE)
+    sp_ids = list_df.specimen_id
+    sp_names = np.empty( (len(sp_ids),),dtype='object')
+    for i in range(len(sp_ids)):
+        sp_names[i]= lu.get_specimen_name_from_lims(str(sp_ids[i]))
+
+    df = pd.DataFrame([glfFeatures,gmiFeatures], columns =[gl_feature_names,gmi_feature_names])
+    df['specimen_name'] = pd.Series(sp_names, index=df.index)
+
+    df.to_csv(feature_csv_file, index=False)
+
+    concatCSVs(LIST_CSV_FILE,feature_csv_file, new_csv_file)
+    return
+
 def  generateGlFeatureCSV(new_csv_file):
     gl_feature_csv_file	= data_DIR+"/glFeatures.csv"  # mid result
     # attacheh specimen id, nrrd id,
-    glfFeatures, gmiFeatures = readDBFeatures(feature_file)
+    glfFeatures, gmiFeatures = readDBFeatures(FEATURE_FILE)
 
 
     #attach  specimen_name
-    list_df = pd.read_csv(list_csv_file)
+    list_df = pd.read_csv(LIST_CSV_FILE)
     sp_ids = list_df.specimen_id
     sp_names = np.empty( (len(sp_ids),),dtype='object')
     for i in range(len(sp_ids)):
@@ -266,19 +286,17 @@ def  generateGlFeatureCSV(new_csv_file):
     #df = df['specimen_name',feature_names]
     df.to_csv(gl_feature_csv_file, index=False)
 
-    concatCSVs(list_csv_file,gl_feature_csv_file, new_csv_file)
+    concatCSVs(LIST_CSV_FILE,gl_feature_csv_file, new_csv_file)
     return
 
 def  generateGmiFeatureCSV(new_csv_file):
     gmi_feature_csv_file= data_DIR+"/gmiFeatures.csv" # mid result
 
     # attacheh specimen id, nrrd id,
-    glFeatures, gmiFeatures = readDBFeatures(feature_file)
-
-
+    glFeatures, gmiFeatures = readDBFeatures(FEATURE_FILE)
 
     #attach  specimen_name
-    list_df = pd.read_csv(list_csv_file)
+    list_df = pd.read_csv(LIST_CSV_FILE)
     sp_ids = list_df.specimen_id
     sp_names = np.empty( (len(sp_ids),),dtype='object')
     for i in range(len(sp_ids)):
@@ -289,7 +307,7 @@ def  generateGmiFeatureCSV(new_csv_file):
     #df = df['specimen_name',feature_names]
     df.to_csv(gmi_feature_csv_file, index=False)
 
-    concatCSVs(list_csv_file,gmi_feature_csv_file, new_csv_file)
+    concatCSVs(LIST_CSV_FILE,gmi_feature_csv_file, new_csv_file)
     return
 
 
@@ -306,10 +324,10 @@ def generateLinkerFileFromCSV(result_dir, csvfile, column_name):
 		    outf.close()
 
 
-def generateFeatureMergedCSV():
+def generateFeatureMergedCSV(out_featureId_filename, ):
 	### gl features
 	feature_csv_with_id_file = data_DIR+"/glFeatures_withid_pvalb.csv"
-	generateGlFeatureCSV(feature_csv_with_id_file)
+	generateGlFeatureCSV(out_featureId_filename)
 
 	df_complete = pd.read_csv(feature_csv_with_id_file)
 	mycolumns = ['specimen_id','specimen_name','nrid','orca_path','IsPVALB']
@@ -329,20 +347,39 @@ def generateFeatureMergedCSV():
 	scoreMatrix_csv_file = data_DIR+"/gl_scoreMatrix.csv"
 	saveScoreMatrix(glFeatures,scoreMatrix_csv_file,1)
 
+							###########  gmi features
+	gmi_feature_csv_with_id_file = data_DIR+"/gmiFeatures_withid.csv"
+	generateGmiFeatureCSV(gmi_feature_csv_with_id_file)
+
+	df_complete = pd.read_csv(gmi_feature_csv_with_id_file)
+	mycolumns = ['specimen_id','specimen_name','nrid','orca_path','IsPVALB']
+	mycolumns.extend(gmi_feature_names)
+	df_complete = df_complete.reindex(columns=mycolumns)
+	print df_complete.columns
+
+
+
+	# merge all info
+	df_type = pd.read_csv(data_DIR+'/custom_report-IVSCC_classification-April_2015.csv')
+	merged = pd.merge(df_complete,df_type,how='inner',on=['specimen_name'])
+	merged.to_csv(data_DIR+'/merged_gmiFeatures.csv')
+
+
+
+	gmiFeatures = merged.values[:,5:19].astype(float)
+	scoreMatrix_csv_file = data_DIR+"/gmi_scoreMatrix.csv"
+	saveScoreMatrix(gmiFeatures,scoreMatrix_csv_file,1)
 
 ##################################################################################################
+all_feature_csv_with_id_file = data_DIR+"/allFeatures_withid.csv"
+generateALLFeatureCSV( data_DIR+"/allFeatures_withid.csv")
 
-
-
-###########  gmi features
-gmi_feature_csv_with_id_file = data_DIR+"/gmiFeatures_withid.csv"
-generateGmiFeatureCSV(gmi_feature_csv_with_id_file)
-
-df_complete = pd.read_csv(gmi_feature_csv_with_id_file)
+df_complete = pd.read_csv(all_feature_csv_with_id_file)
 mycolumns = ['specimen_id','specimen_name','nrid','orca_path','IsPVALB']
-mycolumns.extend(gmi_feature_names)
+mycolumns.extend(gl_feature_names, gmi_feature_names)
 df_complete = df_complete.reindex(columns=mycolumns)
 print df_complete.columns
+
 
 
 # merge all info
@@ -352,9 +389,7 @@ merged.to_csv(data_DIR+'/merged_gmiFeatures.csv')
 
 
 
-gmiFeatures = merged.values[:,5:19].astype(float)
-scoreMatrix_csv_file = data_DIR+"/gmi_scoreMatrix.csv"
-saveScoreMatrix(gmiFeatures,scoreMatrix_csv_file,1)
+
 
 
 
