@@ -16,14 +16,13 @@ BATCH_COMPUTE = blastneuron_DIR + "/bin/batch_compute"  # compute faetures
 #V3D="/Users/xiaoxiaoliu/work/v3d/v3d_external/bin/vaa3d64.app/Contents/MacOS/vaa3d64"
 V3D="/local1/xiaoxiaol/work/v3d/v3d_external/bin/vaa3d"
 
-# data dir
-USE_MANUAL = 1
-if USE_MANUAL: # use manually edited neuron
-#    data_DIR = "/Users/xiaoxiaoliu/work/data/lims2/manual"
-    data_DIR= "/home/xiaoxiaol/work/data/lims2/neuron_recon_2"
-else:
-    data_DIR = "/Users/xiaoxiaoliu/work/data/lims2/auto"
+####### SETTING #####################################################
+data_DIR= "/home/xiaoxiaol/work/data/lims2/nr_june_25_filter"
 
+#RUN downloadSWC.py to grab data into local dir  data_DIR+'/original'
+
+LIST_CSV_FILE = data_DIR+'/list.csv'
+######################################################################
 
 original_data_linker_file =  data_DIR+'/original/mylinker.ano' # will be genereated
 preprocessed_data_linker_file = data_DIR+'/preprocessed/mylinker.ano'
@@ -94,7 +93,7 @@ def main():
 
     #TODO:  pullListFromDB() update from lims2 to grab all neuron reconstructions into list.csv
 
-    genLinkerFileFromList(data_DIR+'/list.csv', original_data_linker_file)
+    genLinkerFileFromList(LIST_CSV_FILE, original_data_linker_file)
 
     if  not os.path.exists(data_DIR+'/pruned'):
         os.mkdir(data_DIR+'/pruned')

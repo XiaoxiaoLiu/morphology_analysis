@@ -23,10 +23,12 @@ WORK_PATH="/home/xiaoxiaol/work"
 MRMR= WORK_PATH+"/src/mrmr_c_src/mrmr"
 V3D="qv3d"
 
-# data dir
-data_DIR= WORK_PATH+"/data/lims2/neuron_recon_2"
-
+########################################## data dir
+#data_DIR= WORK_PATH+"/data/lims2/neuron_recon_2"
+data_DIR= "/home/xiaoxiaol/work/data/lims2/nr_june_25_filter"
 LIST_CSV_FILE =  data_DIR+'/list.csv'
+#########################################################
+
 
 data_linker_file =  data_DIR+'/original/mylinker.ano'
 preprocessed_data_linker_file = data_DIR+'/preprocessed/mylinker.ano'
@@ -268,6 +270,7 @@ def  generateALLFeatureCSV(new_csv_file):
     df.to_csv(feature_csv_file, index=False)
 
     concatCSVs(LIST_CSV_FILE,feature_csv_file, new_csv_file)
+    print 'output all feature csv file to :',new_csv_file
     return
 
 def  generateGlFeatureCSV(new_csv_file):
@@ -386,7 +389,7 @@ print df_complete.columns
 
 
 # merge all info
-df_type = pd.read_csv(data_DIR+'/custom_report-IVSCC_classification-April_2015.csv')
+df_type = pd.read_csv(data_DIR+'/../custom_report-IVSCC_classification-April_2015.csv')
 merged = pd.merge(df_complete,df_type,how='inner',on=['specimen_name'])
 merged.to_csv(data_DIR+'/merged_allFeatures.csv')
 
