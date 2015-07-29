@@ -23,10 +23,12 @@ WORK_PATH="/Users/xiaoxiaoliu/work"
 MRMR= WORK_PATH+"/src/mrmr_c_src/mrmr"
 V3D="qv3d"
 
-# data dir
-data_DIR= WORK_PATH+"/data/lims2/neuron_recon_2"
-
+########################################## data dir
+#data_DIR= WORK_PATH+"/data/lims2/neuron_recon_2"
+data_DIR= "/home/xiaoxiaol/work/data/lims2/nr_june_25_filter_aligned"
 LIST_CSV_FILE =  data_DIR+'/list.csv'
+#########################################################
+
 
 data_linker_file =  data_DIR+'/original/mylinker.ano'
 preprocessed_data_linker_file = data_DIR+'/preprocessed/mylinker.ano'
@@ -268,6 +270,7 @@ def  generateALLFeatureCSV(new_csv_file):
     df.to_csv(feature_csv_file, index=False)
 
     concatCSVs(LIST_CSV_FILE,feature_csv_file, new_csv_file)
+    print 'output all feature csv file to :',new_csv_file
     return
 
 def  generateGlFeatureCSV(new_csv_file):
@@ -320,10 +323,11 @@ def generateLinkerFileFromCSV(result_dir, csvfile, column_name):
 		idxs = np.nonzero(types==atype)[0]
 		swc_files = df['orca_path']
 		with open(result_dir+'/'+atype+'.ano','w') as outf:
-		    for afile in swc_files[idxs]:
-			   line='SWCFILE='+afile+'\n'
-			   outf.write(line)
-		    outf.close()
+        	   for afile in swc_files[idxs]:
+                       filename = afile.split('/')[-1]
+                       line='SWCFILE='+filename+'\n'
+                       outf.write(line)
+                   outf.close()
 
 
 def generateFeatureMergedCSV(outFile):
@@ -343,11 +347,32 @@ def generateFeatureMergedCSV(outFile):
     merged.to_csv(outFile)
 
 
+
 ##################################################################################################
 
 
-all_feature_merged_file = data_DIR+'/merged_allFeatures.csv'
+#all_feature_merged_file = data_DIR+'/merged_allFeatures.csv'
 #generateFeatureMergedCSV(all_feature_merged_file)
+all_feature_csv_with_id_file = data_DIR+"/allFeatures_withid.csv"
+generateALLFeatureCSV( data_DIR+"/allFeatures_withid.csv")
+
+df_complete = pd.read_csv(all_feature_csv_with_id_file)
+mycolumns = np.array(['specimen_id','specimen_name','orca_path'])
+mycolumns = np.append(mycolumns,gl_feature_names,0)
+mycolumns = np.append(mycolumns,gmi_feature_names,0)
+df_complete = df_complete.reindex(columns=mycolumns)
+print df_complete.columns
+
+
+
+# merge all info
+df_type = pd.read_csv(data_DIR+'/../custom_report-IVSCC_classification-April_2015.csv')
+merged = pd.merge(df_complete,df_type,how='inner',on=['specimen_name'])
+merged.to_csv(data_DIR+'/merged_allFeatures.csv')
+
+
+generateLinkerFileFromCSV(data_DIR+'/original',data_DIR +'/merged_allFeatures.csv','cre_line')
+
 
 merged = pd.read_csv(all_feature_merged_file)
 allFeatures = merged.values[:,5:39].astype(float)
