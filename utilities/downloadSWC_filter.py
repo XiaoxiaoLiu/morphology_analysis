@@ -35,8 +35,8 @@ def copyByNrid(df):
             os.system(cmd)
 
 if __name__ == "__main__":
-        default_input_csv_file = '/local1/xiaoxiaol/work/data/lims2/neuron_recon_filter/piaWM_transforms.csv'
-	default_save_data_dir = '/local1/xiaoxiaol/work/data/lims2/neuron_recon_filter/original'
+        default_input_csv_file = '/Users/xiaoxiaoliu/work/filter_june25_xx.csv'
+	default_save_data_dir = '/Users/xiaoxiaoliu/work/data/lims2/neuron_recon_filter/original'
 
 	parser = argparse.ArgumentParser(description='download swc files from lims by specimen id in the csv file ')
 	parser.add_argument('-i','-input_csv_file',dest="input_csv_file",default = default_input_csv_file)
@@ -48,7 +48,6 @@ if __name__ == "__main__":
 
 
         os.system('mkdir '+save_data_dir)
-        
         df = pd.read_csv(input_csv_file)
 
         copyBySpecimenId(df)

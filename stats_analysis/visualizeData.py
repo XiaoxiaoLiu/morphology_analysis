@@ -17,8 +17,8 @@ import lims_orca_utils as lu
 
 # program path on this machine
 #===================================================================
-#WORK_PATH="/Users/xiaoxiaoliu/work"
-WORK_PATH="/home/xiaoxiaol/work"
+WORK_PATH="/Users/xiaoxiaoliu/work"
+#WORK_PATH="/home/xiaoxiaol/work"
 
 MRMR= WORK_PATH+"/src/mrmr_c_src/mrmr"
 V3D="qv3d"
@@ -261,7 +261,7 @@ def  generateALLFeatureCSV(new_csv_file):
         sp_names[i]= lu.get_specimen_name_from_lims(str(sp_ids[i]))
 
     allFeatures = np.append(glFeatures,gmiFeatures,1)
-    allColums = np.append(gl_feature_names,gmi_feature_names,0) 
+    allColums = np.append(gl_feature_names,gmi_feature_names,0)
     df = pd.DataFrame(allFeatures,  columns = allColums )
     df['specimen_name'] = pd.Series(sp_names, index=df.index)
 
@@ -326,72 +326,33 @@ def generateLinkerFileFromCSV(result_dir, csvfile, column_name):
 		    outf.close()
 
 
-def generateFeatureMergedCSV(out_featureId_filename, ):
-	### only for gl features
-	feature_csv_with_id_file = data_DIR+"/glFeatures_withid_pvalb.csv"
-	generateGlFeatureCSV(out_featureId_filename)
+def generateFeatureMergedCSV(outFile):
+    all_feature_csv_with_id_file = data_DIR+"/allFeatures_withid.csv"
+    generateALLFeatureCSV( all_feature_csv_with_id_file)
 
-	df_complete = pd.read_csv(feature_csv_with_id_file)
-	mycolumns = np.array(['specimen_id','specimen_name','nrid','orca_path','IsPVALB'])
-	mycolumns = np.append(mycolumns,gl_feature_names,0)
-	df_complete = df_complete.reindex(columns=mycolumns)
-	print df_complete.columns
+    df_complete = pd.read_csv(all_feature_csv_with_id_file)
+    mycolumns = np.array(['specimen_id','specimen_name','nrid','orca_path'])
+    mycolumns = np.append(mycolumns,gl_feature_names,0)
+    mycolumns = np.append(mycolumns,gmi_feature_names,0)
+    df_complete = df_complete.reindex(columns=mycolumns)
+    print df_complete.columns
 
+        # merge all info
+    df_type = pd.read_csv(data_DIR+'/custom_report-IVSCC_classification-April_2015.csv')
+    merged = pd.merge(df_complete,df_type,how='inner',on=['specimen_name'])
+    merged.to_csv(outFile)
 
-	# merge all info
-	df_type = pd.read_csv(data_DIR+'/custom_report-IVSCC_classification-April_2015.csv')
-	merged = pd.merge(df_complete,df_type,how='inner',on=['specimen_name'])
-	merged.to_csv(data_DIR+'/merged_glFeatures.csv')
-
-
-
-	glFeatures = merged.values[:,5:26].astype(float)
-	scoreMatrix_csv_file = data_DIR+"/gl_scoreMatrix.csv"
-	saveScoreMatrix(glFeatures,scoreMatrix_csv_file,1)
-
-							###########  gmi features
-	gmi_feature_csv_with_id_file = data_DIR+"/gmiFeatures_withid.csv"
-	generateGmiFeatureCSV(gmi_feature_csv_with_id_file)
-
-	df_complete = pd.read_csv(gmi_feature_csv_with_id_file)
-	mycolumns = ['specimen_id','specimen_name','nrid','orca_path','IsPVALB']
-	mycolumns.extend(gmi_feature_names)
-	df_complete = df_complete.reindex(columns=mycolumns)
-	print df_complete.columns
-
-
-
-	# merge all info
-	df_type = pd.read_csv(data_DIR+'/custom_report-IVSCC_classification-April_2015.csv')
-	merged = pd.merge(df_complete,df_type,how='inner',on=['specimen_name'])
-	merged.to_csv(data_DIR+'/merged_gmiFeatures.csv')
-
-
-
-	gmiFeatures = merged.values[:,5:19].astype(float)
-	scoreMatrix_csv_file = data_DIR+"/gmi_scoreMatrix.csv"
-	saveScoreMatrix(gmiFeatures,scoreMatrix_csv_file,1)
 
 ##################################################################################################
-all_feature_csv_with_id_file = data_DIR+"/allFeatures_withid.csv"
-generateALLFeatureCSV( data_DIR+"/allFeatures_withid.csv")
-
-df_complete = pd.read_csv(all_feature_csv_with_id_file)
-mycolumns = np.array(['specimen_id','specimen_name','nrid','orca_path'])
-mycolumns = np.append(mycolumns,gl_feature_names,0)
-mycolumns = np.append(mycolumns,gmi_feature_names,0)
-df_complete = df_complete.reindex(columns=mycolumns)
-print df_complete.columns
 
 
+all_feature_merged_file = data_DIR+'/merged_allFeatures.csv'
+#generateFeatureMergedCSV(all_feature_merged_file)
 
-# merge all info
-df_type = pd.read_csv(data_DIR+'/custom_report-IVSCC_classification-April_2015.csv')
-merged = pd.merge(df_complete,df_type,how='inner',on=['specimen_name'])
-merged.to_csv(data_DIR+'/merged_allFeatures.csv')
-
-
-
+merged = pd.read_csv(all_feature_merged_file)
+allFeatures = merged.values[:,5:39].astype(float)
+scoreMatrix_csv_file = data_DIR+"/allFeatures_scoreMatrix.csv"
+saveScoreMatrix(allFeatures,scoreMatrix_csv_file,1)
 
 
 
