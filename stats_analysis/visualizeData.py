@@ -25,7 +25,7 @@ V3D="qv3d"
 
 ########################################## data dir
 #data_DIR= WORK_PATH+"/data/lims2/neuron_recon_2"
-data_DIR= "/home/xiaoxiaol/work/data/lims2/nr_june_25_filter"
+data_DIR= "/home/xiaoxiaol/work/data/lims2/nr_june_25_filter_aligned"
 LIST_CSV_FILE =  data_DIR+'/list.csv'
 #########################################################
 
@@ -323,10 +323,11 @@ def generateLinkerFileFromCSV(result_dir, csvfile, column_name):
 		idxs = np.nonzero(types==atype)[0]
 		swc_files = df['orca_path']
 		with open(result_dir+'/'+atype+'.ano','w') as outf:
-		    for afile in swc_files[idxs]:
-			   line='SWCFILE='+afile+'\n'
-			   outf.write(line)
-		    outf.close()
+        	   for afile in swc_files[idxs]:
+                       filename = afile.split('/')[-1]
+                       line='SWCFILE='+filename+'\n'
+                       outf.write(line)
+                   outf.close()
 
 
 def generateFeatureMergedCSV(out_featureId_filename, ):
@@ -375,12 +376,13 @@ def generateFeatureMergedCSV(out_featureId_filename, ):
 	scoreMatrix_csv_file = data_DIR+"/gmi_scoreMatrix.csv"
 	saveScoreMatrix(gmiFeatures,scoreMatrix_csv_file,1)
 
+
 ##################################################################################################
 all_feature_csv_with_id_file = data_DIR+"/allFeatures_withid.csv"
 generateALLFeatureCSV( data_DIR+"/allFeatures_withid.csv")
 
 df_complete = pd.read_csv(all_feature_csv_with_id_file)
-mycolumns = np.array(['specimen_id','specimen_name','nrid','orca_path'])
+mycolumns = np.array(['specimen_id','specimen_name','orca_path'])
 mycolumns = np.append(mycolumns,gl_feature_names,0)
 mycolumns = np.append(mycolumns,gmi_feature_names,0)
 df_complete = df_complete.reindex(columns=mycolumns)
@@ -393,6 +395,8 @@ df_type = pd.read_csv(data_DIR+'/../custom_report-IVSCC_classification-April_201
 merged = pd.merge(df_complete,df_type,how='inner',on=['specimen_name'])
 merged.to_csv(data_DIR+'/merged_allFeatures.csv')
 
+
+generateLinkerFileFromCSV(data_DIR+'/original',data_DIR +'/merged_allFeatures.csv','cre_line')
 
 
 

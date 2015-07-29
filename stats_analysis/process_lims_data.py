@@ -17,7 +17,7 @@ BATCH_COMPUTE = blastneuron_DIR + "/bin/batch_compute"  # compute faetures
 V3D="/local1/xiaoxiaol/work/v3d/v3d_external/bin/vaa3d"
 
 ####### SETTING #####################################################
-data_DIR= "/home/xiaoxiaol/work/data/lims2/nr_june_25_filter"
+data_DIR= "/home/xiaoxiaol/work/data/lims2/nr_june_25_filter_aligned"
 
 #RUN downloadSWC.py to grab data into local dir  data_DIR+'/original'
 
@@ -87,6 +87,8 @@ def pullListFromDB(outputFolder):
     #outputListCSVFile = outputFolder +'/list.csv'
     # copy data to local disk?
     return
+    
+    
 
 #==================================================================================================
 def main():
