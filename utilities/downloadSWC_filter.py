@@ -47,7 +47,7 @@ if __name__ == "__main__":
 	save_data_dir = args.save_data_dir
 
 
-        os.system('mkdir '+save_data_dir)
+        os.system('mkdir -p '+save_data_dir)
         
         df = pd.read_csv(input_csv_file)
 
