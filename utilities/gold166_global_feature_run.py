@@ -28,7 +28,7 @@ import pandas as pd
 #V3D="/Users/xiaoxiaoliu/work/v3d/v3d_external/bin/vaa3d64.app/Contents/MacOS/vaa3d64"
 V3D="/local1/xiaoxiaol/work/v3d/v3d_external/bin/vaa3d"
 
-data_DIR = "/data/mat/xiaoxiaol/data/gold166/gold166"
+
 
 
 
@@ -105,26 +105,68 @@ def genLinkerFileFromList(listCSVFile, linkFile):
 
 
 
+
+
+
+
 #==================================================================================================
 def main():
-    if  not os.path.exists(data_DIR+'/preprocessed'):
-        os.mkdir(data_DIR+'/preprocessed')
+    
+    ############################### process the results
+    data_DIR = "/data/mat/xiaoxiaol/data/gold166/gold166_results_combined"
+    preprocessed_dir = data_DIR +"/../preprocessed"
+    if  not os.path.exists(preprocessed_dir):
+        os.mkdir(preprocessed_dir)
 
-    preprocessed_dir = data_DIR +"/../gold166_preprocessed"
+  
 
     for input_swc_path in glob.glob(data_DIR+"/*/*/*.swc"):
        print input_swc_path
-       if( os.path.getsize(input_swc_path) > 1000  ):
+       if(( os.path.getsize(input_swc_path) > 1000) and( os.path.getsize(input_swc_path) < 1024*1024*50)):
             swc_fn = "/".join (input_swc_path.split("/")[-3:])
             preprocessed_swc_fn = preprocessed_dir+ '/'+swc_fn
-    #        pre_processing(input_swc_path, preprocessed_swc_fn)
+            pre_processing(input_swc_path, preprocessed_swc_fn)
 
     preprocessed_ANO = preprocessed_dir+"/preprocessed.ano"
-    #genLinkerFile( preprocessed_dir, preprocessed_ANO)
+    genLinkerFile( preprocessed_dir, preprocessed_ANO)
 
     ##batch computing
     feature_file =  preprocessed_dir+ "/features.nfb"
     batch_compute( preprocessed_ANO,feature_file)
+
+
+
+
+    #########################  PROCESS THE GOLD STANDARDS
+    data_DIR = "/data/mat/xiaoxiaol/data/gold166/checked_final_swcs"
+    preprocessed_dir = data_DIR +"/checked_final_swcs/gold166_preprocessed"
+    if  not os.path.exists(preprocessed_dir):
+        os.mkdir(preprocessed_dir)
+
+
+    for input_swc_path in glob.glob(data_DIR+"/*.swc"):
+       print input_swc_path
+       if(( os.path.getsize(input_swc_path) > 1000) and( os.path.getsize(input_swc_path) < 1024*1024*50)):
+            swc_fn = "/".join (input_swc_path.split("/")[-1])
+            preprocessed_swc_fn = preprocessed_dir+ '/'+swc_fn
+            pre_processing(input_swc_path, preprocessed_swc_fn)
+ 
+    preprocessed_ANO = preprocessed_dir+"/preprocessed.ano"
+    genLinkerFile( preprocessed_dir, preprocessed_ANO)
+
+    ##batch computing
+    feature_file =  preprocessed_dir+ "/features.nfb"
+    batch_compute( preprocessed_ANO,feature_file) 
+
+
+
+
+
+
+
+
+
+
 
 
 
