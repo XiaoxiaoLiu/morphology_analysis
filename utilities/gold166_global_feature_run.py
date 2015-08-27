@@ -1,8 +1,7 @@
 import os
-import scipy.stats
+
 import glob
-import numpy
-import matplotlib.pylab as pl
+
 import pandas as pd
 
 
@@ -35,7 +34,17 @@ V3D="/local1/xiaoxiaol/work/v3d/v3d_external/bin/vaa3d"
 
 
 #===================================================================
-def pre_processing(inputswc_path, outputswc_path):
+def resample(inputswc_path, outputswc_path): 
+    output_dir = os.path.dirname( outputswc_path )
+    if not os.path.exists (output_dir) :
+        os.system("mkdir -p  "+ output_dir)
+        print "create output dir: ",output_dir
+    cmd = V3D +  " -x resample_swc -f resample_swc -i "+ inputswc_path +" -o "+outputswc_path+" -p 1 "
+    print cmd
+    os.system(cmd)
+    return
+
+def pre_processing(inputswc_path, outputswc_path): # prune align x-axis and resample
     output_dir = os.path.dirname( outputswc_path )
     if not os.path.exists (output_dir) :
         os.system("mkdir -p  "+ output_dir)
@@ -112,7 +121,32 @@ def genLinkerFileFromList(listCSVFile, linkFile):
 #==================================================================================================
 def main():
     
-    ############################### process the results
+    ########################  Resample THE GOLD STANDARDS
+    data_DIR = "/data/mat/xiaoxiaol/data/gold166/checked_final_swcs"
+    preprocessed_dir = data_DIR +"/preprocessed"
+    if  not os.path.exists(preprocessed_dir):
+        os.mkdir(preprocessed_dir)
+
+
+    for input_swc_path in glob.glob(data_DIR+"/*.swc"):
+       print input_swc_path
+       if(( os.path.getsize(input_swc_path) > 1000) and( os.path.getsize(input_swc_path) < 1024*1024*50)):
+            swc_fn = input_swc_path.split('/')[-1]
+            preprocessed_swc_path = preprocessed_dir+ '/'+swc_fn
+            resample(input_swc_path, preprocessed_swc_path)
+ 
+    preprocessed_ANO = preprocessed_dir+"/preprocessed.ano"
+    genLinkerFile( preprocessed_dir, preprocessed_ANO)
+
+    ##batch computing
+    feature_file =  preprocessed_dir+ "/features.nfb"
+    batch_compute( preprocessed_ANO,feature_file) 
+
+    
+    
+    
+    
+    ############################### Resample the results
     data_DIR = "/data/mat/xiaoxiaol/data/gold166/gold166_results_combined"
     preprocessed_dir = data_DIR +"/../preprocessed"
     if  not os.path.exists(preprocessed_dir):
@@ -124,8 +158,8 @@ def main():
        print input_swc_path
        if(( os.path.getsize(input_swc_path) > 1000) and( os.path.getsize(input_swc_path) < 1024*1024*50)):
             swc_fn = "/".join (input_swc_path.split("/")[-3:])
-            preprocessed_swc_fn = preprocessed_dir+ '/'+swc_fn
-            pre_processing(input_swc_path, preprocessed_swc_fn)
+            preprocessed_swc_path = preprocessed_dir+ '/'+swc_fn
+            resample(input_swc_path, preprocessed_swc_path)
 
     preprocessed_ANO = preprocessed_dir+"/preprocessed.ano"
     genLinkerFile( preprocessed_dir, preprocessed_ANO)
@@ -137,27 +171,7 @@ def main():
 
 
 
-    #########################  PROCESS THE GOLD STANDARDS
-    data_DIR = "/data/mat/xiaoxiaol/data/gold166/checked_final_swcs"
-    preprocessed_dir = data_DIR +"/checked_final_swcs/gold166_preprocessed"
-    if  not os.path.exists(preprocessed_dir):
-        os.mkdir(preprocessed_dir)
-
-
-    for input_swc_path in glob.glob(data_DIR+"/*.swc"):
-       print input_swc_path
-       if(( os.path.getsize(input_swc_path) > 1000) and( os.path.getsize(input_swc_path) < 1024*1024*50)):
-            swc_fn = "/".join (input_swc_path.split("/")[-1])
-            preprocessed_swc_fn = preprocessed_dir+ '/'+swc_fn
-            pre_processing(input_swc_path, preprocessed_swc_fn)
  
-    preprocessed_ANO = preprocessed_dir+"/preprocessed.ano"
-    genLinkerFile( preprocessed_dir, preprocessed_ANO)
-
-    ##batch computing
-    feature_file =  preprocessed_dir+ "/features.nfb"
-    batch_compute( preprocessed_ANO,feature_file) 
-
 
 
 

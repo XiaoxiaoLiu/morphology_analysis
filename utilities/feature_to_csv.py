@@ -140,17 +140,26 @@ def saveScoreMatrix(featureArray,scoreMatrix_file, REMOVE_OUTLIER=1):
 
 def main():     
     ########################################## data dir
-    data_DIR= "/data/mat/xiaoxiaol/data/gold166/gold166_preprocessed"
+    data_DIR= "/data/mat/xiaoxiaol/data/gold166/preprocessed"
     #########################################################
         
 
     FEATURE_FILE = data_DIR + '/features.nfb'
-    readDBFeatures(FEATURE_FILE)
+
+
+   # generateALLFeatureCSV(FEATURE_FILE, data_DIR +'/features_with_tags.csv')
+   # generateLinkerFileFromCSV(data_DIR, data_DIR +'/features_with_tags.csv', 'image')
     
     
+    
+     ########################################## data dir
+    data_DIR= "/data/mat/xiaoxiaol/data/gold166/checked_final_swcs/preprocessed"
+    #########################################################
+    FEATURE_FILE = data_DIR + '/features.nfb'
+    
+
     generateALLFeatureCSV(FEATURE_FILE, data_DIR +'/features_with_tags.csv')
-    
-    generateLinkerFileFromCSV(data_DIR, data_DIR +'/features_with_tags.csv', 'image')
+   
 
 
 if __name__ == "__main__":
