@@ -13,11 +13,10 @@ def get_ephys_id_from_lims(specimen_id):
 
     print "Specimen: " + result[0]
     print "EphysRoiResult: " + str(result[1])
-    
     cur.close()
     conn.close()
-    
     return result
+
 
 def get_specimen_info_from_lims(specimen):
     conn = psycopg2.connect('host=limsdb2 dbname=lims2 user=limsreader password=limsro')
@@ -30,32 +29,33 @@ def get_specimen_info_from_lims(specimen):
 
     print "Specimen: " + result[0]
     print "EphysRoiResult: " + str(result[1])
-    
     cur.close()
     conn.close()
-    
     return result
-    
+
+
+
 def get_orca_path_from_lims(ephys_roi_result):
     conn = psycopg2.connect('host=limsdb2 dbname=lims2 user=limsreader password=limsro')
     cur = conn.cursor()
 
     cur.execute("SELECT f.filename, f.storage_directory FROM well_known_files f \
-             WHERE f.attachable_type = 'EphysRoiResult' AND f.attachable_id = %s AND f.filename LIKE '%%orca'", (ephys_roi_result,))
+             WHERE f.attachable_type = 'EphysRoiResult' AND f.attachable_id = %s AND f.filename LIKE '%%orca'",
+                (ephys_roi_result,))
     result = cur.fetchone()
-    
+
     if not result:
         print "Cannot find orca file"
         return ""
-    
+
     orca_path = result[1] + result[0]
     print "Orca file: " + orca_path
-    
+
     cur.close()
     conn.close()
     return orca_path
-    
-    
+
+
 def get_swc_from_lims(specimen_id):
     conn = psycopg2.connect('host=limsdb2 dbname=lims2 user=limsreader password=limsro')
     cur = conn.cursor()
@@ -68,10 +68,11 @@ def get_swc_from_lims(specimen_id):
     swc_filename = result[0]
     swc_path = result[1] + result[0]
     print "SWC file: " + swc_path
-    
+
     cur.close()
     conn.close()
     return swc_filename, swc_path
+
 
 def get_swc_from_lims_by_specimen_name(specimen_name):
     conn = psycopg2.connect('host=limsdb2 dbname=lims2 user=limsreader password=limsro')
@@ -85,10 +86,11 @@ def get_swc_from_lims_by_specimen_name(specimen_name):
     swc_filename = result[0]
     swc_path = result[1] + result[0]
     print "SWC file: " + swc_path
-    
+
     cur.close()
     conn.close()
     return swc_filename, swc_path
+
 
 def get_swc_from_lims_by_nrid(id):
     conn = psycopg2.connect('host=limsdb2 dbname=lims2 user=limsreader password=limsro')
@@ -102,10 +104,11 @@ def get_swc_from_lims_by_nrid(id):
     swc_filename = result[0]
     swc_path = result[1] + result[0]
     print "SWC file: " + swc_path
-    
+
     cur.close()
     conn.close()
     return swc_filename, swc_path
+
 
 def get_specimen_name_from_lims(specimen_id):
     conn = psycopg2.connect('host=limsdb2 dbname=lims2 user=limsreader password=limsro')
@@ -118,5 +121,5 @@ def get_specimen_name_from_lims(specimen_id):
 
     cur.close()
     conn.close()
-    
+
     return result[0]
