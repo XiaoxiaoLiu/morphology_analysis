@@ -40,9 +40,9 @@ def generateALLFeatureCSV(feature_file, feature_csv_file):
     swc_file_nameList, glFeatures, gmiFeatures = readDBFeatures(feature_file)
 
     allFeatures = np.append(glFeatures, gmiFeatures, 1)
-    allColums = np.append(GL_FEATURE_TAGS, GMI_FEATURE_TAGS, 0)
+    allColumns = np.append(GL_FEATURE_TAGS, GMI_FEATURE_TAGS, 0)
 
-    df = pd.DataFrame(allFeatures, columns=allColums)
+    df = pd.DataFrame(allFeatures, columns=allColumns)
 
     df['swc_file'] = pd.Series(swc_file_nameList, index=df.index)
 
@@ -50,8 +50,14 @@ def generateALLFeatureCSV(feature_file, feature_csv_file):
     imageList = []
     for swc_file in swc_file_nameList:
         fn = swc_file.split('/')[-1]
-        algorithm = fn.split('_')[-1]
+        algorithm = fn.split('v3dpbd')[-1]
         algorithm = algorithm.split('.')[0]
+        if "app1" in algorithm:   # for patterns like *x245_y234_z234_app1.swc
+              algorithm = "app1"
+        if "app2" in algorithm:
+              algorithm = "app2"
+        if  "spanningtree" in algorithm: # fastmarching_spanningtree is too long
+              algorithm = "spanningtree"
         image = fn.split('.v3dpbd')[0]
         image = image.split('sorted_')[-1]  # for sorted_* swc_files
         algorithmList.append(algorithm)

@@ -24,12 +24,52 @@ import os
 
 
 
+
+import subprocess, threading
+
+class Command(object):
+    def __init__(self, cmd):
+        self.cmd = cmd
+        self.process = None
+
+    def run(self, timeout):
+        def target():
+            print 'Thread started'
+            self.process = subprocess.Popen(self.cmd, shell=True)
+            self.process.communicate()
+            print 'Thread finished'
+
+        thread = threading.Thread(target=target)
+        thread.start()
+
+        thread.join(timeout)
+        if thread.is_alive():
+            print 'Terminating process'
+            self.process.terminate()
+            thread.join()
+        print self.process.returncode
+
+
 #V3D="/Users/xiaoxiaoliu/work/v3d/v3d_external/bin/vaa3d64.app/Contents/MacOS/vaa3d64"
 V3D= "/local1/xiaoxiaol/work/v3d/v3d_external/bin/vaa3d"
 
 
-
 #===================================================================
+def sort_swc(inputswc_path, outputswc_path):
+    output_dir = os.path.dirname(outputswc_path)
+    if not os.path.exists(output_dir):
+        os.system("mkdir -p  " + output_dir)
+        print "create output dir: ", output_dir
+    cmd = V3D + " -x sort_neuron_swc -f sort_swc -i "+ inputswc_path + " -o " + outputswc_path + " -p 0 "
+    print cmd
+    #os.system(cmd)
+
+    command = Command(cmd)
+    command.run(timeout=60*5)
+
+    return
+
+
 def resample(inputswc_path, outputswc_path):
     output_dir = os.path.dirname(outputswc_path)
     if not os.path.exists(output_dir):
@@ -37,7 +77,9 @@ def resample(inputswc_path, outputswc_path):
         print "create output dir: ", output_dir
     cmd = V3D + " -x resample_swc -f resample_swc -i " + inputswc_path + " -o " + outputswc_path + " -p 1 "
     print cmd
-    os.system(cmd)
+    #os.system(cmd)
+    command = Command(cmd)
+    command.run(timeout=60*5)
     return
 
 
