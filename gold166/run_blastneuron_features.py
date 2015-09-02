@@ -12,10 +12,9 @@ sys.path.append(p+'/blast_neuron')
 import blast_neuron_comp as bn
 
 
+###############################
 RUN_GOLD = 0
-
 if RUN_GOLD:
-    ########################  Resample THE GOLD STANDARDS
     data_DIR = "/data/mat/xiaoxiaol/data/gold166/checked_final_swcs"
     original_dir = data_DIR + "/original"
     preprocessed_dir = data_DIR +"/preprocessed"
@@ -38,10 +37,9 @@ if RUN_GOLD:
     bn.batch_compute( preprocessed_ANO,feature_file)
 
 
-###############################
 
-
-RUN_RESULTS = 1
+###############################  run on cluster ################
+RUN_RESULTS = 0
 if RUN_RESULTS:
   data_DIR = "/data/mat/xiaoxiaol/data/gold166/gold166_results_combined"
   original_dir = data_DIR + "/original"
@@ -58,16 +56,18 @@ if RUN_RESULTS:
           swc_fn = "/".join (input_swc_path.split("/")[-3:])
           # resample
           preprocessed_swc_path = preprocessed_dir+ '/'+swc_fn
-          bn.resample(input_swc_path, preprocessed_swc_path)
+          bn.resample(input_swc_path, preprocessed_swc_path,1,'resample')  # generate QSUB scripts
 
           # sort
           sorted_swc_path = sorted_dir+ '/'+swc_fn
-          bn.sort_swc(preprocessed_swc_path, sorted_swc_path)
+          bn.sort_swc(preprocessed_swc_path, sorted_swc_path,1,'sort')
 
 
-  #preprocessed_ANO = preprocessed_dir+"/preprocessed.ano"
-  #genLinkerFile( preprocessed_dir, preprocessed_ANO)
 
+
+###############################
+FEATURE_CALC = 1
+if FEATURE_CALC:
   sorted_ANO = sorted_dir+"/sorted.ano"
   genLinkerFile( sorted_dir, sorted_ANO)
 
