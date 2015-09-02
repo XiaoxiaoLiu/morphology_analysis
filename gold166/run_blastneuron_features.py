@@ -52,8 +52,8 @@ if RUN_RESULTS:
   for input_swc_path in glob.glob(original_dir+"/*/*/*.swc"):
      print input_swc_path
      if(( os.path.getsize(input_swc_path) > 1000) and( os.path.getsize(input_swc_path) < 1024*1024*5)):
-
-          swc_fn = "/".join (input_swc_path.split("/")[-3:])
+        if not "tmp_cache_img"  in input_swc_path:   # skip the tmp files
+          swc_fn = "/".join (input_swc_path.split("/")[-3:]) # to keep the subfolder structure
           # resample
           preprocessed_swc_path = preprocessed_dir+ '/'+swc_fn
           bn.resample(input_swc_path, preprocessed_swc_path,1,'resample')  # generate QSUB scripts
@@ -66,15 +66,19 @@ if RUN_RESULTS:
 
 
 ###############################
+data_DIR = "/data/mat/xiaoxiaol/data/gold166/gold166_results_combined"
+original_dir = data_DIR + "/original"
+preprocessed_dir = data_DIR +"/resampled"
+sorted_dir = data_DIR +"/sorted"
 FEATURE_CALC = 1
 if FEATURE_CALC:
   sorted_ANO = sorted_dir+"/sorted.ano"
-  genLinkerFile( sorted_dir, sorted_ANO)
+  bn.genLinkerFile( sorted_dir, sorted_ANO)
 
 
    ##batch computing
   feature_file =  sorted_dir+ "/features.nfb"
-  batch_compute (sorted_ANO,feature_file)
+  bn.batch_compute (sorted_ANO,feature_file)
 
 
 

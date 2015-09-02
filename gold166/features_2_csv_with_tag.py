@@ -31,15 +31,15 @@ nfb.generateALLFeatureCSV(FEATURE_FILE, data_DIR +'/features_with_tags.csv')
 
 
 
-#
+
 # ##########################################  recon results
-# data_DIR= "/data/mat/xiaoxiaol/data/gold166/gold166_results_combined/sorted"
-# #########################################################
-#
-# FEATURE_FILE = data_DIR + '/features.nfb'
-#
-# nfb.generateALLFeatureCSV(FEATURE_FILE, data_DIR +'/features_with_tags.csv')
-# nfb.generateLinkerFileFromCSV(data_DIR, data_DIR +'/features_with_tags.csv', 'image')
+data_DIR= "/data/mat/xiaoxiaol/data/gold166/gold166_results_combined/sorted"
+#########################################################
+
+FEATURE_FILE = data_DIR + '/features.nfb'
+
+nfb.generateALLFeatureCSV(FEATURE_FILE, data_DIR +'/features_with_tags.csv')
+nfb.generateLinkerFileFromCSV(data_DIR, data_DIR +'/features_with_tags.csv', 'image')
 #
 
 

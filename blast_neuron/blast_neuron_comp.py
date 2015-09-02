@@ -67,7 +67,7 @@ def gen_qsub_script(cmd, job_name, script_fn):
     FILE = open(script_fn, 'w')
     FILE.write("#PBS -q mindscope\n")
     FILE.write("#PBS -l vmem=16g\n")
-    FILE.write("#PBS -l walltime=00:30:00\n")
+    FILE.write("#PBS -l walltime=01:00:00\n")
     FILE.write("#PBS -l ncpus=1\n")
     FILE.write("#PBS -N %s\n" % job_name)
     FILE.write("#PBS -r n\n")
@@ -142,7 +142,7 @@ def run_neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSU
     if GEN_QSUB :
         cmd = QMasterV3D + arguments
         print cmd
-        script_fn = qsub_script_dir +'/'+inputswc_path1.split('/')[-1]+'.qsub'
+        script_fn = qsub_script_dir +'/'+str(random.randint(1000000,9999999))+'.qsub'
         jobname = qsub_script_dir+inputswc_path1.split('/')[-1]
         gen_qsub_script(cmd, jobname, script_fn)
     else:

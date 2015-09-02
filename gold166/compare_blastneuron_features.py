@@ -18,7 +18,7 @@ def SSD(feature_array1, feature_array2):
 
 
 data_DIR =  "/data/mat/xiaoxiaol/data/gold166/preprocessed"
-results_csv = "/data/mat/xiaoxiaol/data/gold166/preprocessed/features_with_tags.csv"
+results_csv = "/data/mat/xiaoxiaol/data/gold166/gold_results_combined/sorted/features_with_tags.csv"
 gold_csv="/data/mat/xiaoxiaol/data/gold166/checked_final_swcs/preprocessed/features_with_tags.csv"
 
 
@@ -48,7 +48,7 @@ df_gold_normalized = pd.DataFrame()
 for i in range(final_images.size):
       imageName = final_images[i]
       df_image = df_results[df_results.image == imageName]
-      if df_image.shape[0] > 3:
+      if df_image.shape[0] > 5:  # too few samples
           df_gold_image = df_gold[df_gold.image == imageName]
        
           df_image_normalized = pd.DataFrame()

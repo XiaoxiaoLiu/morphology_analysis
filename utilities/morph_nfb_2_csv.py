@@ -50,7 +50,7 @@ def generateALLFeatureCSV(feature_file, feature_csv_file):
     imageList = []
     for swc_file in swc_file_nameList:
         fn = swc_file.split('/')[-1]
-        algorithm = fn.split('v3dpbd')[-1]
+        algorithm = fn.split('v3dpbd_')[-1]
         algorithm = algorithm.split('.')[0]
         if "app1" in algorithm:   # for patterns like *x245_y234_z234_app1.swc
               algorithm = "app1"
