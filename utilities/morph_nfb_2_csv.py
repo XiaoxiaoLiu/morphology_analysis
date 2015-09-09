@@ -46,6 +46,27 @@ def generateALLFeatureCSV(feature_file, feature_csv_file):
 
     df['swc_file'] = pd.Series(swc_file_nameList, index=df.index)
 
+    allColumns = np.append(np.array(['swc_file']), allColumns, 0)
+
+    df = df[allColumns]
+
+    df.to_csv(feature_csv_file, index=False)
+
+    print 'output all feature csv file to :', feature_csv_file
+    return
+
+
+
+def generateALLFeatureCSV_gold166(feature_file, feature_csv_file):
+    swc_file_nameList, glFeatures, gmiFeatures = readDBFeatures(feature_file)
+
+    allFeatures = np.append(glFeatures, gmiFeatures, 1)
+    allColumns = np.append(GL_FEATURE_TAGS, GMI_FEATURE_TAGS, 0)
+
+    df = pd.DataFrame(allFeatures, columns=allColumns)
+
+    df['swc_file'] = pd.Series(swc_file_nameList, index=df.index)
+
     algorithmList = []
     imageList = []
     for swc_file in swc_file_nameList:

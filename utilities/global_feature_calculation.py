@@ -91,7 +91,6 @@ def pullListFromDB(outputFolder):
 
 #==================================================================================================
 def main():
-
     #TODO:  pullListFromDB() update from lims2 to grab all neuron reconstructions into list.csv
 
     #genLinkerFileFromList(data_DIR+'/list.csv', original_data_linker_file)

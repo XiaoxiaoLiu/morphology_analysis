@@ -27,7 +27,7 @@ data_DIR= "/data/mat/xiaoxiaol/data/gold166/checked_final_swcs/preprocessed"
 #########################################################
 FEATURE_FILE = data_DIR + '/features.nfb'
 
-nfb.generateALLFeatureCSV(FEATURE_FILE, data_DIR +'/features_with_tags.csv')
+nfb.generateALLFeatureCSV_gold166(FEATURE_FILE, data_DIR +'/features_with_tags.csv')
 
 
 
@@ -38,7 +38,7 @@ data_DIR= "/data/mat/xiaoxiaol/data/gold166/gold166_results_combined/sorted"
 
 FEATURE_FILE = data_DIR + '/features.nfb'
 
-nfb.generateALLFeatureCSV(FEATURE_FILE, data_DIR +'/features_with_tags.csv')
+nfb.generateALLFeatureCSV_gold166(FEATURE_FILE, data_DIR +'/features_with_tags.csv')
 nfb.generateLinkerFileFromCSV(data_DIR, data_DIR +'/features_with_tags.csv', 'image')
 #
 
