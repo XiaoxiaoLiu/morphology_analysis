@@ -2,7 +2,7 @@
 #source("/data/0351/351_Informatics/Analysis/analysis.function.r")
 library(multtest)
 library(sigclust)
-source("/data/informatics/changkyul/Ephys/Script_Repository/CK/ClusTree.function.r")
+source("/data/informatics/changkyul/Ephys/Ephys_Unix/stepbystep10featsel.r")
 
 #############################################
 # Set input & output Dirs
@@ -19,8 +19,8 @@ if(!file.exists(OUTDIR)) { system(paste("mkdir", OUTDIR, "; chmod 777 -R", OUTDI
     print(paste("now, the data file is ", DATAINDIR, "/EphysOnly_700n_e", i, ".csv", sep=""))
 
     print("====================================================")
-    print(" Read in feature file")
-    print(" column 'specimen_id', and 'name' are expected")
+    print(" Read in feature file"
+    print(" column 'specimen_id', and 'name' are expected"
     print("====================================================")
     specimen_id <- as.character(din[,"specimen_id"])
     samplename <- as.character(din[,"name"])
@@ -181,7 +181,7 @@ if(!file.exists(OUTDIR)) { system(paste("mkdir", OUTDIR, "; chmod 777 -R", OUTDI
     ZSel35[ZSel< -3.5] <- -3.5
     ZSel35[ZSel> 3.5] <- 3.5
 
-    print(paste("	", i, "-th DATA IS SET"))
+    print(paste("	", i, "-th DATA IS SET")
     print("====================================================")
     print("====================================================")
     print(paste("	Buildng", i, "-th Tree", sep=""))
@@ -192,7 +192,7 @@ if(!file.exists(OUTDIR)) { system(paste("mkdir", OUTDIR, "; chmod 777 -R", OUTDI
     ################################### ###################################
     ################################### ###################################
     
-    
+
     XEphys <- XSel 
     
     str.of.interest <- c("Ephys", "Morph", "EphysMorph")
@@ -204,17 +204,16 @@ if(!file.exists(OUTDIR)) { system(paste("mkdir", OUTDIR, "; chmod 777 -R", OUTDI
     
          if (soi == "EphysMorph") {
              Xsoi <- XEphysMorph
-             OUTDIRsoi = paste(OUTDIR,  soi, sep="/")
          } 
          if (soi == "Ephys") {
              Xsoi <- XEphys
-             OUTDIRsoi = paste(OUTDIR,  "/", soi, "Only", pthr, sep="")
          }
          if (soi == "Morph") {
              Xsoi <- XMorph
-             OUTDIRsoi = paste(OUTDIR,  "/", soi, "Only", pthr, sep="")
          }
+         OUTDIRsoi = paste(OUTDIR,  "/", soi, ".", pthr, sep="")
          OUTDIR.soi = paste(OUTDIRsoi, "_e", i, sep="")
+         OUTDIR.soi.str <- paste(soi, ".", pthr, "_e", i, sep="") 
 
          if(!file.exists(OUTDIR.soi)) { system(paste("mkdir", OUTDIR.soi, "; chmod 777 -R", OUTDIR.soi)) }
     
@@ -231,7 +230,7 @@ if(!file.exists(OUTDIR)) { system(paste("mkdir", OUTDIR, "; chmod 777 -R", OUTDI
          soi.leg$str <- hybrid.leg.str
          soi.leg$strL <-  hybrid.leg.str2
                
-         thisStr <- "Grp.SFp0.01Nshuffled1000" 
+         thisStr <- "LDA_GrpSF0.01Nshuffled100.CreMeanLR_0" 
          Node0$NodeStr <- "" 
          Node0$strin=paste(OUTDIR.soi, "/", soi, ".Node", thisStr, sep="")
          Node0$pch <- mypch
@@ -249,5 +248,8 @@ if(!file.exists(OUTDIR)) { system(paste("mkdir", OUTDIR, "; chmod 777 -R", OUTDI
     }
     
     print(paste("	", i, "-th ClusterTree has built", sep=""))
+
+    gather_ID(OUTDIR, OUTDIR.soi.str, nrow(XXX)) 
+
     #system(paste("rm -r", OUTDIR.soi))  
 #}
