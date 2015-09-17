@@ -1,27 +1,30 @@
 
+#source("/data/0351/351_Informatics/Analysis/analysis.function.r")
 library(multtest)
 library(sigclust)
-source("/data/informatics/changkyul/Ephys/Script_Repository/CK/ClusTree.function.r")
+library(ape)
+source("stepbystep10featsel.r")
 
 #############################################
 # Set input & output Dirs
 #############################################
 PARAMDIR = "/data/informatics/changkyul/Ephys/Data"
-
-OUTDIR = "~/work/data/lims2/0903_filtered_ephys_qc"
-
+DATAINDIR = "/data/informatics/changkyul/Ephys/Data/kylel.Aug31.2015.cluster_tree.nonparam"
+OUTDIR = "/data/informatics/changkyul/Ephys/Data/kylel.Aug31.2015.cluster_tree.nonparam"
+if(!file.exists(OUTDIR)) { system(paste("mkdir", OUTDIR, "; chmod 777 -R", OUTDIR)) }
        
 #for (i in 1:1000) {
     print("change the following line specifying input file")
     i <- 1
-    din <- read.csv("~/work/data/lims2/0903_filtered_ephys_qc/preprocessed/features_with_db_tags.csv", header=TRUE)
-  
+    din <- read.csv(paste(DATAINDIR, "/EphysOnly_700n_e", i, ".csv", sep=""), header=TRUE)
+    print(paste("now, the data file is ", DATAINDIR, "/EphysOnly_700n_e", i, ".csv", sep=""))
+
     print("====================================================")
-    print(" Read in feature file")
-    print(" column 'specimen_id', and 'name' are expected")
+    print(" Read in feature file"
+    print(" column 'specimen_id', and 'name' are expected"
     print("====================================================")
     specimen_id <- as.character(din[,"specimen_id"])
-    samplename <- as.character(din[,"specimen_name"])
+    samplename <- as.character(din[,"name"])
     tmp1 <- get.field(samplename, ";", 1)
     tmp2 <- get.field(samplename, ";", 2)
     #tmp22 <- get.field(tmp2, '-', 2)
@@ -179,18 +182,25 @@ OUTDIR = "~/work/data/lims2/0903_filtered_ephys_qc"
     ZSel35[ZSel< -3.5] <- -3.5
     ZSel35[ZSel> 3.5] <- 3.5
 
-    print(paste("	", i, "-th DATA IS SET"))
+    print(paste("	", i, "-th DATA IS SET")
     print("====================================================")
     print("====================================================")
     print(paste("	Buildng", i, "-th Tree", sep=""))
 
     set.seed(1)
-    pthr=0.05
+    pthr=0.01
 
     ################################### ###################################
     ################################### ###################################
+    soi.leg <- list()
+    soi.leg$pch <- leg.pch
+    soi.leg$crecolor <- leg.crecolor
+    soi.leg$crecolorL <- leg.crecolor
+    soi.leg$crecolor2 <- leg.crecolor2
+    soi.leg$str <- leg.str
+    soi.leg$str2 <- leg.str2
     
-    
+
     XEphys <- XSel 
     
     str.of.interest <- c("Ephys", "Morph", "EphysMorph")
@@ -202,17 +212,16 @@ OUTDIR = "~/work/data/lims2/0903_filtered_ephys_qc"
     
          if (soi == "EphysMorph") {
              Xsoi <- XEphysMorph
-             OUTDIRsoi = paste(OUTDIR,  soi, sep="/")
          } 
          if (soi == "Ephys") {
              Xsoi <- XEphys
-             OUTDIRsoi = paste(OUTDIR,  "/", soi, "Only", pthr, sep="")
          }
          if (soi == "Morph") {
              Xsoi <- XMorph
-             OUTDIRsoi = paste(OUTDIR,  "/", soi, "Only", pthr, sep="")
          }
+         OUTDIRsoi = paste(OUTDIR,  "/", soi, ".", pthr, sep="")
          OUTDIR.soi = paste(OUTDIRsoi, "_e", i, sep="")
+         OUTDIR.soi.str <- paste(soi, ".", pthr, "_e", i, sep="") 
 
          if(!file.exists(OUTDIR.soi)) { system(paste("mkdir", OUTDIR.soi, "; chmod 777 -R", OUTDIR.soi)) }
     
@@ -221,15 +230,8 @@ OUTDIR = "~/work/data/lims2/0903_filtered_ephys_qc"
          X35[XXX < -3.5] <- -3.5
          X35[XXX > 3.5] <- 3.5
     
-         soi.leg <- list()
-         soi.leg$pch <- leg.pch
-         soi.leg$crecolor <- hybrid.leg.crecolor
-         soi.leg$crecolorL <- hybrid.leg.crecolor2
-         soi.leg$crecolor2 <- hybrid.leg.crecolor2
-         soi.leg$str <- hybrid.leg.str
-         soi.leg$strL <-  hybrid.leg.str2
                
-         thisStr <- "Grp.SFp0.01Nshuffled1000" 
+         thisStr <- "LDA_GrpSF0.01Nshuffled100.CreMeanLR_0" 
          Node0$NodeStr <- "" 
          Node0$strin=paste(OUTDIR.soi, "/", soi, ".Node", thisStr, sep="")
          Node0$pch <- mypch
@@ -241,11 +243,23 @@ OUTDIR = "~/work/data/lims2/0903_filtered_ephys_qc"
          Node0$Xsoi <- Xsoi
          Node0$ZSel35 <- X35
     
+         print("building Clustering Tree with iterative PCA")
          Node0 <- BuildBinaryClusTree(Node0, soi.leg, Nshuffled=1000, flagDEC="LDA", flagGRP="SEL", flagPthr=pthr, flagPlot=FALSE ) 
          BCT[[soi]] <- Node0
          save(BCT, file=paste(OUTDIR.soi, "/BCT.e_", i, ".Rdata", sep=""))
-    }
     
-    print(paste("	", i, "-th ClusterTree has built", sep=""))
-    #system(paste("rm -r", OUTDIR.soi))  
-#}
+         print("Heatmap with Cluster Specific Genes")
+         gather_AssignedID_plotHeatmap_tree (OUTDIR0, paste(soi, "Only.Reduced.Regular.LDA.N5.P", pthr, "n1000.Grpby", grp, ".IncPC_diffFOI.Sigclust", sep=""), 0.05, Node0, soi.leg, "") 
+               
+         print("Cluster Diagram")
+         tree_txt <- get_meanMembership2(Node0, "") #"(L:0.1,(RL:0.2,RR:0.3):0.15);"
+         tree <- read.tree(text=paste(tree_txt,";",sep=""))
+         pdf(paste(OUTDIR.soi, "Final.Tree.Diagram.pdf", sep="/"))
+         plot(tree, dir="d")
+         dev.off()
+
+
+               
+     }
+
+print("DONE")

@@ -86,11 +86,11 @@ heatmap.2(t(newd),
           Colv=TRUE,
           col=redgreen(75), 
           scale="column", 
-          #key=T,
+          key=T,
           ColSideColors=mycolor1, 
-          #keysize=1.5,
-          #density.info="none", 
-          #trace="none",cexCol=0.9,margins=c(12,15)
+          keysize=1.5,
+          density.info="none", 
+          trace="none",cexCol=0.9,margins=c(12,15)
           )
 #
 legend("bottomleft",      # location of the legend on the heatmap plot
