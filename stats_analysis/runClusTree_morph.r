@@ -12,114 +12,84 @@ PARAMDIR = "/data/informatics/changkyul/Ephys/Data"
 DATAINDIR ="~/work/data/lims2/0903_filtered_ephys_qc"
 OUTDIR = "~/work/data/lims2/0903_filtered_ephys_qc"
 
-print("change the following line specifying input file")
-i <- 1
-din <- read.csv(paste(DATAINDIR, "preprocessed/features_with_db_tags.csv", sep="/"), header=TRUE)
+
+data_in <- read.csv(paste(DATAINDIR, "preprocessed/features_with_db_tags_fixed.csv", sep="/"), header=TRUE)
 
 print("====================================================")
 print(" Read in feature file")
-print(" column 'specimen_id', and 'name' are expected")
+print(" column 'specimen_id', and 'specimen_name' are required")
 print("====================================================")
-specimen_id <- as.character(din[,"specimen_id"])
-samplename <- as.character(din[,"specimen_name"])
-tmp1 <- get.field(samplename, ";", 1)
-tmp2 <- get.field(samplename, ";", 2)
-samplekey <- paste(tmp1, tmp2, sep=";")  # the same as samplename?
+specimen_id <- as.character(data_in[,"specimen_id"])
+samplename <- as.character(data_in[,"specimen_name"])
+#tmp1 <- get.field(samplename, ";", 1)
+#tmp2 <- get.field(samplename, ";", 2)
+#samplekey <- paste(tmp1, tmp2, sep=";")  #some specimen name is manually added, does not have complete info, samplekey may contain "NA" for those
+samplekey<-samplename
 
 
-print("	Leaving Out non-feature column from the data file")
-idx.exc <- which(colnames(din) %in% c("X","specimen_id","specimen_name","dendrite_type","cre_line","layer","swc_file"))
-fn <- colnames(din)[-c(idx.exc)]
+#	Leaving Out non-feature column from the data file
+idx.exc <- which(colnames(data_in) %in% c("X","specimen_id","specimen_name","dendrite_type","cre_line","layer","swc_file"))
+all_feature_names <- colnames(data_in)[-c(idx.exc)]
+#featcolorall <- c(rep("white",length(all_feature_names)))  # all white 
+Xall <- matrix(as.numeric(as.matrix(data_in[,all_feature_names])), ncol=length(all_feature_names))
+rownames(Xall) <- samplekey
+colnames(Xall) <- all_feature_names
 
-Nfeatall <- length(fn)
-featnameall <- fn
-ephysfeatall <- 1:Nfeatall 
-Nephysall <- length(ephysfeatall)
-featcolorall <- c(rep("white",length(ephysfeatall)))  # all white 
-
-
-Xallna <- matrix(as.numeric(as.matrix(din[,featnameall])), ncol=length(featnameall))
-rownames(Xallna) <- samplekey
-colnames(Xallna) <- featnameall
-
-Xall <-Xallna
+#####-------  if NA values present----------------
+#print("  NA values are replaced by mean value over all cells")
+#Xall.imputed <- t(impute.my(t(Xall)))
 
 
-print("	Get the Cre-line after  fixing the samplename")
-creallin <- samplekey
-crealltmp <- get.field(creallin,";", 1)
-creall <- gsub("Cre-197628.03.02.01", "Cre", gsub("Cre-197628.06.02.01", "Cre", gsub("Cre-197628.06.01.01", "Cre", crealltmp)))
-cre <- unique(creall)
 
+#Get the Cre-line after fixing the samplename
+cre_lines <- unique(data_in$cre_line)
+dendrite_types <- unique(data_in$dendrite_type)
+
+
+# -----------------------  for creating the legends and color bars
+# use the creline tables for consistency with ephy  data
 creline_table = read.csv(paste(PARAMDIR, "Cre_line_typeC.06092015.csv", sep="/"))
-creC <- as.character(creline_table[,"cre_line"])
+#creC <- as.character(creline_table[,"cre_line"])
 typeC <- substr(as.character(creline_table[,"type"]),1,3)
 pchC <- as.numeric(creline_table[,"pch1"])
 colorC <- as.character(creline_table[,"color"])
-print(creC)
+#print(creC)
 
 print("	Get the Spiny Tags")
-spiny_table <- read.csv(paste(PARAMDIR, "Tag.spiny.asipny.08142015.csv", sep="/"))
-spiny_type <- gsub("dendrite type - ", "", as.character(spiny_table[,"type"]))
-names(spiny_type) <- as.character(spiny_table[,"id"])
-idx.t <- match(names(spiny_type), specimen_id)
-color.tags <- c("black", "grey", "white", "darkgreen")
-colorT <- rep("grey", length(specimen_id))
-names(colorT) <- specimen_id
-colorT[names(spiny_type)] <- color.tags[match(spiny_type, unique(spiny_type))]
-
+color.tags<-c("blue","red","green") #aspiny         spiny          sparsely spiny
+# color_dendritetype maps specimen id to a color according to its speciemn id
+color_dendritetype <- rep("grey", length(specimen_id))
+names(color_dendritetype) <- specimen_id
+color_dendritetype[data_in$specimen_id] <- color.tags[match(data_in$dendrite_type, dendrite_types)]
 
 
 print("	Setting up Sample Color & Symbols") 
-mypch <- rep(20,length(creall)) 
-crecolor <- rainbow(11+1)[match(creall,creC)] 
+mypch <- rep(20,length(data_in$cre_line)) 
+crecolor <- rainbow(length(cre_lines)+1)[match(data_in$cre_line,cre_lines)] 
+
 print("	Creline based Color Set Up is chosen") 
 leg.pch <- rep(20,10) 
-leg.crecolor <- rainbow(12)[1:11]  
-leg.tagcolor <- color.tags 
-print("	Setting up Legend Color & Symbols") 
-thisGT <- creall 
-leg.pch <- rep(20,10) 
-leg.crecolor_t <- c(leg.crecolor, leg.tagcolor) 
-leg.crecolor2 <- c(leg.crecolor, leg.tagcolor) 
-leg.str <- c(creC) #, 'Excitatory', 'Inhibitory')
-leg.str_t <- c(creC, unique(spiny_type)) #, 'Excitatory', 'Inhibitory')
-leg.str2 <- c(creC, unique(spiny_type)) #, 'Excitatory', 'Inhibitory')
+leg.crecolor <- rainbow(length(cre_lines)+1)[1:length(cre_lines)]  
+leg.tagcolor <- color.tags  # dendrite types
 
+print("	Setting up Legend Color & Symbols") 
+leg.pch <- rep(20,10) 
+leg.color_t <- c(leg.crecolor, leg.tagcolor)  #creline types, dendrite types
+leg.str <- c(cre_lines)
+leg.str_t <- c(cre_lines, dendrite_types) 
+
+### to do : have layer info
 print("	Now, the layer info is NOT available")
 
-hybrid.GT <- thisGT
+hybrid.GT <- data_in$cre_line
 hybrid.leg.str2 <- c(leg.str_t)
-hybrid.leg.crecolor2 <- leg.crecolor_t
+hybrid.leg.crecolor2 <- leg.color_t
 hybrid.leg.str <- leg.str
 hybrid.leg.crecolor <- leg.crecolor
 hybrid.crecolor <- crecolor
-hybrid.crecolor2 <- t(matrix(c(crecolor,colorT), ncol=2))
-unique.crecolor <- matrix(unique(crecolor),nrow=1) #topo.colors(10)[match(unique(creall),cre3)]
-
-
-print("	Colorbar for Ephys, Morph Features")
-mask.sameforall <- which(apply(Xall.imputed,2,sd)==0)
-# if (length(mask.sameforall)>0) {
-#   ephysfeat <- ephysfeatall[-mask.sameforall]
-# } else {
-#   ephysfeat <- ephysfeatall
-# }
-# Nephys <- length(ephysfeat)
-# featcolor <- c(rep("white",length(ephysfeat)))
-# if (length(mask.sameforall) > 0) {
-#   Xall <- Xall.imputed[, -mask.sameforall]
-# } else {
-#   Xall <- Xall.imputed
-# }
-# 
-# print("	Zscore it")
-# Zall <- t(zscore(t(Xall))) 
-# Zall35 <- Zall
-# Zall35[Zall< -3.5] <- -3.5
-# Zall35[Zall> 3.5] <- 3.5
-# 
-# 
+hybrid.crecolor2 <- t(matrix(c(crecolor,color_dendritetype), ncol=2))
+unique.crecolor <- matrix(unique(crecolor),nrow=1) #topo.colors(10)[match(unique(data_in$cre_line),cre3)]
+#----- end of setting up legend ------------------
 
 
 
@@ -134,11 +104,13 @@ print("====================================================")
 print("====================================================")
 print(paste("	Buildng", i, "-th Tree", sep=""))
 
-set.seed(1)
-pthr=0.01
+
 
 ################################### ###################################
+# the stopping critria  p-value threshold
+pthr=0.05
 ################################### ###################################
+
 soi.leg <- list()
 soi.leg$pch <- leg.pch
 soi.leg$crecolor <- leg.crecolor
@@ -191,7 +163,7 @@ for (soi in str.of.interest[c(1)]) {
   Node0$ZSel35 <- X35
   
   print("building Clustering Tree with iterative PCA")
-  Node0 <- BuildBinaryClusTree(Node0, soi.leg, Nshuffled=1000, flagDEC="LDA", flagGRP="SEL", flagPthr=pthr, flagPlot=FALSE ) 
+  Node0 <- BuildBinaryClusTree(Node0, soi.leg, Nshuffled=1000, flagDEC="LDA", flagGRP="SEL", flagPthr=pthr, flagPlot=TRUE ) 
   BCT[[soi]] <- Node0
   save(BCT, file=paste(OUTDIR.soi, "/BCT.e_", i, ".Rdata", sep=""))
   
