@@ -9,8 +9,8 @@ source("/home/xiaoxiaol/work/src/cell-type-analysis/stats_analysis/analysis.func
 # Set input & output Dirs
 #############################################
 PARAMDIR = "/data/informatics/changkyul/Ephys/Data"
-DATAINDIR ="~/work/data/lims2/0903_filtered_ephys_qc"
-OUTDIR = "~/work/data/lims2/0903_filtered_ephys_qc"
+DATAINDIR ="/data/mat/xiaoxiaol/data/lims2/0903_filtered_ephys_qc"
+OUTDIR = "/data/mat/xiaoxiaol/data/0903_filtered_ephys_qc"
 
 
 data_in <- read.csv(paste(DATAINDIR, "preprocessed/features_with_db_tags_fixed.csv", sep="/"), header=TRUE)
@@ -99,25 +99,23 @@ ZSel35 = ZSel
 ZSel35[ZSel< -3.5] <- -3.5
 ZSel35[ZSel> 3.5] <- 3.5
 
-print(paste("	", i, "-th DATA IS SET"))
 print("====================================================")
 print("====================================================")
-print(paste("	Buildng", i, "-th Tree", sep=""))
 
 
 
 ################################### ###################################
 # the stopping critria  p-value threshold
-pthr=0.05
+pthr=0.01
 ################################### ###################################
 
 soi.leg <- list()
 soi.leg$pch <- leg.pch
 soi.leg$crecolor <- leg.crecolor
 soi.leg$crecolorL <- leg.crecolor
-soi.leg$crecolor2 <- leg.crecolor2
+soi.leg$crecolor2 <- leg.color_t
 soi.leg$str <- leg.str
-soi.leg$str2 <- leg.str2
+soi.leg$str2 <- leg.str_t
 
 
 XMorph <- XSel 
@@ -139,8 +137,8 @@ for (soi in str.of.interest[c(1)]) {
     Xsoi <- XMorph
   }
   OUTDIRsoi = paste(OUTDIR,  "/", soi, ".", pthr, sep="")
-  OUTDIR.soi = paste(OUTDIRsoi, "_e", i, sep="")
-  OUTDIR.soi.str <- paste(soi, ".", pthr, "_e", i, sep="") 
+  OUTDIR.soi = paste(OUTDIRsoi, "_e", sep="")
+  OUTDIR.soi.str <- paste(soi, ".", pthr, "_e", sep="") 
   
   if(!file.exists(OUTDIR.soi)) { system(paste("mkdir", OUTDIR.soi, "; chmod 777 -R", OUTDIR.soi)) }
   
@@ -165,7 +163,7 @@ for (soi in str.of.interest[c(1)]) {
   print("building Clustering Tree with iterative PCA")
   Node0 <- BuildBinaryClusTree(Node0, soi.leg, Nshuffled=1000, flagDEC="LDA", flagGRP="SEL", flagPthr=pthr, flagPlot=TRUE ) 
   BCT[[soi]] <- Node0
-  save(BCT, file=paste(OUTDIR.soi, "/BCT.e_", i, ".Rdata", sep=""))
+  save(BCT, file=paste(OUTDIR.soi, "/BCT.e", ".Rdata", sep=""))
   
   print("Heatmap with Cluster Specific Genes")
   subfolder <-paste(soi, "Only.Reduced.Regular.LDA.N5.P", pthr, "n1000.Grpby", ".IncPC_diffFOI.Sigclust", sep="")

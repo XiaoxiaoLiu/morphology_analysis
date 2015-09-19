@@ -63,19 +63,7 @@ Assign_NodeID <- function(Nodei) {
 
 
 BuildBinaryClusTree <- function(Nodei, soi.leg, Nshuffled=1000, flagDEC="LDA", flagGRP="SEL", flagPthr=0.05, flagSparse=FALSE, flagPlot=TRUE, flagDIP=FALSE, flagMembership=TRUE, flagPartition="PCA" ) {
-  if(0) {
-    Nodei <- Nodei$Right
-    Nshuffled=1000
-    flagDEC="LDA"
-    flagGRP="SEL"
-    flagPthr=0.05
-    flagSparse=FALSE
-    flagPlot=FALSE 
-    flagDebug=TRUE 
-    flagMembership=TRUE
-  }
-  
-  TN.Sample.thr <- 5
+  TN.Sample.thr <- 5  # termination condition
   print("##########################################################")
   print(paste("Numbef of samples :", nrow(Nodei$Xsoi),  "&   Number of Features : ", ncol(Nodei$Xsoi)))
   if (!is.matrix(Nodei$Xsoi) || nrow(Nodei$Xsoi) <= TN.Sample.thr) {
@@ -83,7 +71,10 @@ BuildBinaryClusTree <- function(Nodei, soi.leg, Nshuffled=1000, flagDEC="LDA", f
     Assign_NodeID (Nodei)
     print(paste("  ", Nodei$NodeStr, ": terminal node...STOP # Not enough Sample", nrow(Nodei$Xoi))) 
     
-  } else {
+  }
+ else 
+{
+     #  NodeStr = empty?
     print(paste("   BuildBinaryClusTree", Nodei$NodeStr))
     Nodei <- clustering2decR(Nodei, Nodei$Xsoi, Nodei$GT_cre, Nodei$ZSel35, Nodei$strin, Nodei$pch, soi.leg$pch, Nodei$crecolor, Nodei$hybrid.crecolorL, 
                              soi.leg$crecolor, soi.leg$crecolorL, soi.leg$str, soi.leg$strL, Nodei$NodeStr, Nshuffled, flagDEC, flagGRP, flagPthr, flagSparse, flagPlot, flagDIP, flagMembership, flagPartition) 
@@ -246,6 +237,7 @@ binary_partition_PC <- function (Pin, nPC, meth, flagSparse=FALSE) {
     hhh_PCA <- hclust(as.dist(newdistmat),method="ward")
   }
   print("====== binary partition L R and its significance (binary_partition_PC)======")
+  ####### cutree
   hhh_grpLR <- cutree(hhh_PCA,k=2) ;
   hhh_ttt <- table(hhh_grpLR)
   
@@ -321,10 +313,11 @@ binary_partition_incPC <- function (Zin, Pin, nPC, meth, flagSparse=FALSE) {
     
     if (ii > 1) {
       if (flagSparse) {
-        perm.out1 <- HierarchicalSparseCluster.permute(Pin$x[,1:nPC], wbounds=c(1.5,2:6), nperms=5)
+       perm.out1 <- HierarchicalSparseCluster.permute(Pin$x[,1:nPC], wbounds=c(1.5,2:6), nperms=5)
         hhh_sparse <- HierarchicalSparseCluster(dists=perm.out1$dists, wbound=perm.out1$bestw, method="complete", dissimilarity="squared.distance")
         hhh_PCA <- hhh_sparse$hc
       } else {
+        ###### use ward by default
         hhh_PCA <- hclust(as.dist(newdistmat),method="ward")
       }
       hhh_grpLR <- cutree(hhh_PCA,k=2) ;
@@ -337,7 +330,7 @@ binary_partition_incPC <- function (Zin, Pin, nPC, meth, flagSparse=FALSE) {
         
         
         #FEM
-        print("kyle_fem")
+#        print("kyle_fem")
        # femval <- kyle_fem(as.matrix(Zin), hhh_grpLR)  # 
         
         
@@ -478,7 +471,7 @@ binary_partition_DLM <- function (Zin, Pin, nPC, meth, flagSparse=FALSE) {
         min.pval <- NA 
         min.cindex <- NA
       }
-      #print(paste("PC", ii, " eigenvalue=", summary(Pin)$importance[2,ii], "min.pval=",min.pval))
+      print(paste("PC", ii, " eigenvalue=", summary(Pin)$importance[2,ii], "min.pval=",min.pval))
     }
   }
   
@@ -600,61 +593,39 @@ cal_12membership <- function (X, param, Nin) {
 
 clustering2decR <- function (ORIG, orig.XSel,orig.GT_cre, orig.ZSel35, orig.strin, mypch, leg.pch, crecolor, crecolor2, leg.crecolor, leg.crecolor2, leg.str, leg.str2, nodestr, nsim, flagDEC="LDA", flagGRP="SEL", flagPthr=0.05, flagSparse=FALSE, flagPlot=TRUE, flagDIP=FALSE, flagMembership=FALSE, flagPartition="PCA") { 
   
-  debug=0
-  if (debug) {
-    ORIG <- Nodei
-    orig.GT_cre <- Nodei$GT_cre
-    orig.ZSel35 <- Nodei$ZSel35
-    orig.XSel <- Nodei$Xsoi
-    orig.strin <- "hello"
-    mypch <- Nodei$pch
-    leg.pch <- soi.leg$pch
-    crecolor <- Nodei$crecolor
-    crecolor2 <- Nodei$hybrid.crecolorL 
-    leg.crecolor <- soi.leg$crecolor
-    leg.crecolor2 <- soi.leg$crecolorL
-    leg.str <-  soi.leg$str
-    leg.str2 <- soi.leg$strL
-    nodestr <- "debug"
-    nsim <- 100
-    flagDEC="LDA"
-    flagGRP="SEL"
-    flagPthr=0.05 
-    flagSparse=FALSE
-    flagPlot=FALSE    
-  }
   set.seed(1)
   OUT <- ORIG
   
-  print("this one is added")
   OUT$nPC  <- 0
   #print(dim(orig.ZSel35))
   
   pdffn <- paste(orig.strin, ".pca.pdf", sep="") 
   if (!flagPlot) save(ORIG, file="ORIG.Rdata") 
   if (flagPlot) pdf(pdffn)
-  
-  if (1) {
+ 
+    ################################ bimodel features are selected 
     print("      selecting features with bimodal distribution")
     nfeat <- ncol(orig.ZSel35) 
     print(paste("           number of cells :", nrow(orig.ZSel35), ",     number of features :", ncol(orig.ZSel35)))
     
     if (!flagDIP) {
-      varfeat <- apply(orig.ZSel35, 2, sd)
-      zero.sd <- sum(varfeat==0)
+      feature_std <- apply(orig.ZSel35, 2, sd)  # col std
+      zero.sd <- sum(feature_std==0)
       
       #print(paste("zero.sd =", zero.sd))
       
       if (zero.sd==0) { f0 <- 2} else { f0 <- 1 }
       foi <- c() 
       if (zero.sd!=nfeat) {
-        varorder <- order(varfeat, decreasing=FALSE)
+        feature_std_order <- order(feature_std, decreasing=FALSE)
         for (f in c((zero.sd+f0):nfeat)) {
-          Zf <- orig.ZSel35[,c(varorder[1],varorder[f])]
+          Zf <- orig.ZSel35[,c(feature_std_order[1],feature_std_order[f])]
+          ############ sig clust 
           fsig <- sigclust(Zf, 100, labflag=0, label=0, icovest=2)
+          ############ sig clust 
           if (fsig@pvalnorm < 0.01) {
-            foi <- c(foi, varorder[f]) 
-            #             print(paste('feat=', f, '  sigclust=', fsig@pvalnorm))
+            foi <- c(foi, feature_std_order[f]) 
+            print(paste('feat=', f, '  sigclust=', fsig@pvalnorm))
           }
         }
       }
@@ -666,8 +637,9 @@ clustering2decR <- function (ORIG, orig.XSel,orig.GT_cre, orig.ZSel35, orig.stri
       } 
     }
     print(paste("           number of interesting features = ", length(foi), "out of", nfeat))
-  }
   
+
+  ######################  PCA
   print("     Do pca")
   
   if (length(foi)>0) {
@@ -675,16 +647,18 @@ clustering2decR <- function (ORIG, orig.XSel,orig.GT_cre, orig.ZSel35, orig.stri
     ZSel35 <- orig.ZSel35[, foi]
     XSel <- orig.XSel[, foi]
     
-    #orig.pin <- plotPCA(ZSel35, nodestr, mypch, leg.pch, crecolor, leg.crecolor, leg.str, pdffn, flagPlot)
-    orig.pin <- prcomp(ZSel35, cor=TRUE)
+    #orig.pca <- plotPCA(ZSel35, nodestr, mypch, leg.pch, crecolor, leg.crecolor, leg.str, pdffn, flagPlot)
+    orig.pca <- prcomp(ZSel35, cor=TRUE)
     
     if (flagPartition=="PCA") {
       print("     Partition in pca")
       pdffn <- paste(orig.strin, ".pca.pdf", sep="") 
-      orig.grp <- part2grp_PCA(orig.pin, ZSel35, pdffn, nsim, flagSparse, flagPlot)
-    } else {
+      ###########
+      orig.grp <- part2grp_PCA(orig.pca, ZSel35, pdffn, nsim, flagSparse, flagPlot)
+     #########    
+} else {
       pdffn <- paste(orig.strin, ".DLM.pdf", sep="") 
-      orig.grp <- part2grp_DLM(orig.pin, ZSel35, pdffn, nsim, flagSparse, flagPlot)
+      orig.grp <- part2grp_DLM(orig.pca, ZSel35, pdffn, nsim, flagSparse, flagPlot)
     }
     if (flagPlot) dev.off()
     
@@ -692,7 +666,7 @@ clustering2decR <- function (ORIG, orig.XSel,orig.GT_cre, orig.ZSel35, orig.stri
     
     print(paste("           (orig.grp$nPCsig, orig.grp$pval, orig.grp$pval)=",orig.grp$nPCsig, round(orig.grp$pval,3), round(orig.grp$pval,3))) 
     if ((orig.grp$nPCsig > 0) && !is.na(orig.grp$cindex) && !is.na(orig.grp$pval) && (orig.grp$pval< flagPthr)) {
-      clusterPCA (orig.pin, orig.grp$nPCsig, crecolor2, leg.crecolor2, leg.str2, pdffn, flagPlot) 
+      clusterPCA (orig.pca, orig.grp$nPCsig, crecolor2, leg.crecolor2, leg.str2, pdffn, flagPlot) 
       #if ((orig.grp$nPCsig > 0) && !is.na(orig.grp$pval) && (orig.grp$pval<1) && ((orig.grp$pval<0.01) || (orig.grp$gap > 0))) {
       print("            any features with discrimination power given binary partition?")
       #print(table(orig.grp$PCA_grp12))
@@ -756,10 +730,10 @@ clustering2decR <- function (ORIG, orig.XSel,orig.GT_cre, orig.ZSel35, orig.stri
         
         if (flagMembership) { 
           print("          estimate parameter for two clusters")
-          params <- get_grp_mean_sd (orig.pin$x, orig.grp$PCA_grp12, orig.grp$nPCsig)
+          params <- get_grp_mean_sd (orig.pca$x, orig.grp$PCA_grp12, orig.grp$nPCsig)
           print("          calculate memebership score")
-          #membershiplr <- cal_12membership(orig.pin$x[1,1:orig.grp$nPCsig], params, orig.grp$nPCsig)
-          membershiplrs <- apply(as.matrix(orig.pin$x[,1:orig.grp$nPCsig]), 1, cal_12membership, params, orig.grp$nPCsig)
+          #membershiplr <- cal_12membership(orig.pca$x[1,1:orig.grp$nPCsig], params, orig.grp$nPCsig)
+          membershiplrs <- apply(as.matrix(orig.pca$x[,1:orig.grp$nPCsig]), 1, cal_12membership, params, orig.grp$nPCsig)
         }
         
         
@@ -776,8 +750,8 @@ clustering2decR <- function (ORIG, orig.XSel,orig.GT_cre, orig.ZSel35, orig.stri
         print("          get up to 10 best features dividing these two groups")
         
         orig.class <- orig.grp$PCA_grp12
-        order_pc1_loading <- order(abs(orig.pin$rotation[,"PC1"]), decreasing=TRUE)
-        orig_feat_pcloading <- rownames(orig.pin$rotation)[order_pc1_loading]
+        order_pc1_loading <- order(abs(orig.pca$rotation[,"PC1"]), decreasing=TRUE)
+        orig_feat_pcloading <- rownames(orig.pca$rotation)[order_pc1_loading]
         if (flagDEC=="SVM") {
           print("          by SVM decision rule")
           orig.pcloading.cv4roc <- mystepbystepSVMcv(orig.class, orig.class, ZSel35, orig_feat_pcloading, 
@@ -796,7 +770,7 @@ clustering2decR <- function (ORIG, orig.XSel,orig.GT_cre, orig.ZSel35, orig.stri
         sf10.params <- get_grp_mean_sd (sf10.ZSel35, orig.grp$PCA_grp12, orig.pcloading.cv4roc$nf)
         
         OUT$nPC         <- orig.grp$nPCsig 
-        OUT$loadingsPC  <- orig.pin$rotation[,1:orig.grp$nPCsig] 
+        OUT$loadingsPC  <- orig.pca$rotation[,1:orig.grp$nPCsig] 
         OUT$groupingPC  <- orig.grp$PCA_grp12 
         OUT$grouping_pval_cindex_pc <- c(orig.grp$pvalue, orig.grp$cindex)
         
