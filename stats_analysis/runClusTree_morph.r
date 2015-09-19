@@ -10,7 +10,7 @@ source("/home/xiaoxiaol/work/src/cell-type-analysis/stats_analysis/analysis.func
 #############################################
 PARAMDIR = "/data/informatics/changkyul/Ephys/Data"
 DATAINDIR ="/data/mat/xiaoxiaol/data/lims2/0903_filtered_ephys_qc"
-OUTDIR = "/data/mat/xiaoxiaol/data/0903_filtered_ephys_qc"
+OUTDIR = "/data/mat/xiaoxiaol/data/lims2/0903_filtered_ephys_qc"
 
 
 data_in <- read.csv(paste(DATAINDIR, "preprocessed/features_with_db_tags_fixed.csv", sep="/"), header=TRUE)
