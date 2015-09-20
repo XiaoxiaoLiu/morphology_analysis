@@ -9,8 +9,9 @@ from mpl_toolkits.mplot3d import Axes3D
 
 #===================== DATA PATH ==============================================
 #WORK_PATH= "/Users
-data_DIR = "/Users/xiaoxiaoliu/work/data/lims2/neuron_recon_2"
-fn = data_DIR+'/zscore_glFeatures_subtypes.csv'
+#data_DIR = "/Users/xiaoxiaoliu/work/data/lims2_july15/neuron_recon_2"
+data_DIR = "/Users/xiaoxiaoliu/work/data/lims2/0903_filtered_ephys_qc/"
+fn = data_DIR+'/zscore_glFeatures.csv'
 #fn = data_DIR+'/zscore_ei_glFeatures.csv'
 
 #==============================================================================

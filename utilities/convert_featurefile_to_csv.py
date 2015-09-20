@@ -1,6 +1,4 @@
 import numpy as np
-
-
 import pandas as pd
 
 
@@ -29,10 +27,8 @@ selected_features=['max_euclidean_distance','num_stems','num_bifurcations','aver
 ##################################################################################################
 
 csv_file = data_DIR+'/glfeatures.csv'
-
-
-
     # TODO: detect nan values
+
 glf_featureList = []  # each row is a feature vector
 gmi_featureList = []
 fn_list=[]
