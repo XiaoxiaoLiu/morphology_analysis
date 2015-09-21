@@ -206,7 +206,9 @@ def pre_processing(inputswc_path, outputswc_path):  # prune align x-axis and res
     if not os.path.exists(output_dir):
         os.system("mkdir -p  " + output_dir)
         print "create output dir: ", output_dir
-    cmd = V3D + " -x blastneuron -f pre_processing -p \"#i " + inputswc_path + "  #o " + outputswc_path + " #s 2 #r 1\" "
+
+    #s =2  resampling size   #r = 0  --skip rotation
+    cmd = V3D + " -x blastneuron -f pre_processing -p \"#i " + inputswc_path + "  #o " + outputswc_path + " #s 2 #r 0\" "
     print cmd
     os.system(cmd)
     return

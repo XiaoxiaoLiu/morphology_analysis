@@ -2,6 +2,7 @@ import os
 from os import sys, path
 
 p = path.dirname(path.dirname(path.abspath(__file__)))
+p=  '/local1/xiaoxiaol/work/src/cell-type-analysis'
 sys.path.append(p)
 
 sys.path.append(p + '/utilities')
