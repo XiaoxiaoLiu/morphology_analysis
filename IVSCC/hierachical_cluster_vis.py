@@ -4,14 +4,18 @@ from scipy import stats
 
 import pandas as pd
 import seaborn as sns
+import os
 
-from scipy.spatial import distance
 from scipy.cluster import hierarchy
+import platform
 
 
 # program path on this machine
 # ===================================================================
-WORK_PATH = "/local1/xiaoxiaol/work"
+if (platform.system() == "Linux"):
+   WORK_PATH = "/local1/xiaoxiaol/work"
+else:
+   WORK_PATH = "/Users/xiaoxiaoliu/work"
 
 ########################################## data dir
 data_DIR = WORK_PATH + "/data/lims2/0903_filtered_ephys_qc"
@@ -35,6 +39,9 @@ selected_features = ['max_euclidean_distance', 'num_stems', 'num_bifurcations', 
 
 all_feature_names = np.append(gl_feature_names, gmi_feature_names)
 # ===================================================================
+
+
+
 def zscore(features):
     zscores = stats.zscore(features, 0)
     return zscores
@@ -63,7 +70,7 @@ def plotFeatureVector(featureArray, fig_title):
     return
 
 
-OUTLIER_THRESHOLD = 5
+OUTLIER_THRESHOLD = 15
 
 def zscores_matrix(featureArray, out_file, REMOVE_OUTLIER=1):
     normalized = zscore(featureArray)
@@ -107,6 +114,7 @@ def distance_matrix(featureArray, out_distanceMatrix_file, REMOVE_OUTLIER=1):
 
     df = pd.DataFrame(distanceMatrix)
     df.to_csv(out_distanceMatrix_file)
+    print("score sim matrix is saved to : " + out_distanceMatrix_file + "\n")
     return distanceMatrix
 
 
@@ -211,9 +219,12 @@ def heatmap_plot_zscore(zscore_features, merged, output_dir, title):
     # PLOT
     g = sns.clustermap(zscore_features, row_linkage=r_linkage, method='ward', metric='euclidean',
                        linewidths=0.0, row_colors=dendritetype_colors, cmap=cmap,
-                       xticklabels=True, yticklabels = merged['cre_line'])
-    g.ax_heatmap.set_yticklabels( merged['cre_line'],fontsize='small')
-
+                       xticklabels=True, yticklabels =False)
+    # TODO : adjust creline tag size
+    # print type(g.data)
+    #print g.data.columns
+    #crelines = g.data['cre_line']
+    #g.ax_heatmap.set_yticklabels(crelines, fontsize=3)
 
     assignment = hierarchy.fcluster(r_linkage, 2, criterion="maxclust")
 
@@ -227,12 +238,12 @@ def heatmap_plot_zscore(zscore_features, merged, output_dir, title):
     #   g.ax_col_dendrogram.legend(loc="center", ncol=3)
 
     pl.title(title)
-    pl.show()
+    #pl.show()
     filename = output_dir + '/zscore_feature_heatmap' + title + '.pdf'
     pl.savefig(filename, dpi=600)
     print("save zscore matrix heatmap figure to :" + filename)
     pl.close()
-    return c_linkage
+    return g
 
 
 
@@ -240,7 +251,7 @@ def output_clusters(assign_ids, df_all,feature_names,  output_dir):
     clusters = np.unique(assign_ids)
     num_cluster = len(clusters)
 
-    df_zscores =  zscore_features(df_all, feature_names, None, REMOVE_OUTLIER=1)
+    df_zscores = zscore_features(df_all, feature_names, None, REMOVE_OUTLIER=1)
 
     print("there are %d cluster" %num_cluster)
     for i in clusters:
@@ -255,11 +266,41 @@ def output_clusters(assign_ids, df_all,feature_names,  output_dir):
         df_zscore_cluster.to_csv(csv_file2)
 
         ano_file = output_dir + '/ward_cluster_'+str(i) +'.ano'
-        generateLinkerFileFromDF(df_cluster,ano_file, True)
+        generateLinkerFileFromDF(df_cluster,ano_file, False)
     return
+
+
+
+#############################################################################################
+def ward_cluster_similarity(df_all, feature_names, max_cluster_num, output_dir, fig_title):
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+
+    feature_array = df_all[feature_names].astype(float)
+
+    simMatrix = distance_matrix(feature_array, output_dir + "/morph_features_similarity_matrix.csv", 1)
+
+    # visualize heatmap using ward on similarity matrix
+    out = heatmap_plot_distancematrix(simMatrix, df_all, output_dir, fig_title)
+    linkage = out.dendrogram_row.calculated_linkage
+
+    assignments = hierarchy.fcluster(linkage,max_cluster_num,criterion="maxclust")
+    #hierarchy.dendrogram(linkage)
+
+    ## put assignments into ano files and csv files
+    output_clusters(assignments, df_all, feature_names,output_dir)
+
+
+    ##### zscores  featuer plots
+    df_zscores = zscore_features(merged, feature_names, output_dir + '/zscore_all_features.csv', 1)
+    a = heatmap_plot_zscore(df_zscores, merged, output_dir, 'all_Features')
+
+
+    return
+
 ##################################################################################################
 
-# merge all info
+# merge all info, waiting to get cell_shape tags....
 #df_type = pd.read_csv(data_DIR+'/../custom_report-IVSCC_classification-April_2015.csv')
 #merged = pd.merge(df_complete,df_type,how='inner',on=['specimen_name'])
 #merged.to_csv(data_DIR+'/merged_allFeatures.csv')
@@ -270,60 +311,16 @@ def output_clusters(assign_ids, df_all,feature_names,  output_dir):
 all_feature_merged_file = data_DIR + '/preprocessed/features_with_db_tags.csv'
 generateLinkerFileFromCSV(data_DIR + '/preprocessed', all_feature_merged_file, 'cre_line')
 merged = pd.read_csv(all_feature_merged_file)
-allFeatures = merged[all_feature_names].astype(float)
 
 
 cre_lines = np.unique(merged['cre_line'])
 num_of_crelines = len(cre_lines)
 
+
 PLOT_DISTANCE_MATRIX = 1
 if PLOT_DISTANCE_MATRIX:
-    # all features
-    distanceMatrix_csv_file = data_DIR + "/preprocessed/morph_features_similarity_matrix.csv"
-    distanceMatrix = distance_matrix(allFeatures, distanceMatrix_csv_file, 1)
-    print("score matrix is saved to : " + distanceMatrix_csv_file + "\n")
-    out = heatmap_plot_distancematrix(distanceMatrix, merged, data_DIR, '34 Morph Features')
-    linkage = out.dendrogram_row.calculated_linkage
-
-    # choose the number of clusteres by the crelines
-    assignments = hierarchy.fcluster(linkage,num_of_crelines,criterion="maxclust")
-    #hierarchy.dendrogram(linkage)
-
-    ## put assignments into ano files and csv files
-    output_clusters(assignments,merged, all_feature_names,data_DIR+'/preprocessed')
-
-
-if 0:
-
-    gmiFeatures = merged[gmi_feature_names].astype(float)
-    distanceMatrix_csv_file = data_DIR + "/preprocessed/morph_gmi_similarity_matrix.csv"
-    distanceMatrix = distance_matrix(gmiFeatures, distanceMatrix_csv_file, 1)
-    print("score matrix is saved to : " + distanceMatrix_csv_file + "\n")
-    heatmap_plot_distancematrix(distanceMatrix, merged, data_DIR, '13 GMI Features')
-
-    # gl features
-    glFeatures = merged[gl_feature_names].astype(float)
-    distanceMatrix_csv_file = data_DIR + "/preprocessed/morph_gl_similarity_matrix.csv"
-    distanceMatrix = distance_matrix(glFeatures, distanceMatrix_csv_file, 1)
-    print("score matrix is saved to : " + distanceMatrix_csv_file + "\n")
-    heatmap_plot_distancematrix(distanceMatrix, merged, data_DIR, '21 L-M Features')
+    output_dir = data_DIR+'/clustering_results/cluster_ward_all_features'
+    ward_cluster_similarity(merged, all_feature_names, num_of_crelines*2, output_dir, 'all morph features')
 
 
 
-PLOT_ZSCORE_HEATMAP = 0
-if PLOT_ZSCORE_HEATMAP:
-    # score matrix saves zscore distance
-    prefix = data_DIR + "/preprocessed/morph_features_zscores"
-
-    fn = prefix + '_all.csv'
-    df_zscores = zscore_features(merged, all_feature_names, fn, 1)
-    a = heatmap_plot_zscore(df_zscores, merged, data_DIR, 'all_Features')
-
-if 0:
-    fn = prefix + '_gmi.csv'
-    df_zscores = zscore_features(merged, gmi_feature_names, fn, 1)
-    a = heatmap_plot_zscore(df_zscores, merged, data_DIR, 'gmi_Features')
-
-    fn = prefix + '_gl.csv'
-    df_zscores = zscore_features(merged, gl_feature_names, fn, 1)
-    a = heatmap_plot_zscore(df_zscores, merged, data_DIR, 'gl_Features')
