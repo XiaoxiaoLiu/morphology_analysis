@@ -9,6 +9,7 @@ import os
 from scipy.cluster import hierarchy
 import platform
 
+from scipy.stats.stats import pearsonr
 
 # program path on this machine
 # ===================================================================
@@ -188,8 +189,8 @@ def heatmap_plot_distancematrix(distanceMatrix, merged, output_dir, title):
     pl.title(title)
     #pl.show()
 
-    filename = output_dir + '/similarity_heatmap' + title + '.pdf'
-    pl.savefig(filename, dpi=600)
+    filename = output_dir + '/similarity_heatmap' + title + '.png'
+    pl.savefig(filename, dpi=300)
     print("save similarity matrix heatmap figure to :" + filename)
     pl.close()
     return g
@@ -239,8 +240,8 @@ def heatmap_plot_zscore(zscore_features, merged, output_dir, title):
 
     pl.title(title)
     #pl.show()
-    filename = output_dir + '/zscore_feature_heatmap' + title + '.pdf'
-    pl.savefig(filename, dpi=600)
+    filename = output_dir + '/zscore_feature_heatmap' + title + '.png'
+    pl.savefig(filename, dpi=300)
     print("save zscore matrix heatmap figure to :" + filename)
     pl.close()
     return g
@@ -254,6 +255,8 @@ def output_clusters(assign_ids, df_all,feature_names,  output_dir):
     df_zscores = zscore_features(df_all, feature_names, None, REMOVE_OUTLIER=1)
 
     print("there are %d cluster" %num_cluster)
+    df_cluster = pd.DataFrame()
+    df_zscore_cluster = pd.DataFrame()
     for i in clusters:
         ids = np.nonzero(assign_ids == i)[0]  # starting from  0
         df_cluster = df_all.loc[ids]
@@ -267,6 +270,8 @@ def output_clusters(assign_ids, df_all,feature_names,  output_dir):
 
         ano_file = output_dir + '/ward_cluster_'+str(i) +'.ano'
         generateLinkerFileFromDF(df_cluster,ano_file, False)
+
+        print("there are %d neurons in cluster %d" %(df_cluster.shape[0], i))
     return
 
 
@@ -292,12 +297,37 @@ def ward_cluster_similarity(df_all, feature_names, max_cluster_num, output_dir, 
 
 
     ##### zscores  featuer plots
-    df_zscores = zscore_features(merged, feature_names, output_dir + '/zscore_all_features.csv', 1)
-    a = heatmap_plot_zscore(df_zscores, merged, output_dir, 'all_Features')
+    df_zscores = zscore_features(merged, feature_names, output_dir + '/zscore.csv', 1)
+    a = heatmap_plot_zscore(df_zscores, merged, output_dir, fig_title)
 
 
     return
 
+
+def remove_correlated_features(df_all, feature_names, coef_threshold = 0.99):
+    num_features = len(feature_names)
+    removed_names=[]
+    for i in range(num_features):
+        if not feature_names[i] in removed_names:
+            a = df_all[feature_names[i]].astype(float)
+
+            for j in range(i+1, num_features):
+                if not feature_names[j] in removed_names:
+                    b = df_all[feature_names[j]].astype(float)
+                    corrcoef = pearsonr(a,b)
+                    if (corrcoef[0] > coef_threshold):
+                        removed_names.append(feature_names[j])
+
+    subset_features_names = feature_names.tolist()
+    for i in range(len(removed_names)):
+        if removed_names[i] in subset_features_names:
+              print ("remove "+removed_names[i])
+              subset_features_names.remove(removed_names[i])
+
+    return np.asarray(subset_features_names)
+
+##################################################################################################
+######################## WARD  Clustering  main function           ###############################
 ##################################################################################################
 
 # merge all info, waiting to get cell_shape tags....
@@ -312,6 +342,7 @@ all_feature_merged_file = data_DIR + '/preprocessed/features_with_db_tags.csv'
 generateLinkerFileFromCSV(data_DIR + '/preprocessed', all_feature_merged_file, 'cre_line')
 merged = pd.read_csv(all_feature_merged_file)
 
+merged[all_feature_names]= merged[all_feature_names].astype(float)
 
 cre_lines = np.unique(merged['cre_line'])
 num_of_crelines = len(cre_lines)
@@ -321,6 +352,15 @@ PLOT_DISTANCE_MATRIX = 1
 if PLOT_DISTANCE_MATRIX:
     output_dir = data_DIR+'/clustering_results/cluster_ward_all_features'
     ward_cluster_similarity(merged, all_feature_names, num_of_crelines*2, output_dir, 'all morph features')
+
+    output_dir = data_DIR+'/clustering_results/cluster_ward_GMI_features_only'
+    ward_cluster_similarity(merged, gmi_feature_names, num_of_crelines*2, output_dir, 'GMI features')
+
+
+#################################################################################################
+#############   feature selection
+
+remove_correlated_features(merged, all_feature_names,0.95)
 
 
 
