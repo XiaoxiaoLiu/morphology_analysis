@@ -12,7 +12,6 @@ join ephys_roi_results err on err.id = sp.ephys_roi_result_id
 join neuron_reconstructions nr on nr.specimen_id = sp.id
 join well_known_files wkf on wkf.attachable_id = nr.id
 where err.workflow_state = 'manual_passed'
-and sp.cre_reporter_positive is true
 and nr.superseded is false and nr.manual is true
 and wkf.attachable_type = 'NeuronReconstruction'
 order by sp.name;
@@ -20,3 +19,8 @@ order by sp.name;
 
 
 
+select sp.name from specimens sp
+join ephys_roi_results err on err.id = sp.ephys_roi_result_id
+join neuron_reconstructions nr on nr.specimen_id = sp.id
+where nr.superseded IS FALSE AND nr.manual IS TRUE
+and err.workflow_state = 'manual_passed';
