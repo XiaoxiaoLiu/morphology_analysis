@@ -13,6 +13,8 @@ python ../utilities/downloadSWC_filter.py  -i ~/work/data/lims2/0923_pw_aligned/
 python applyPiaTransformToSWCs.py
 
 
+
+# need to remove 464326095 (alignment paras are way too off) Pvalb-IRES-Cre_Ai14_IVSCC_-165172.06.02.01_475465899_m.swc
 #4. run feature calculation
 python run_feature_calculation.py
 

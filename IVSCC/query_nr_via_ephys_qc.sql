@@ -13,7 +13,6 @@ join neuron_reconstructions nr on nr.specimen_id = sp.id
 join well_known_files wkf on wkf.attachable_id = nr.id
 where err.workflow_state = 'manual_passed'
 and nr.superseded is false and nr.manual is true
-and wkf.attachable_type = 'NeuronReconstruction'
 order by sp.name;
 
 

@@ -18,43 +18,16 @@ if (platform.system() == "Linux"):
 else:
    WORK_PATH = "/Users/xiaoxiaoliu/work"
 
-########################################## data dir
-data_DIR = WORK_PATH + "/data/lims2/0923_pw_aligned"
-#########################################################
-#data_linker_file = data_DIR + '/original/mylinker.ano'
-#preprocessed_data_linker_file = data_DIR + '/preprocessed/mylinker.ano'
-FEATURE_FILE = data_DIR + '/preprocessed/prep_features.nfb'
-
-gl_feature_names = np.array(
-    ['num_nodes', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips',
-     'overall_width', 'overall_height', 'overall_depth', 'average_diameter', 'total_length',
-     'total_surface', 'total_volume', 'max_euclidean_distance', 'max_path_distance', 'max_branch_order',
-     'average_contraction', 'average fragmentation', 'parent_daughter_ratio', 'bifurcation_angle_local',
-     'bifurcation_angle_remote'])
-
-gmi_feature_names = np.array(['moment1', 'moment2', 'moment3', 'moment4', 'moment5', 'moment6', 'moment7', 'moment8',
-                              'moment9', 'moment10', 'moment11', 'moment12', 'moment13'])  ### removed ave_R
-
-selected_features = ['max_euclidean_distance', 'num_stems', 'num_bifurcations', 'average_contraction',
-                     'parent_daughter_ratio']
-
-all_feature_names = np.append(gl_feature_names, gmi_feature_names)
-# ===================================================================
 
 
-# zscore
-ZSCORE_OUTLIER_THRESHOLD = 3.5
-# ===================================================================
-
-
-
-def zscore(features):
+def zscore(features, remove_outlier = 0):
     zscores = stats.zscore(features, 0)
+    #zscores = normalizeFeatures(features)
     return zscores
 
 
 def normalizeFeatures(features):
-    meanFeatures = np.mean(features, 0)
+    meanFeatures = np.median(features, 0)
     stdFeatures = np.std(features, 0)
     if np.count_nonzero(stdFeatures) < len(stdFeatures):
         print "zero detected"
@@ -77,8 +50,8 @@ def plotFeatureVector(featureArray, fig_title):
 
 
 
-
-def zscores_matrix(featureArray, out_file, REMOVE_OUTLIER=1):
+def zscore_features(df_all, feature_names, out_file, REMOVE_OUTLIER=1):
+    featureArray = df_all[feature_names].astype(float)
     normalized = zscore(featureArray)
     if REMOVE_OUTLIER:
          num_outliers = np.count_nonzero(normalized < -ZSCORE_OUTLIER_THRESHOLD) + np.count_nonzero(normalized > ZSCORE_OUTLIER_THRESHOLD)
@@ -86,32 +59,21 @@ def zscores_matrix(featureArray, out_file, REMOVE_OUTLIER=1):
          if num_outliers >0 :
             normalized[normalized < -ZSCORE_OUTLIER_THRESHOLD] = -ZSCORE_OUTLIER_THRESHOLD
             normalized[normalized > ZSCORE_OUTLIER_THRESHOLD] = ZSCORE_OUTLIER_THRESHOLD
-    df = pd.DataFrame(normalized)
-    df.to_csv(out_file)
-    return normalized
 
-
-def zscore_features(merged, feature_names, out_file, REMOVE_OUTLIER=1):
-    featureArray = merged[feature_names].astype(float)
-    normalized = zscore(featureArray)
-    if REMOVE_OUTLIER:
-         num_outliers = np.count_nonzero(normalized < -ZSCORE_OUTLIER_THRESHOLD) + np.count_nonzero(normalized > ZSCORE_OUTLIER_THRESHOLD)
-         print(" found %d outliers" %num_outliers)
-         if num_outliers >0 :
-            normalized[normalized < -ZSCORE_OUTLIER_THRESHOLD] = -ZSCORE_OUTLIER_THRESHOLD
-            normalized[normalized > ZSCORE_OUTLIER_THRESHOLD] = ZSCORE_OUTLIER_THRESHOLD
     df = pd.DataFrame(normalized)
     df.columns = feature_names
+
     if out_file:
-        df.to_csv(out_file)
+        df.to_csv(out_file, index=False)
         print("save to " + out_file )
     return df
 
 
-def distance_matrix(featureArray, out_distanceMatrix_file, REMOVE_OUTLIER=1):
+def distance_matrix(df_all, feature_names, out_distanceMatrix_file, REMOVE_OUTLIER=1):
+    feature_array = df_all[feature_names].astype(float)
     distanceMatrix = []
-    normalized = zscore(featureArray)
-    #normalized = normalizeFeatures(featureArray)
+    normalized = zscore(feature_array)
+    #normalized = normalizeFeatures(feature_array)
 
     # remove outliers!!!
     if REMOVE_OUTLIER:
@@ -127,10 +89,10 @@ def distance_matrix(featureArray, out_distanceMatrix_file, REMOVE_OUTLIER=1):
         #scores = np.sum(np.abs(normalized - queryFeature) ** 2, 1)  # distance
         distanceMatrix.append(scores)
 
-    df = pd.DataFrame(distanceMatrix)
-    df.to_csv(out_distanceMatrix_file)
+    df_dist = pd.DataFrame(distanceMatrix)
+    df_dist.to_csv(out_distanceMatrix_file)
     print("score sim matrix is saved to : " + out_distanceMatrix_file + "\n")
-    return distanceMatrix
+    return df_dist
 
 
 def generateLinkerFileFromDF(df_in, output_ano_file, strip_path= False):
@@ -166,7 +128,7 @@ def generateLinkerFileFromCSV(result_dir, csvfile, column_name, strip_path = Tru
 
 ##############  heatmap plot: hierachical clustering  ########
 
-def heatmap_plot_distancematrix(distanceMatrix, merged, output_dir, title=None):
+def heatmap_plot_distancematrix(df_distanceMatrix, merged, output_dir, title=None):
     pl.figure()
 
     # Create a custom palette for creline colors
@@ -185,7 +147,7 @@ def heatmap_plot_distancematrix(distanceMatrix, merged, output_dir, title=None):
     cmap = sns.diverging_palette(240, 10, as_cmap=True)
 
 
-    g = sns.clustermap(distanceMatrix, method='ward', metric='euclidean', linewidths=0.0,
+    g = sns.clustermap(df_distanceMatrix, method='ward', metric='euclidean', linewidths=0.0,
                        row_colors=dendritetype_colors, col_colors=creline_colors, cmap=cmap, xticklabels=False,
                        yticklabels=False)
     if title:
@@ -209,29 +171,29 @@ def heatmap_plot_distancematrix(distanceMatrix, merged, output_dir, title=None):
     return g
 
 
-def heatmap_plot_zscore(zscore_features, merged, output_dir, title=None):
+def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
     pl.figure()
 
     # Create a custom palette for creline colors
-    cre_lines = np.unique(merged['cre_line'])
+    cre_lines = np.unique(df_all['cre_line'])
     cre_line_pal = sns.color_palette("hls", len(cre_lines))
     cre_line_lut = dict(zip(cre_lines, cre_line_pal))  # map creline type to color
-    creline_colors = merged['cre_line'].map(cre_line_lut)
+    creline_colors = df_all['cre_line'].map(cre_line_lut)
 
     # Create a custom palette for dendrite_type colors
-    dendrite_types = np.unique(merged['dendrite_type'])
+    dendrite_types = np.unique(df_all['dendrite_type'])
     dendrite_type_pal = sns.color_palette("hls", len(dendrite_types))
     dendrite_type_lut = dict(zip(dendrite_types, dendrite_type_pal))
-    dendritetype_colors = merged['dendrite_type'].map(dendrite_type_lut)
+    dendritetype_colors = df_all['dendrite_type'].map(dendrite_type_lut)
 
     # Create a custom colormap for the heatmap values
     cmap = sns.diverging_palette(240, 10, as_cmap=True)
 
-    r_linkage = hierarchy.linkage(zscore_features, method='ward', metric='euclidean')
-    c_linkage = hierarchy.linkage(zscore_features.T, method='ward', metric='euclidean')
+    r_linkage = hierarchy.linkage(df_zscore_features, method='ward', metric='euclidean')
+    c_linkage = hierarchy.linkage(df_zscore_features.T, method='ward', metric='euclidean')
 
     # PLOT
-    g = sns.clustermap(zscore_features, row_linkage=r_linkage, method='ward', metric='euclidean',
+    g = sns.clustermap(df_zscore_features, row_linkage=r_linkage, method='ward', metric='euclidean',
                        linewidths=0.0, row_colors=dendritetype_colors, cmap=cmap,
                        xticklabels=True, yticklabels =False)
     if title:
@@ -265,9 +227,18 @@ def heatmap_plot_zscore(zscore_features, merged, output_dir, title=None):
 
 
 def output_clusters(assign_ids, df_all,feature_names,  output_dir):
+    if  not os.path.exists(output_dir):
+       os.mkdir(output_dir)
+
+
+    df_assign_id = pd.DataFrame()
+    df_assign_id['specimen_name'] = df_all['specimen_name']
+    df_assign_id['cluster_id']= assign_ids
+    df_assign_id.to_csv(output_dir + "/cluster_id.csv",index=False)
+
     clusters = np.unique(assign_ids)
     num_cluster = len(clusters)
-
+    # to save zscores into csv files
     df_zscores = zscore_features(df_all, feature_names, None, REMOVE_OUTLIER=1)
 
     print("there are %d cluster" %num_cluster)
@@ -275,16 +246,16 @@ def output_clusters(assign_ids, df_all,feature_names,  output_dir):
     df_zscore_cluster = pd.DataFrame()
     for i in clusters:
         ids = np.nonzero(assign_ids == i)[0]  # starting from  0
-        df_cluster = df_all.loc[ids]
+        df_cluster = df_all.iloc[ids]
 
-        csv_file = output_dir + '/ward_cluster_'+str(i) +'.csv'
-        df_cluster.to_csv(csv_file)
+        csv_file = output_dir + '/cluster_'+str(i) +'.csv'
+        df_cluster.to_csv(csv_file,index=False)
 
-        df_zscore_cluster = df_zscores.loc[ids]
-        csv_file2 = output_dir + '/ward_cluster_zscore_'+str(i) +'.csv'
-        df_zscore_cluster.to_csv(csv_file2)
+        df_zscore_cluster = df_zscores.iloc[ids]
+        csv_file2 = output_dir + '/cluster_zscore_'+str(i) +'.csv'
+        df_zscore_cluster.to_csv(csv_file2,index=False)
 
-        ano_file = output_dir + '/ward_cluster_'+str(i) +'.ano'
+        ano_file = output_dir + '/cluster_'+str(i) +'.ano'
         generateLinkerFileFromDF(df_cluster,ano_file, False)
 
         print("there are %d neurons in cluster %d" %(df_cluster.shape[0], i))
@@ -294,15 +265,14 @@ def output_clusters(assign_ids, df_all,feature_names,  output_dir):
 
 #############################################################################################
 def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, fig_title=None):
+    print("\n\n\n ward computation, max_cluster = %d :" %max_cluster_num)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
-    feature_array = df_all[feature_names].astype(float)
-
-    simMatrix = distance_matrix(feature_array, output_dir + "/morph_features_similarity_matrix.csv", 1)
+    df_simMatrix = distance_matrix(df_all, feature_names, output_dir + "/morph_features_similarity_matrix.csv", 1)
 
     # visualize heatmap using ward on similarity matrix
-    out = heatmap_plot_distancematrix(simMatrix, df_all, output_dir, fig_title)
+    out = heatmap_plot_distancematrix(df_simMatrix, df_all, output_dir, fig_title)
     linkage = out.dendrogram_row.calculated_linkage
 
     assignments = hierarchy.fcluster(linkage,max_cluster_num,criterion="maxclust")
@@ -313,11 +283,30 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, fig_title=N
 
 
     ##### zscores  featuer plots
-    df_zscores = zscore_features(merged, feature_names, output_dir + '/zscore.csv', 1)
+    df_zscores = zscore_features(df_all, feature_names, output_dir + '/zscore.csv', 1)
     a = heatmap_plot_zscore(df_zscores, merged, output_dir, fig_title)
 
 
     return
+
+
+
+
+from sklearn.cluster import AffinityPropagation
+from sklearn import metrics
+
+def affinity_propagation(df_all, feature_names, output_dir, fig_title=None):
+    print("\n\n\naffinity propogation computation:")
+    if  not os.path.exists(output_dir):
+       os.mkdir(output_dir)
+        # Compute Affinity Propagation
+    df_zscores = zscore_features(df_all, feature_names, None, 1)
+    X= df_zscores.as_matrix()
+    af = AffinityPropagation().fit(X)
+    cluster_centers_indices = af.cluster_centers_indices_
+    labels = af.labels_
+    output_clusters(labels, df_all, feature_names,  output_dir)
+    return len(np.unique(labels))
 
 #############################################################################################
 def remove_correlated_features(df_all, feature_names, coef_threshold = 0.99):
@@ -343,41 +332,84 @@ def remove_correlated_features(df_all, feature_names, coef_threshold = 0.99):
 
     return np.asarray(subset_features_names)
 
+
 ##################################################################################################
-######################## WARD  Clustering  main function           ###############################
-##################################################################################################
+
+
+########################################## data dir
+data_DIR = WORK_PATH + "/data/lims2/0923_pw_aligned"
+#########################################################
+#data_linker_file = data_DIR + '/original/mylinker.ano'
+#preprocessed_data_linker_file = data_DIR + '/preprocessed/mylinker.ano'
+FEATURE_FILE = data_DIR + '/preprocessed/prep_features.nfb'
+
+gl_feature_names = np.array(
+    ['num_nodes', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips',
+     'overall_width', 'overall_height', 'overall_depth', 'average_diameter', 'total_length',
+     'total_surface', 'total_volume', 'max_euclidean_distance', 'max_path_distance', 'max_branch_order',
+     'average_contraction', 'average fragmentation', 'parent_daughter_ratio', 'bifurcation_angle_local',
+     'bifurcation_angle_remote'])
+
+gmi_feature_names = np.array(['moment1', 'moment2', 'moment3', 'moment4', 'moment5', 'moment6', 'moment7', 'moment8',
+                              'moment9', 'moment10', 'moment11', 'moment12', 'moment13'])  ### removed ave_R
+
+selected_features = ['max_euclidean_distance', 'num_stems', 'num_bifurcations', 'average_contraction',
+                     'parent_daughter_ratio']
+
+all_feature_names = np.append(gl_feature_names, gmi_feature_names)
+# ===================================================================
+
+
+# zscore
+ZSCORE_OUTLIER_THRESHOLD = 5
+# ===================================================================
+
 
 # merge all info, waiting to get cell_shape tags....
 #df_type = pd.read_csv(data_DIR+'/../custom_report-IVSCC_classification-April_2015.csv')
 #merged = pd.merge(df_complete,df_type,how='inner',on=['specimen_name'])
-#merged.to_csv(data_DIR+'/merged_allFeatures.csv')
+#merged.to_csv(data_DIR+'/merged_allFeatures.csv',index=False)
 
 # To qualitative look though crelines
 #generateLinkerFileFromCSV(data_DIR+'/original',data_DIR +'/merged_allFeatures.csv','cre_line')
 
-all_feature_merged_file = data_DIR + '/preprocessed/features_with_db_tags.csv'
-generateLinkerFileFromCSV(data_DIR + '/preprocessed', all_feature_merged_file, 'cre_line')
-merged = pd.read_csv(all_feature_merged_file)
 
+
+####################################
+all_feature_merged_file = data_DIR + '/preprocessed/features_with_db_tags.csv'
+###################################
+
+
+generateLinkerFileFromCSV(data_DIR + '/preprocessed', all_feature_merged_file, 'cre_line')
+
+merged = pd.read_csv(all_feature_merged_file)
 merged[all_feature_names]= merged[all_feature_names].astype(float)
 
+
 cre_lines = np.unique(merged['cre_line'])
-num_of_crelines = len(cre_lines)
+
 
 output_dir = data_DIR+'/clustering_results'
 if  not os.path.exists(output_dir):
       os.mkdir(output_dir)
 
 
-
-PLOT_DISTANCE_MATRIX = 1
-if PLOT_DISTANCE_MATRIX:
+USE_ALL_FEAUTRES = 0
+if USE_ALL_FEAUTRES:
     ward_cluster(merged, all_feature_names, num_of_crelines, output_dir +'/ward_all_features')
-    ward_cluster(merged, gmi_feature_names, num_of_crelines, output_dir +'/ward_GMI_features')
+    #ward_cluster(merged, gmi_feature_names, num_of_crelines, output_dir +'/ward_GMI_features')
+    num_clusters = affinity_propagation(merged, all_feature_names, output_dir +'/ap_all_features')
+    ward_cluster(merged, all_feature_names, num_clusters, output_dir +'/ward_all_features')
+    #ward_cluster(merged, gmi_feature_names, num_clusters, output_dir +'/ward_GMI_features')
 
-
-#################################################################################################
 #############   feature selection
 
-redundancy_removed_features_names = remove_correlated_features(merged, all_feature_names,0.98)
-ward_cluster(merged, redundancy_removed_features_names, num_of_crelines,output_dir +'/ward_rr_all_features')
+
+if not USE_ALL_FEAUTRES:
+    redundancy_removed_features_names = remove_correlated_features(merged, all_feature_names,0.98)
+    print(" The %d features that are not closely correlated are %s" %(len(redundancy_removed_features_names),redundancy_removed_features_names))
+
+    # warning! ap cluster id starts from 0
+    num_clusters = affinity_propagation(merged, redundancy_removed_features_names, output_dir +'/ap_rr_all_features')
+
+    ward_cluster(merged, redundancy_removed_features_names, num_clusters,output_dir +'/ward_rr_all_features')
