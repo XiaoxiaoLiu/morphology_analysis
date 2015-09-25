@@ -49,7 +49,6 @@ origin_data_DIR = data_dir + "/original"
 
 
 
-
 #########
 # output dirs
 transform_DIR = data_dir + "/transforms"  ## where to store the transform.txt
@@ -69,8 +68,10 @@ if not os.path.exists(output_DIR):
     os.makedirs(output_DIR)
 
 df = pd.read_csv(csv_file)
+df = df[df.specimen_id != 464326095]  # this specimenid's alignments are wrong
 data_table = df.values
 num_samples, num_cols = data_table.shape
+
 
 for i in range(num_samples):
     orca_path = data_table[i][num_cols - 1]

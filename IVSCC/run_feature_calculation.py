@@ -87,7 +87,7 @@ db_tags_csv_file = data_DIR + '/0923_filtered_ephys_qc.csv'  # 153 neurons
 def main():
 
     # run blast neuron  features
-    #cal_bn_features(original_dir,preprocessed_dir)
+    cal_bn_features(original_dir,preprocessed_dir)
 
     # clean up db tags
     df_db_tags= cleanup_query_csv(db_tags_csv_file)

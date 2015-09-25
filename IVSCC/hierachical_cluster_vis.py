@@ -226,6 +226,48 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
 
 
 
+
+######################  dunn index
+def delta(ck, cl):
+    values = np.ones([len(ck), len(cl)])*10000
+
+    for i in range(0, len(ck)):
+        for j in range(0, len(cl)):
+            values[i, j] = np.linalg.norm(ck[i]-cl[j])
+
+    return np.min(values)
+
+def big_delta(ci):
+    values = np.zeros([len(ci), len(ci)])
+
+    for i in range(0, len(ci)):
+        for j in range(0, len(ci)):
+            values[i, j] = np.linalg.norm(ci[i]-ci[j])
+
+    return np.max(values)
+
+def dunn(k_list):
+    """ Dunn index [CVI]
+
+    Parameters
+    ----------
+    k_list : list of np.arrays
+        A list containing a numpy array for each cluster |c| = number of clusters
+        c[K] is np.array([N, p]) (N : number of samples in cluster K, p : sample dimension)
+    """
+    deltas = np.ones([len(k_list), len(k_list)])*1000000
+    big_deltas = np.zeros([len(k_list), 1])
+    l_range = range(0, len(k_list))
+
+    for k in l_range:
+        for l in (l_range[0:k]+l_range[k+1:]):
+            deltas[k, l] = delta(k_list[k], k_list[l])
+
+        big_deltas[k] = big_delta(k_list[k])
+
+    di = np.min(deltas)/np.max(big_deltas)
+    return di
+
 def output_clusters(assign_ids, df_all,feature_names,  output_dir):
     if  not os.path.exists(output_dir):
        os.mkdir(output_dir)
@@ -241,12 +283,15 @@ def output_clusters(assign_ids, df_all,feature_names,  output_dir):
     # to save zscores into csv files
     df_zscores = zscore_features(df_all, feature_names, None, REMOVE_OUTLIER=1)
 
+    cluster_list=[]
     print("there are %d cluster" %num_cluster)
     df_cluster = pd.DataFrame()
     df_zscore_cluster = pd.DataFrame()
     for i in clusters:
         ids = np.nonzero(assign_ids == i)[0]  # starting from  0
         df_cluster = df_all.iloc[ids]
+
+
 
         csv_file = output_dir + '/cluster_'+str(i) +'.csv'
         df_cluster.to_csv(csv_file,index=False)
@@ -255,13 +300,14 @@ def output_clusters(assign_ids, df_all,feature_names,  output_dir):
         csv_file2 = output_dir + '/cluster_zscore_'+str(i) +'.csv'
         df_zscore_cluster.to_csv(csv_file2,index=False)
 
+
+        cluster_list.append(df_zscore_cluster.values)
+
         ano_file = output_dir + '/cluster_'+str(i) +'.ano'
         generateLinkerFileFromDF(df_cluster,ano_file, False)
 
         print("there are %d neurons in cluster %d" %(df_cluster.shape[0], i))
-    return
-
-
+    return cluster_list
 
 #############################################################################################
 def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, fig_title=None):
@@ -279,18 +325,18 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, fig_title=N
     #hierarchy.dendrogram(linkage)
 
     ## put assignments into ano files and csv files
-    output_clusters(assignments, df_all, feature_names,output_dir)
+    clusters_list= output_clusters(assignments, df_all, feature_names,output_dir)
 
+    dunn_index =  dunn(clusters_list)
 
-    ##### zscores  featuer plots
+    print("dunn index is %f" %dunn_index)
+
+      ##### zscores  featuer plots
     df_zscores = zscore_features(df_all, feature_names, output_dir + '/zscore.csv', 1)
     a = heatmap_plot_zscore(df_zscores, merged, output_dir, fig_title)
 
 
-    return
-
-
-
+    return dunn_index
 
 from sklearn.cluster import AffinityPropagation
 from sklearn import metrics
@@ -301,12 +347,18 @@ def affinity_propagation(df_all, feature_names, output_dir, fig_title=None):
        os.mkdir(output_dir)
         # Compute Affinity Propagation
     df_zscores = zscore_features(df_all, feature_names, None, 1)
+
     X= df_zscores.as_matrix()
+
     af = AffinityPropagation().fit(X)
     cluster_centers_indices = af.cluster_centers_indices_
     labels = af.labels_
-    output_clusters(labels, df_all, feature_names,  output_dir)
-    return len(np.unique(labels))
+    clusters_list = output_clusters(labels, df_all, feature_names,  output_dir)
+
+    dunn_index =  dunn(clusters_list)
+    print("dunn index is %f" %dunn_index)
+
+    return len(np.unique(labels)), dunn_index
 
 #############################################################################################
 def remove_correlated_features(df_all, feature_names, coef_threshold = 0.99):
@@ -331,6 +383,11 @@ def remove_correlated_features(df_all, feature_names, coef_threshold = 0.99):
               subset_features_names.remove(removed_names[i])
 
     return np.asarray(subset_features_names)
+
+
+
+
+
 
 
 ##################################################################################################
@@ -361,7 +418,7 @@ all_feature_names = np.append(gl_feature_names, gmi_feature_names)
 
 
 # zscore
-ZSCORE_OUTLIER_THRESHOLD = 5
+ZSCORE_OUTLIER_THRESHOLD = 3.5
 # ===================================================================
 
 
@@ -410,6 +467,6 @@ if not USE_ALL_FEAUTRES:
     print(" The %d features that are not closely correlated are %s" %(len(redundancy_removed_features_names),redundancy_removed_features_names))
 
     # warning! ap cluster id starts from 0
-    num_clusters = affinity_propagation(merged, redundancy_removed_features_names, output_dir +'/ap_rr_all_features')
+    num_clusters, dunn_index1 = affinity_propagation(merged, redundancy_removed_features_names, output_dir +'/ap_rr_all_features')
 
-    ward_cluster(merged, redundancy_removed_features_names, num_clusters,output_dir +'/ward_rr_all_features')
+    dunn_index2 =  ward_cluster(merged, redundancy_removed_features_names, num_clusters,output_dir +'/ward_rr_all_features')
