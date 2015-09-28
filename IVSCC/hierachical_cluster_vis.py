@@ -36,20 +36,6 @@ def normalizeFeatures(features):
     return normalized
 
 
-def plotFeatureVector(featureArray, fig_title):
-    normalized = normalizeFeatures(featureArray)
-    pl.figure()
-    pl.imshow(normalized, interpolation='none')
-    pl.colorbar()
-    pl.title(fig_title)
-    pl.xlabel('feature ID')
-    pl.ylabel('neuron ID')
-    pl.show()
-    pl.savefig(data_DIR + '/' + fig_title + '.png')
-    return
-
-
-
 def zscore_features(df_all, feature_names, out_file, REMOVE_OUTLIER=1):
     featureArray = df_all[feature_names].astype(float)
     normalized = zscore(featureArray)
@@ -94,6 +80,16 @@ def distance_matrix(df_all, feature_names, out_distanceMatrix_file, REMOVE_OUTLI
     print("score sim matrix is saved to : " + out_distanceMatrix_file + "\n")
     return df_dist
 
+
+def copySnapshots(df_in, snapshots_dir, output_dir):
+    if  not os.path.exists(output_dir):
+       os.mkdir(output_dir)
+    swc_files = df_in['swc_file']
+    if len(swc_files) > 0:
+            for afile in swc_files:
+                filename = snapshots_dir + '/'+ afile.split('/')[-1] +'.BMP'
+                os.system("cp  "+filename +"  "+ output_dir +  "/\n")
+    return
 
 def generateLinkerFileFromDF(df_in, output_ano_file, strip_path= False):
     swc_files = df_in['swc_file']
@@ -268,10 +264,9 @@ def dunn(k_list):
     di = np.min(deltas)/np.max(big_deltas)
     return di
 
-def output_clusters(assign_ids, df_all,feature_names,  output_dir):
+def output_clusters(assign_ids, df_all,feature_names,  output_dir,snapshots_dir= None):
     if  not os.path.exists(output_dir):
        os.mkdir(output_dir)
-
 
     df_assign_id = pd.DataFrame()
     df_assign_id['specimen_name'] = df_all['specimen_name']
@@ -291,8 +286,6 @@ def output_clusters(assign_ids, df_all,feature_names,  output_dir):
         ids = np.nonzero(assign_ids == i)[0]  # starting from  0
         df_cluster = df_all.iloc[ids]
 
-
-
         csv_file = output_dir + '/cluster_'+str(i) +'.csv'
         df_cluster.to_csv(csv_file,index=False)
 
@@ -306,11 +299,15 @@ def output_clusters(assign_ids, df_all,feature_names,  output_dir):
         ano_file = output_dir + '/cluster_'+str(i) +'.ano'
         generateLinkerFileFromDF(df_cluster,ano_file, False)
 
+        # copy bmp vaa3d snapshots images over
+        if ( snapshots_dir ):
+            copySnapshots(df_cluster, snapshots_dir, output_dir+"/cluster_"+str(i) )
+
         print("there are %d neurons in cluster %d" %(df_cluster.shape[0], i))
     return cluster_list
 
 #############################################################################################
-def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, fig_title=None):
+def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, fig_title=None, snapshots_dir):
     print("\n\n\n ward computation, max_cluster = %d :" %max_cluster_num)
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
@@ -325,8 +322,7 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, fig_title=N
     #hierarchy.dendrogram(linkage)
 
     ## put assignments into ano files and csv files
-    clusters_list= output_clusters(assignments, df_all, feature_names,output_dir)
-
+    clusters_list= output_clusters(assignments, df_all, feature_names,output_dir,snapshots_dir) 
     dunn_index =  dunn(clusters_list)
 
     print("dunn index is %f" %dunn_index)
@@ -341,7 +337,7 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, fig_title=N
 from sklearn.cluster import AffinityPropagation
 from sklearn import metrics
 
-def affinity_propagation(df_all, feature_names, output_dir, fig_title=None):
+def affinity_propagation(df_all, feature_names, output_dir, fig_title=None, snapshots_dir):
     print("\n\n\naffinity propogation computation:")
     if  not os.path.exists(output_dir):
        os.mkdir(output_dir)
@@ -353,8 +349,9 @@ def affinity_propagation(df_all, feature_names, output_dir, fig_title=None):
     af = AffinityPropagation().fit(X)
     cluster_centers_indices = af.cluster_centers_indices_
     labels = af.labels_
-    clusters_list = output_clusters(labels, df_all, feature_names,  output_dir)
+    labels = labels +1  # the default labels start from 0, to be consistent with ward, add 1 so that it starts from 1
 
+    clusters_list = output_clusters(labels, df_all, feature_names,  output_dir, snapshots_dir)
     dunn_index =  dunn(clusters_list)
     print("dunn index is %f" %dunn_index)
 
@@ -391,35 +388,28 @@ def remove_correlated_features(df_all, feature_names, coef_threshold = 0.99):
 
 
 ##################################################################################################
-
-
-########################################## data dir
+ZSCORE_OUTLIER_THRESHOLD = 3.5
 data_DIR = WORK_PATH + "/data/lims2/0923_pw_aligned"
-#########################################################
-#data_linker_file = data_DIR + '/original/mylinker.ano'
-#preprocessed_data_linker_file = data_DIR + '/preprocessed/mylinker.ano'
-FEATURE_FILE = data_DIR + '/preprocessed/prep_features.nfb'
+##################################################################################################
 
-gl_feature_names = np.array(
-    ['num_nodes', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips',
+def main(): 
+    ########################################## data dir
+    all_feature_merged_file = data_DIR + '/preprocessed/features_with_db_tags.csv'
+    #########################################################
+
+    gl_feature_names = np.array( ['num_nodes', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips',
      'overall_width', 'overall_height', 'overall_depth', 'average_diameter', 'total_length',
      'total_surface', 'total_volume', 'max_euclidean_distance', 'max_path_distance', 'max_branch_order',
      'average_contraction', 'average fragmentation', 'parent_daughter_ratio', 'bifurcation_angle_local',
      'bifurcation_angle_remote'])
 
-gmi_feature_names = np.array(['moment1', 'moment2', 'moment3', 'moment4', 'moment5', 'moment6', 'moment7', 'moment8',
+    gmi_feature_names = np.array(['moment1', 'moment2', 'moment3', 'moment4', 'moment5', 'moment6', 'moment7', 'moment8',
                               'moment9', 'moment10', 'moment11', 'moment12', 'moment13'])  ### removed ave_R
 
-selected_features = ['max_euclidean_distance', 'num_stems', 'num_bifurcations', 'average_contraction',
+    selected_features = ['max_euclidean_distance', 'num_stems', 'num_bifurcations', 'average_contraction',
                      'parent_daughter_ratio']
 
-all_feature_names = np.append(gl_feature_names, gmi_feature_names)
-# ===================================================================
-
-
-# zscore
-ZSCORE_OUTLIER_THRESHOLD = 3.5
-# ===================================================================
+    all_feature_names = np.append(gl_feature_names, gmi_feature_names)
 
 
 # merge all info, waiting to get cell_shape tags....
@@ -430,43 +420,34 @@ ZSCORE_OUTLIER_THRESHOLD = 3.5
 # To qualitative look though crelines
 #generateLinkerFileFromCSV(data_DIR+'/original',data_DIR +'/merged_allFeatures.csv','cre_line')
 
+    #generateLinkerFileFromCSV(data_DIR + '/preprocessed', all_feature_merged_file, 'cre_line')
+
+    merged = pd.read_csv(all_feature_merged_file)
+    merged[all_feature_names]= merged[all_feature_names].astype(float)
+
+    cre_lines = np.unique(merged['cre_line'])
+
+    output_dir = data_DIR+'/clustering_results'
+    if  not os.path.exists(output_dir):
+          os.mkdir(output_dir)
+
+    USE_ALL_FEAUTRES = 0
+    if USE_ALL_FEAUTRES:
+        ward_cluster(merged, all_feature_names, num_of_crelines, output_dir +'/ward_all_features')
+        #ward_cluster(merged, gmi_feature_names, num_of_crelines, output_dir +'/ward_GMI_features')
+        num_clusters = affinity_propagation(merged, all_feature_names, output_dir +'/ap_all_features')
+        ward_cluster(merged, all_feature_names, num_clusters, output_dir +'/ward_all_features')
+        #ward_cluster(merged, gmi_feature_names, num_clusters, output_dir +'/ward_GMI_features')
+
+    #############   feature selection
+
+    if not USE_ALL_FEAUTRES:
+        redundancy_removed_features_names = remove_correlated_features(merged, all_feature_names,0.98)
+        print(" The %d features that are not closely correlated are %s" %(len(redundancy_removed_features_names),redundancy_removed_features_names))
+
+        num_clusters, dunn_index1 = affinity_propagation(merged, redundancy_removed_features_names, output_dir +'/ap_rr_all_features', data_DIR + "/figures/pw_aligned_bmps")
+        dunn_index2 =  ward_cluster(merged, redundancy_removed_features_names, num_clusters,output_dir +'/ward_rr_all_features', data_DIR + "/figures/pw_aligned_bmps")
 
 
-####################################
-all_feature_merged_file = data_DIR + '/preprocessed/features_with_db_tags.csv'
-###################################
-
-
-generateLinkerFileFromCSV(data_DIR + '/preprocessed', all_feature_merged_file, 'cre_line')
-
-merged = pd.read_csv(all_feature_merged_file)
-merged[all_feature_names]= merged[all_feature_names].astype(float)
-
-
-cre_lines = np.unique(merged['cre_line'])
-
-
-output_dir = data_DIR+'/clustering_results'
-if  not os.path.exists(output_dir):
-      os.mkdir(output_dir)
-
-
-USE_ALL_FEAUTRES = 0
-if USE_ALL_FEAUTRES:
-    ward_cluster(merged, all_feature_names, num_of_crelines, output_dir +'/ward_all_features')
-    #ward_cluster(merged, gmi_feature_names, num_of_crelines, output_dir +'/ward_GMI_features')
-    num_clusters = affinity_propagation(merged, all_feature_names, output_dir +'/ap_all_features')
-    ward_cluster(merged, all_feature_names, num_clusters, output_dir +'/ward_all_features')
-    #ward_cluster(merged, gmi_feature_names, num_clusters, output_dir +'/ward_GMI_features')
-
-#############   feature selection
-
-
-if not USE_ALL_FEAUTRES:
-    redundancy_removed_features_names = remove_correlated_features(merged, all_feature_names,0.98)
-    print(" The %d features that are not closely correlated are %s" %(len(redundancy_removed_features_names),redundancy_removed_features_names))
-
-    # warning! ap cluster id starts from 0
-    num_clusters, dunn_index1 = affinity_propagation(merged, redundancy_removed_features_names, output_dir +'/ap_rr_all_features')
-
-    dunn_index2 =  ward_cluster(merged, redundancy_removed_features_names, num_clusters,output_dir +'/ward_rr_all_features')
+if __name__ == "__main__":
+        main()
