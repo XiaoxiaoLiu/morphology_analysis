@@ -1,20 +1,27 @@
 import numpy as np
-import pylab as pl
-import scipy
+import matplotlib.pylab as pl
+from scipy import stats
 
 import pandas as pd
 import seaborn as sns
 import os
-
+import sys, getopt
 from scipy.cluster import hierarchy
 import platform
 
 from scipy.stats.stats import pearsonr
 
+# program path on this machine
+# ===================================================================
+if (platform.system() == "Linux"):
+   WORK_PATH = "/local1/xiaoxiaol/work"
+else:
+   WORK_PATH = "/Users/xiaoxiaoliu/work"
+
 
 
 def zscore(features, remove_outlier = 0):
-    zscores = scipy.stats.zscore(features, 0)
+    zscores = stats.zscore(features, 0)
     #zscores = normalizeFeatures(features)
     return zscores
 
@@ -74,46 +81,7 @@ def distance_matrix(df_all, feature_names, out_distanceMatrix_file, REMOVE_OUTLI
     return df_dist
 
 
-def copySnapshots(df_in, snapshots_dir, output_dir):
-    if  not os.path.exists(output_dir):
-       os.mkdir(output_dir)
-    swc_files = df_in['swc_file']
-    if len(swc_files) > 0:
-            for afile in swc_files:
-                filename = snapshots_dir + '/'+ afile.split('/')[-1] +'.BMP'
-                if os.path.exists(filename):
-                    os.system("cp  "+filename +"  "+ output_dir +  "/\n")
-    return
 
-def generateLinkerFileFromDF(df_in, output_ano_file, strip_path= False):
-    swc_files = df_in['swc_file']
-    if len(swc_files) > 0:
-        with open(output_ano_file, 'w') as outf:
-            for afile in swc_files:
-                filename = afile
-                if strip_path:
-                   filename = afile.split('/')[-1]
-                line = 'SWCFILE=' + filename + '\n'
-                outf.write(line)
-            outf.close()
-    return
-
-
-def generateLinkerFileFromCSV(result_dir, csvfile, column_name, strip_path = True):
-    df = pd.read_csv(csvfile)
-    types = df[column_name]
-    for atype in np.unique(types):
-        idxs = np.nonzero(types == atype)[0]
-        swc_files = df['swc_file']
-        with open(result_dir + '/' + atype + '.ano', 'w') as outf:
-            for afile in swc_files[idxs]:
-                filename = afile
-                if strip_path:
-                   filename = afile.split('/')[-1]
-                line = 'SWCFILE=' + filename + '\n'
-                outf.write(line)
-            outf.close()
-    return
 
 
 ##############  heatmap plot: hierachical clustering  ########
@@ -217,34 +185,6 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
 
 
 
-##########################   feature selection   ########################
-def remove_correlated_features(df_all, feature_names, coef_threshold = 0.99):
-    num_features = len(feature_names)
-    removed_names=[]
-    for i in range(num_features):
-        if not feature_names[i] in removed_names:
-            a = df_all[feature_names[i]].astype(float)
-
-            for j in range(i+1, num_features):
-                if not feature_names[j] in removed_names:
-                    b = df_all[feature_names[j]].astype(float)
-                    corrcoef = pearsonr(a,b)
-                    if (corrcoef[0] > coef_threshold):
-                        removed_names.append(feature_names[j])
-                        print("highly correlated:[" +feature_names[i]+", "+feature_names[j]+" ]")
-
-    subset_features_names = feature_names.tolist()
-    for i in range(len(removed_names)):
-        if removed_names[i] in subset_features_names:
-              print ("remove "+removed_names[i])
-              subset_features_names.remove(removed_names[i])
-
-    return np.asarray(subset_features_names)
-
-
-
-#######################################  cluster evaluations ##################
-
 ######################  dunn index
 def delta(ck, cl):
     values = np.ones([len(ck), len(cl)])*10000
@@ -286,33 +226,16 @@ def dunn(k_list):
     di = np.min(deltas)/np.max(big_deltas)
     return di
 
-
-
-
-###############################  cluster specific features #####
-def  cluster_specific_features(df_all, assign_ids):
-    #student t to get cluster specific features
-
-     return
-
-
-
-
-
-
-
-
-#############################################################################################
-#############################################################################################
-
-def output_clusters(assign_ids, df_all,feature_names,  output_dir,snapshots_dir= None):
+def output_clusters(assign_ids, df_all,feature_names,  output_dir,cluster_id_fn):
     if  not os.path.exists(output_dir):
        os.mkdir(output_dir)
 
     df_assign_id = pd.DataFrame()
-    df_assign_id['specimen_name'] = df_all['specimen_name']
+    #df_assign_id['specimen_name'] = df_all['specimen_name']
+    df_assign_id['name'] = df_all['name']
     df_assign_id['cluster_id']= assign_ids
-    df_assign_id.to_csv(output_dir + "/cluster_id.csv",index=False)
+    df_assign_id.to_csv(output_dir + "/" + cluster_id_fn,index=False)
+    print "cluster id file is aved into ", output_dir + "/" + cluster_id_fn
 
     clusters = np.unique(assign_ids)
     num_cluster = len(clusters)
@@ -337,64 +260,49 @@ def output_clusters(assign_ids, df_all,feature_names,  output_dir,snapshots_dir=
 
         cluster_list.append(df_zscore_cluster.values)
 
-        ano_file = output_dir + '/cluster_'+str(i) +'.ano'
-        generateLinkerFileFromDF(df_cluster,ano_file, False)
 
         # copy bmp vaa3d snapshots images over
-        if (snapshots_dir):
-            copySnapshots(df_cluster, snapshots_dir, output_dir+"/cluster_"+str(i) )
-        else:
-            print "no bmp copying from:", snapshots_dir
+        #if ( snapshots_dir ):
+        #    copySnapshots(df_cluster, snapshots_dir, output_dir+"/cluster_"+str(i) )
 
         print("there are %d neurons in cluster %d" %(df_cluster.shape[0], i))
     return cluster_list
 
-
-####### ward  hierachichal clustering  ###########
-def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_dir = None):
+#############################################################################################
+def ward_cluster(df_all, feature_names, max_cluster_num, output_dir,cluster_id_fn, fig_title ="ward"):
     print("\n\n\n ward computation, max_cluster = %d :" %max_cluster_num)
-
-    if  not os.path.exists(output_dir):
-       os.mkdir(output_dir)
-    else:
-       os.system("rm -r  "+output_dir+'/*')
-
-
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
 
     df_simMatrix = distance_matrix(df_all, feature_names, output_dir + "/morph_features_similarity_matrix.csv", 1)
 
     # visualize heatmap using ward on similarity matrix
-    out = heatmap_plot_distancematrix(df_simMatrix, df_all, output_dir, "Similarity")
+    out = heatmap_plot_distancematrix(df_simMatrix, df_all, output_dir, fig_title)
     linkage = out.dendrogram_row.calculated_linkage
 
-    assignments = hierarchy.fcluster(linkage, max_cluster_num,criterion = "maxclust")
+    assignments = hierarchy.fcluster(linkage,max_cluster_num,criterion="maxclust")
     #hierarchy.dendrogram(linkage)
 
     ## put assignments into ano files and csv files
-    clusters_list= output_clusters(assignments, df_all, feature_names,output_dir,snapshots_dir) 
+    clusters_list= output_clusters(assignments, df_all, feature_names,output_dir,cluster_id_fn)
     dunn_index =  dunn(clusters_list)
 
     print("dunn index is %f" %dunn_index)
 
-     ##### zscores  featuer plots
+      ##### zscores  featuer plots
     df_zscores = zscore_features(df_all, feature_names, output_dir + '/zscore.csv', 1)
-    a = heatmap_plot_zscore(df_zscores, df_all, output_dir, "zscore")
+    a = heatmap_plot_zscore(df_zscores, df_all, output_dir, fig_title)
 
 
     return dunn_index
 
-######  Affinity Propogation ##############
 from sklearn.cluster import AffinityPropagation
 from sklearn import metrics
-def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None):
-    print("\n\n\naffinity propogation computation:")
 
+def affinity_propagation(df_all, feature_names, output_dir,  cluster_id_fn):
+    print("\n\n\naffinity propogation computation:")
     if  not os.path.exists(output_dir):
        os.mkdir(output_dir)
-    else:
-       os.system("rm -r  "+output_dir+'/*')
-
-
         # Compute Affinity Propagation
     df_zscores = zscore_features(df_all, feature_names, None, 1)
 
@@ -405,97 +313,97 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None):
     labels = af.labels_
     labels = labels +1  # the default labels start from 0, to be consistent with ward, add 1 so that it starts from 1
 
-    clusters_list = output_clusters(labels, df_all, feature_names,  output_dir, snapshots_dir)
+    clusters_list = output_clusters(labels, df_all,feature_names,  output_dir, cluster_id_fn)
+
     dunn_index =  dunn(clusters_list)
     print("dunn index is %f" %dunn_index)
 
     return len(np.unique(labels)), dunn_index
 
-
-
-######  iterative PCA ##############
-from rpy2.robjects.packages import importr
-R_base     = importr('base')
-R_stats    = importr('stats')
-R_graphics = importr('graphics')
-R_gplots =  importr('gplots')
-
-from rpy2.robjects import pandas2ri
-pandas2ri.activate()
-#m = base.matrix(stats.rnorm(100), ncol = 5)
-#pca = stats.princomp(m)
-#graphics.plot(pca, main = "Eigen values")
-#stats.biplot(pca, main = "biplot")
-
-
-def binary_partition(df_data, ):
-    df_left = pd.DataFrame()
-    df_right = pd.DataFrame()
-
-    r_df_data = pandas2ri(df_data)
-    pca = R_stats.princomp(r_df_data)
-
-    return df_left, df_right
-
-def iterative_pca(df_all,feature_names,num_clusters):
-    df_zscores = zscore_features(df_all, feature_names, None, 1)
-    df_left, df_right = binary_partition(df_zscores)
-
-    #iterative_pca(df_left, features_names, )
-
-
-
-    return
 #############################################################################################
-#############################################################################################
+def remove_correlated_features(df_all, feature_names, coef_threshold = 0.99):
+    num_features = len(feature_names)
+    removed_names=[]
+    for i in range(num_features):
+        if not feature_names[i] in removed_names:
+            a = df_all[feature_names[i]].astype(float)
+
+            for j in range(i+1, num_features):
+                if not feature_names[j] in removed_names:
+                    b = df_all[feature_names[j]].astype(float)
+                    corrcoef = pearsonr(a,b)
+                    if (corrcoef[0] > coef_threshold):
+                        removed_names.append(feature_names[j])
+                        print("highly correlated:[" +feature_names[i]+", "+feature_names[j]+" ]")
+
+    subset_features_names = feature_names.tolist()
+    for i in range(len(removed_names)):
+        if removed_names[i] in subset_features_names:
+              print ("remove "+removed_names[i])
+              subset_features_names.remove(removed_names[i])
+
+    return np.asarray(subset_features_names)
 
 
 
-ZSCORE_OUTLIER_THRESHOLD = 5
 
-# program path on this machine
-# ===================================================================
-if (platform.system() == "Linux"):
-   WORK_PATH = "/local1/xiaoxiaol/work"
-else:
-   WORK_PATH = "/Users/xiaoxiaoliu/work"
 
-data_DIR = WORK_PATH + "/data/lims2/0923_pw_aligned"
 
-def main(): 
-    ########################################## data dir
-    all_feature_merged_file = data_DIR + '/preprocessed/features_with_db_tags.csv'
+
+##################################################################################################
+ZSCORE_OUTLIER_THRESHOLD = 3.5
+##################################################################################################
+
+def main(argv):
+
+    #######################################################
+    try:
+      opts, args = getopt.getopt(argv,"hi:o:m:",["ifile=","ofile=", "method="])
+    except getopt.GetoptError:
+       print 'error: morph_cluster_on_simulation.py -i <inputfile> -o <outputfile> -m <ap/ward>'
+       sys.exit(2)
+
+    input_csv_file = ""
+    output_dir = ""
+    method=""
+
+    if len(opts) <3:
+        print 'usage: morph_cluster_on_simulation.py -i <input_csv_file> -o <output_dir> -m <ap/ward>'
+        sys.exit()
+
+    for opt, arg in opts:
+      print opt
+      print arg
+      if opt == '-h':
+         print 'usage: morph_cluster_on_simulation.py -i <input_csv_file> -o <output_dir> -m <ap/ward>'
+         sys.exit()
+      elif opt in ("-i"):
+         input_csv_file = arg
+      elif opt in ("-o"):
+         output_dir = arg
+      elif opt in ("-m"):
+         method = arg
+
+    print 'Input csv file is ', input_csv_file
+    print 'Output dir is ', output_dir
+    print 'Cluster method is ', method
+
+    ########################################################
+    all_feature_merged_file = input_csv_file
     #########################################################
 
-    gl_feature_names = np.array( ['num_nodes', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips',
-     'overall_width', 'overall_height', 'overall_depth', 'average_diameter', 'total_length',
-     'total_surface', 'total_volume', 'max_euclidean_distance', 'max_path_distance', 'max_branch_order',
-     'average_contraction', 'average fragmentation', 'parent_daughter_ratio', 'bifurcation_angle_local',
-     'bifurcation_angle_remote'])
+    gl_feature_names = np.array( ['num_nodes', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips','overall_width', 'overall_height', 'overall_depth', 'average_diameter', 'total_length','total_surface', 'total_volume', 'max_euclidean_distance', 'max_path_distance', 'max_branch_order', 'average_contraction', 'average fragmentation', 'parent_daughter_ratio', 'bifurcation_angle_local','bifurcation_angle_remote'])
 
-    gmi_feature_names = np.array(['moment1', 'moment2', 'moment3', 'moment4', 'moment5', 'moment6', 'moment7', 'moment8',
-                              'moment9', 'moment10', 'moment11', 'moment12', 'moment13'])  ### removed ave_R
+    gmi_feature_names = np.array(['moment1', 'moment2', 'moment3', 'moment4', 'moment5', 'moment6', 'moment7', 'moment8','moment9', 'moment10', 'moment11', 'moment12', 'moment13'])  ### removed ave_R
 
-    #selected_features = ['max_euclidean_distance', 'num_stems', 'num_bifurcations', 'average_contraction',
-     #                'parent_daughter_ratio']
 
     all_feature_names = np.append(gl_feature_names, gmi_feature_names)
 
-# merge all info, waiting to get cell_shape tags....
-#df_type = pd.read_csv(data_DIR+'/../custom_report-IVSCC_classification-April_2015.csv')
-#merged = pd.merge(df_complete,df_type,how='inner',on=['specimen_name'])
-#merged.to_csv(data_DIR+'/merged_allFeatures.csv',index=False)
 
-# To qualitative look though crelines
-#generateLinkerFileFromCSV(data_DIR+'/original',data_DIR +'/merged_allFeatures.csv','cre_line')
-
-    #generateLinkerFileFromCSV(data_DIR + '/preprocessed', all_feature_merged_file, 'cre_line')
-
-    merged = pd.read_csv(all_feature_merged_file)
+    merged = pd.read_csv(all_feature_merged_file,skipinitialspace=True)
     merged[all_feature_names]= merged[all_feature_names].astype(float)
 
 
-    output_dir = data_DIR+'/clustering_results'
     if  not os.path.exists(output_dir):
           os.mkdir(output_dir)
 
@@ -506,17 +414,23 @@ def main():
     #     num_clusters = affinity_propagation(merged, all_feature_names, output_dir +'/ap_all_features')
     #     ward_cluster(merged, all_feature_names, num_clusters, output_dir +'/ward_all_features')
     #     #ward_cluster(merged, gmi_feature_names, num_clusters, output_dir +'/ward_GMI_features')
+
     #############   feature selection
     if not USE_ALL_FEAUTRES:
         redundancy_removed_features_names = remove_correlated_features(merged, all_feature_names,0.98)
         print(" The %d features that are not closely correlated are %s" %(len(redundancy_removed_features_names),redundancy_removed_features_names))
 
-        num_clusters = 10
-       #num_clusters, dunn_index1 = affinity_propagation(merged, redundancy_removed_features_names, output_dir +'/ap_rr_all_features', data_DIR + "/figures/pw_aligned_bmps")
-       # dunn_index2 =  ward_cluster(merged, redundancy_removed_features_names, num_clusters,output_dir +'/ward_rr_all_features', data_DIR + "/figures/pw_aligned_bmps")
+        cluster_id_fn = input_csv_file.split('/')[-1]
+        cluster_id_fn = cluster_id_fn.split('.')[0] +'.csv'
 
-        dunn_index3= iterative_pca(merged,redundancy_removed_features_names,num_clusters)
+
+        if method == "ap":
+
+            num_clusters, dunn_index1 = affinity_propagation(merged, redundancy_removed_features_names, output_dir,cluster_id_fn )
+        if method == "ward":
+            num_clusters, dunn_index1 = affinity_propagation(merged, redundancy_removed_features_names, output_dir,cluster_id_fn )
+            dunn_index2 =  ward_cluster(merged, redundancy_removed_features_names, num_clusters,output_dir, cluster_id_fn )
 
 
 if __name__ == "__main__":
-        main()
+        main(sys.argv[1:])
