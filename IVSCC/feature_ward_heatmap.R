@@ -1,13 +1,15 @@
 library(gplots)
 
-#merged<-read.csv("~/work/data/lims2/neuron_recon_2/merged.csv")
-data_dir<-"~/work/data/lims2/0903_filtered_ephys_qc/"
-merged<-read.csv("~/work/data/lims2/0903_filtered_ephys_qc/preprocessed/features_with_db_tags.csv")
 
-summary(merged)
-names(merged)
+data_dir<-"/data/mat/xiaoxiaol/data/lims2/0923_pw_aligned"
+merged<-read.csv(paste(data_dir, "preprocessed/features_with_db_tags.csv", sep="/"))
+
 
 dims=dim(merged)
+
+
+
+ZSCORE_THRESHOLD<-5
 
 
 ################ remove outliers, normalize data
@@ -20,8 +22,8 @@ std=apply(y,2,sd)
 mm=t(replicate(dims[1],m))
 stdstd=t(replicate(dims[1],std))
 zscores= (y-mm)/stdstd
-zscores[zscores<-3] <- -3
-zscores[zscores>3] <- 3
+zscores[zscores<-ZSCORE_THRESHOLD] <- -ZSCORE_THRESHOLD
+zscores[zscores>ZSCORE_THRESHOLD] <- ZSCORE_THRESHOLD
 
 
 unique.type <- as.character(unique(merged$dendrite_type))
@@ -47,16 +49,17 @@ orderP = order(pvalue)
 #yy=scale(zscores, center=TRUE, scale=TRUE)
 newd=zscores[,orderP]
 
-#pdf(paste(data_dir, "heatmap2_dendrite_type.pdf",sep="/"), height=10, width=10)
-heatmap.2(t(newd),Rowv=TRUE,Colv=TRUE,symm = FALSE,hclustfun=function(d) hclust(d,method='ward'), ColSideColors=mycolor1, keysize=1.5,col=redgreen(75), density.info="none", trace="none", cexCol=0.9, margin=c(15,15))
+png(paste(data_dir, "clustering_results/R_heatmap2_dendrite_type.png",sep="/"),  width=800, height=750)
+heatmap.2(t(newd),Rowv=TRUE,Colv=TRUE,symm = FALSE,hclustfun=function(d) hclust(d,method='ward'), ColSideColors=mycolor1, keysize=1.5,col=redgreen(75), density.info="none", trace="none", cexCol=0.9, margins=c(10,15))
 
-legend("bottomleft",      # location of the legend on the heatmap plot
+legend("topright",      # location of the legend on the heatmap plot
        legend = c("aspiny", "spiny", "sparse spiny"), # category labels
        col = mycolors,  # color key
        lty= 1,             # line style
        lwd = 10            # line width
 )
-#dev.off
+#dev.offo
+graphics.off()
 
 
 

@@ -19,46 +19,26 @@ def zscore(features, remove_outlier = 0):
     return zscores
 
 
-def normalizeFeatures(features):
-    meanFeatures = np.median(features, 0)
-    stdFeatures = np.std(features, 0)
-    if np.count_nonzero(stdFeatures) < len(stdFeatures):
-        print "zero detected"
-        print stdFeatures
-    normalized = (features - meanFeatures) / stdFeatures
-    return normalized
+# def normalizeFeatures(features):
+#     meanFeatures = np.median(features, 0)
+#     stdFeatures = np.std(features, 0)
+#     if np.count_nonzero(stdFeatures) < len(stdFeatures):
+#         print "zero detected"
+#         print stdFeatures
+#     normalized = (features - meanFeatures) / stdFeatures
+#     return normalized
 
 
-def zscore_features(df_all, feature_names, out_file, REMOVE_OUTLIER=1):
-    featureArray = df_all[feature_names].astype(float)
-    normalized = zscore(featureArray)
-    if REMOVE_OUTLIER:
-         num_outliers = np.count_nonzero(normalized < -ZSCORE_OUTLIER_THRESHOLD) + np.count_nonzero(normalized > ZSCORE_OUTLIER_THRESHOLD)
-         print(" found %d outliers" %num_outliers)
-         if num_outliers >0 :
-            normalized[normalized < -ZSCORE_OUTLIER_THRESHOLD] = -ZSCORE_OUTLIER_THRESHOLD
-            normalized[normalized > ZSCORE_OUTLIER_THRESHOLD] = ZSCORE_OUTLIER_THRESHOLD
 
-    df = pd.DataFrame(normalized)
-    df.columns = feature_names
-
-    if out_file:
-        df.to_csv(out_file, index=False)
-        print("save to " + out_file )
-    return df
-
-
-def distance_matrix(df_all, feature_names, out_distanceMatrix_file, REMOVE_OUTLIER=1):
+#### need to be updated
+def distance_matrix(df_all, feature_names, out_distanceMatrix_file, REMOVE_OUTLIER=0,ZSCORE_OUTLIER_THRESHOLD = 3.5):
     feature_array = df_all[feature_names].astype(float)
     distanceMatrix = []
     normalized = zscore(feature_array)
     #normalized = normalizeFeatures(feature_array)
 
-    # remove outliers!!!
-    if REMOVE_OUTLIER:
-         num_outliers = np.count_nonzero(normalized < -ZSCORE_OUTLIER_THRESHOLD) + np.count_nonzero(normalized > ZSCORE_OUTLIER_THRESHOLD)
-         print(" found %d outliers" %num_outliers)
-         if num_outliers >0 :
+    if num_outliers >0 :
+        if not REMOVE_OUTLIER:  # only clp
             normalized[normalized < -ZSCORE_OUTLIER_THRESHOLD] = -ZSCORE_OUTLIER_THRESHOLD
             normalized[normalized > ZSCORE_OUTLIER_THRESHOLD] = ZSCORE_OUTLIER_THRESHOLD
 
@@ -69,7 +49,7 @@ def distance_matrix(df_all, feature_names, out_distanceMatrix_file, REMOVE_OUTLI
         distanceMatrix.append(scores)
 
     df_dist = pd.DataFrame(distanceMatrix)
-    df_dist.to_csv(out_distanceMatrix_file)
+    df_dist.to_csv(out_distanceMatrix_file,index=False)
     print("score sim matrix is saved to : " + out_distanceMatrix_file + "\n")
     return df_dist
 
@@ -84,6 +64,26 @@ def copySnapshots(df_in, snapshots_dir, output_dir):
                 if os.path.exists(filename):
                     os.system("cp  "+filename +"  "+ output_dir +  "/\n")
     return
+
+
+from PIL import Image
+import glob
+def assemble_pngs(output_dir, size):
+
+    files = glob.glob(output_dir+"/*.BMP")
+
+    image = Image.new( "RGB", (size,size*len(files) ) )
+
+    y=0
+    for infile in files[1:]:
+        im = Image.open(infile)
+        im.thumbnail((size,size), Image.ANTIALIAS)
+        image.paste(im, (y,0) )
+        y += size
+    image.save(output_dir +"/assembled.png")
+
+    return
+
 
 def generateLinkerFileFromDF(df_in, output_ano_file, strip_path= False):
     swc_files = df_in['swc_file']
@@ -194,7 +194,6 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
     #crelines = g.data['cre_line']
     #g.ax_heatmap.set_yticklabels(crelines, fontsize=3)
 
-    assignment = hierarchy.fcluster(r_linkage, 2, criterion="maxclust")
 
     # Legend for row and col colors
     for label in dendrite_types:
@@ -212,7 +211,7 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
     pl.savefig(filename, dpi=300)
     print("save zscore matrix heatmap figure to :" + filename)
     pl.close()
-    return g
+    return r_linkage
 
 
 
@@ -303,9 +302,77 @@ def  cluster_specific_features(df_all, assign_ids):
 
 
 #############################################################################################
+
+def get_zscore_features(df_all, feature_names, out_file, REMOVE_OUTLIER = 0 , ZSCORE_OUTLIER_THRESHOLD = 3.5):  # if remove_outlier ==0 , just clip at threshold
+    featureArray = df_all[feature_names].astype(float)
+    normalized = zscore(featureArray)
+
+    num_outliers = np.count_nonzero(normalized < -ZSCORE_OUTLIER_THRESHOLD) + np.count_nonzero(normalized > ZSCORE_OUTLIER_THRESHOLD)
+    print("Found %d  |z score| > %f in zscore matrix :" %(num_outliers, ZSCORE_OUTLIER_THRESHOLD) )
+
+    df_all_modified = df_all
+    df_outliers = pd.DataFrame()
+    if num_outliers >0 :
+        if not REMOVE_OUTLIER:  # just clip
+            normalized[normalized < -ZSCORE_OUTLIER_THRESHOLD] = -ZSCORE_OUTLIER_THRESHOLD
+            normalized[normalized > ZSCORE_OUTLIER_THRESHOLD] = ZSCORE_OUTLIER_THRESHOLD
+        else:
+            outliers_l = np.nonzero(normalized < -ZSCORE_OUTLIER_THRESHOLD)
+            outliers_h = np.nonzero(normalized > ZSCORE_OUTLIER_THRESHOLD)
+            outlier_index = np.unique((np.append( outliers_l[0], outliers_h[0])))
+
+            # remove outlier rows
+            df_all_modified = df_all_modified.drop(df_all_modified.index[outlier_index])
+            normalized = np.delete(normalized, outlier_index, 0)
+
+            # re-zscoring
+            #m_featureArray = df_all_modified[feature_names].astype(float)
+            #normalized = zscore(m_featureArray)
+
+
+            print("Removed %d outlier neurons" %len(outlier_index))
+
+            df_outliers = df_all.iloc[outlier_index]
+
+
+    df_z = pd.DataFrame(normalized)
+    df_z.columns = feature_names
+
+    if out_file:
+        df_z.to_csv(out_file, index=False)
+        print("save to " + out_file )
+
+
+    if  (df_z.shape[0] != df_all_modified.shape[0]) :
+         print ("error:  the sample size of the zscore and the original table does not match!")
+
+
+    return df_z, df_all_modified, df_outliers
+
+
+
+
+
 #############################################################################################
 
-def output_clusters(assign_ids, df_all,feature_names,  output_dir,snapshots_dir= None):
+
+def output_single_cluster_results(df_cluster, output_dir, output_prefix, snapshots_dir):
+        csv_file = output_dir + '/' + output_prefix +'.csv'
+        df_cluster.to_csv(csv_file,index=False)
+
+        ano_file = output_dir + '/' + output_prefix +'.ano'
+        generateLinkerFileFromDF(df_cluster,ano_file, False)
+
+        # copy bmp vaa3d snapshots images over
+        if (snapshots_dir):
+            copySnapshots(df_cluster, snapshots_dir, output_dir + '/' + output_prefix)
+            assemble_pngs(df_cluster,snapshots_dir, output_dir + '/' + output_prefix )
+        else:
+            print "no bmp copying from:", snapshots_dir
+        return
+
+
+def output_clusters(assign_ids, df_zscores, df_all,feature_names,  output_dir,snapshots_dir= None):
     if  not os.path.exists(output_dir):
        os.mkdir(output_dir)
 
@@ -316,43 +383,30 @@ def output_clusters(assign_ids, df_all,feature_names,  output_dir,snapshots_dir=
 
     clusters = np.unique(assign_ids)
     num_cluster = len(clusters)
-    # to save zscores into csv files
-    df_zscores = zscore_features(df_all, feature_names, None, REMOVE_OUTLIER=1)
 
-    cluster_list=[]
-    print("there are %d cluster" %num_cluster)
+    cluster_list=[]  # for dunn index calculation
+    print("There are %d clusters in total" %num_cluster)
     df_cluster = pd.DataFrame()
     df_zscore_cluster = pd.DataFrame()
     for i in clusters:
         ids = np.nonzero(assign_ids == i)[0]  # starting from  0
         df_cluster = df_all.iloc[ids]
 
-        csv_file = output_dir + '/cluster_'+str(i) +'.csv'
-        df_cluster.to_csv(csv_file,index=False)
+        output_single_cluster_results(df_cluster, output_dir, '/cluster_'+str(i),snapshots_dir)
 
         df_zscore_cluster = df_zscores.iloc[ids]
         csv_file2 = output_dir + '/cluster_zscore_'+str(i) +'.csv'
         df_zscore_cluster.to_csv(csv_file2,index=False)
 
-
         cluster_list.append(df_zscore_cluster.values)
+        print("  %d neurons in cluster %d" %(df_cluster.shape[0], i))
 
-        ano_file = output_dir + '/cluster_'+str(i) +'.ano'
-        generateLinkerFileFromDF(df_cluster,ano_file, False)
-
-        # copy bmp vaa3d snapshots images over
-        if (snapshots_dir):
-            copySnapshots(df_cluster, snapshots_dir, output_dir+"/cluster_"+str(i) )
-        else:
-            print "no bmp copying from:", snapshots_dir
-
-        print("there are %d neurons in cluster %d" %(df_cluster.shape[0], i))
     return cluster_list
 
 
 ####### ward  hierachichal clustering  ###########
-def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_dir = None):
-    print("\n\n\n ward computation, max_cluster = %d :" %max_cluster_num)
+def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_dir = None,RemoveOutliers = 0):
+    print("\n\n\n  ***************  ward computation, max_cluster = %d  *************:" %max_cluster_num)
 
     if  not os.path.exists(output_dir):
        os.mkdir(output_dir)
@@ -360,34 +414,37 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_d
        os.system("rm -r  "+output_dir+'/*')
 
 
+    #### similarity plots
+    # df_simMatrix = distance_matrix(df_all, feature_names, output_dir + "/morph_features_similarity_matrix.csv", 1)
+    # # visualize heatmap using ward on similarity matrix
+    # out = heatmap_plot_distancematrix(df_simMatrix, df_all, output_dir, "Similarity")
+    # linkage = out.dendrogram_row.calculated_linkage
 
-    df_simMatrix = distance_matrix(df_all, feature_names, output_dir + "/morph_features_similarity_matrix.csv", 1)
 
-    # visualize heatmap using ward on similarity matrix
-    out = heatmap_plot_distancematrix(df_simMatrix, df_all, output_dir, "Similarity")
-    linkage = out.dendrogram_row.calculated_linkage
+    ##### zscores  featuer plots
+    df_zscores,df_all_outlier_removed,df_outliers = get_zscore_features(df_all, feature_names, output_dir + '/zscore.csv', RemoveOutliers)
+    if (df_outliers.shape[0] > 0 ):
+         output_single_cluster_results(df_outliers, output_dir, "outliers",snapshots_dir)
 
+    linkage = heatmap_plot_zscore(df_zscores, df_all_outlier_removed, output_dir, "zscore")
     assignments = hierarchy.fcluster(linkage, max_cluster_num,criterion = "maxclust")
     #hierarchy.dendrogram(linkage)
 
+
     ## put assignments into ano files and csv files
-    clusters_list= output_clusters(assignments, df_all, feature_names,output_dir,snapshots_dir) 
+    clusters_list= output_clusters(assignments,df_zscores, df_all_outlier_removed, feature_names,output_dir,snapshots_dir)
     dunn_index =  dunn(clusters_list)
 
     print("dunn index is %f" %dunn_index)
-
-     ##### zscores  featuer plots
-    df_zscores = zscore_features(df_all, feature_names, output_dir + '/zscore.csv', 1)
-    a = heatmap_plot_zscore(df_zscores, df_all, output_dir, "zscore")
 
 
     return dunn_index
 
 ######  Affinity Propogation ##############
 from sklearn.cluster import AffinityPropagation
-from sklearn import metrics
-def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None):
-    print("\n\n\naffinity propogation computation:")
+
+def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, RemoveOutliers = 0):
+    print("\n\n\n ***************  affinity propogation computation ****************:")
 
     if  not os.path.exists(output_dir):
        os.mkdir(output_dir)
@@ -396,7 +453,9 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None):
 
 
         # Compute Affinity Propagation
-    df_zscores = zscore_features(df_all, feature_names, None, 1)
+    df_zscores ,df_all_outlier_removed,df_outliers = get_zscore_features(df_all, feature_names, None, RemoveOutliers)
+    if (df_outliers.shape[0] > 0 ):
+        output_single_cluster_results(df_outliers, output_dir, "outliers",snapshots_dir)
 
     X= df_zscores.as_matrix()
 
@@ -405,7 +464,7 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None):
     labels = af.labels_
     labels = labels +1  # the default labels start from 0, to be consistent with ward, add 1 so that it starts from 1
 
-    clusters_list = output_clusters(labels, df_all, feature_names,  output_dir, snapshots_dir)
+    clusters_list = output_clusters(labels, df_zscores, df_all_outlier_removed, feature_names,  output_dir, snapshots_dir)
     dunn_index =  dunn(clusters_list)
     print("dunn index is %f" %dunn_index)
 
@@ -413,45 +472,9 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None):
 
 
 
-######  iterative PCA ##############
-from rpy2.robjects.packages import importr
-R_base     = importr('base')
-R_stats    = importr('stats')
-R_graphics = importr('graphics')
-R_gplots =  importr('gplots')
-
-from rpy2.robjects import pandas2ri
-pandas2ri.activate()
-#m = base.matrix(stats.rnorm(100), ncol = 5)
-#pca = stats.princomp(m)
-#graphics.plot(pca, main = "Eigen values")
-#stats.biplot(pca, main = "biplot")
-
-
-def binary_partition(df_data, ):
-    df_left = pd.DataFrame()
-    df_right = pd.DataFrame()
-
-    r_df_data = pandas2ri(df_data)
-    pca = R_stats.princomp(r_df_data)
-
-    return df_left, df_right
-
-def iterative_pca(df_all,feature_names,num_clusters):
-    df_zscores = zscore_features(df_all, feature_names, None, 1)
-    df_left, df_right = binary_partition(df_zscores)
-
-    #iterative_pca(df_left, features_names, )
 
 
 
-    return
-#############################################################################################
-#############################################################################################
-
-
-
-ZSCORE_OUTLIER_THRESHOLD = 5
 
 # program path on this machine
 # ===================================================================
@@ -512,10 +535,15 @@ def main():
         print(" The %d features that are not closely correlated are %s" %(len(redundancy_removed_features_names),redundancy_removed_features_names))
 
         num_clusters = 10
-       #num_clusters, dunn_index1 = affinity_propagation(merged, redundancy_removed_features_names, output_dir +'/ap_rr_all_features', data_DIR + "/figures/pw_aligned_bmps")
-       # dunn_index2 =  ward_cluster(merged, redundancy_removed_features_names, num_clusters,output_dir +'/ward_rr_all_features', data_DIR + "/figures/pw_aligned_bmps")
+        REMOVE_OUTLIERS = 0
+        postfix="_rr"
+        if REMOVE_OUTLIERS>0:
+            postfix += "_removed"
 
-        dunn_index3= iterative_pca(merged,redundancy_removed_features_names,num_clusters)
+        num_clusters, dunn_index1 = affinity_propagation(merged, redundancy_removed_features_names, output_dir +'/ap_all_features'+postfix, data_DIR + "/figures/pw_aligned_bmps",REMOVE_OUTLIERS)
+        dunn_index2 =  ward_cluster(merged, redundancy_removed_features_names, num_clusters,output_dir +'/ward_all_features'+postfix, data_DIR + "/figures/pw_aligned_bmps",REMOVE_OUTLIERS)
+
+      #  dunn_index3= iterative_pca(merged,redundancy_removed_features_names,num_clusters)
 
 
 if __name__ == "__main__":
