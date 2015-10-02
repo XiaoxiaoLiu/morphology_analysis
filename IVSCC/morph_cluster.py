@@ -105,22 +105,6 @@ def generateLinkerFileFromDF(df_in, output_ano_file, strip_path=False):
     return
 
 
-def generateLinkerFileFromCSV(result_dir, csvfile, column_name, strip_path=True):
-    df = pd.read_csv(csvfile)
-    types = df[column_name]
-    for atype in np.unique(types):
-        idxs = np.nonzero(types == atype)[0]
-        swc_files = df['swc_file']
-        with open(result_dir + '/' + atype + '.ano', 'w') as outf:
-            for afile in swc_files[idxs]:
-                filename = afile
-                if strip_path:
-                    filename = afile.split('/')[-1]
-                line = 'SWCFILE=' + filename + '\n'
-                outf.write(line)
-            outf.close()
-    return
-
 
 ##############  heatmap plot: hierachical clustering  ########
 #
@@ -296,31 +280,39 @@ import math
 def cluster_specific_features(df_all, assign_ids, feature_names, output_csv_fn):
     #student t to get cluster specific features
 
-
+    labels=[]
     clusters = np.unique(assign_ids)
     num_cluster = len(clusters)
     df_pvalues =  pd.DataFrame(index = feature_names, columns = clusters)
-    df_pvalues.
 
     for cluster_id in clusters:
 
         ids_a = np.nonzero(assign_ids == cluster_id)[0]  # starting from  0
         ids_b = np.nonzero(assign_ids != cluster_id)[0]  # starting from  0
-
+        labels.append("C"+str(cluster_id) + "("+ str(len(ids_a))+")" )
         for feature in feature_names:
             a = df_all.iloc[ids_a][feature]
             b = df_all.iloc[ids_b][feature]
-            if len(a) > 2  and  len(b) > 2:
-                pval = stats.ttest_ind(a,b,equal_var=False)[1]
-                df_pvalues.loc[feature,cluster_id] = pval
+
+            t_stats,pval = stats.ttest_ind(a,b,equal_var=False)
+            df_pvalues.loc[feature,cluster_id] = -np.log10(pval)
+
 
     df_pvalues.to_csv(output_csv_fn)
 
 
 
     ### visulaize
+    df_pvalues.index.name = "Features"
+    df_pvalues.columns.name ="Clusters"
+    d=df_pvalues[df_pvalues.columns].astype(float)
+    g = sns.heatmap(data=d,linewidths=0.1)
+     #               cmap =sns.color_palette("coolwarm",7, as_cmap=True))
 
-    g = sns.heatmap(df_pvalues)
+    g.set_xticklabels(labels)
+    pl.yticks(rotation=0)
+    pl.xticks(rotation=90)
+    pl.subplots_adjust(left=0.3, right=0.9, top=0.9, bottom=0.1)
     filename = output_csv_fn + '.png'
     pl.savefig(filename, dpi=300)
     pl.close()
@@ -504,22 +496,17 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
 
 
 ######################################################################################################################
+
 if (platform.system() == "Linux"):
     WORK_PATH = "/local1/xiaoxiaol/work"
 else:
     WORK_PATH = "/Users/xiaoxiaoliu/work"
 
 data_DIR = WORK_PATH + "/data/lims2/0923_pw_aligned"
-default_all_feature_merged_file = data_DIR + '/preprocessed/features_with_db_tags_or.csv'
-
+default_all_feature_merged_file = data_DIR + '/meta_merged_allFeatures.csv'
 default_output_dir = data_DIR + '/clustering_results'
+default_swc_screenshot_folder =  data_DIR + "/figures/pw_aligned_bmps"
 
-
-
-Meta_CSV_FILE = data_DIR + '/IVSCC_qual_calls_XiaoXiao_150cells_092915.csv'
-
-# require the following col names in the merged spread sheet
-col_names = ['specimen_id','specimen_name','cre_line','layer_corrected','dendrite_type','swc_file']
 #######################################################################################################################
 
 
@@ -527,14 +514,17 @@ def main(argv):
     try:
         opts, args = getopt.getopt(argv, "hi:o:m:f:", ["ifile=", "ofile=", "method=", "feature="])
     except getopt.GetoptError:
-        print 'error: morph_cluster.py -i <inputfile> -o <outputfile> [-m <ap/ward/all>] [-f <rr/gmi/all/inv>] '
+        print 'error: morph_cluster.py -i <inputfile> -o <outputfile> [-m <ap/ward/all>] [-f <rr/gmi/all/inv>]'
         #sys.exit(1)
 
     # example default setting
     input_csv_file = default_all_feature_merged_file
     output_dir = default_output_dir
+    swc_screenshot_folder = default_swc_screenshot_folder
+
     method = "all"
     SEL_FEATURE = "all"
+
 
     if len(opts) < 2:
         print 'usage: morph_cluster.py -i <input_csv_file> -o <output_dir> [-m <ap/ward/all>] [-f <rr/gmi/all/inv>]'
@@ -592,27 +582,7 @@ def main(argv):
 
     all_feature_names = np.append(gl_feature_names, gmi_feature_names)
 
-    df_complete = pd.read_csv(all_feature_file)
-
-
-    # merge all info, waiting to get cell_shape tags....
-    df_meta = pd.read_csv(Meta_CSV_FILE)
-
-    merged = pd.merge(df_complete,df_meta,how='inner',on=['specimen_name'])
-
-    output_merged_csv = output_dir+'/meta_merged_allFeatures.csv'
-
-
-    col_names.extend(all_feature_names)
-    print col_names
-
-    merged = merged[col_names]
-    merged[all_feature_names] = merged[all_feature_names].astype(float)
-
-    merged.to_csv(output_merged_csv,index=False)
-    generateLinkerFileFromCSV(output_dir, output_merged_csv,'cre_line',False)
-
-
+    merged = pd.read_csv(all_feature_file)
     print "There are %d neurons in this dataset" % merged.shape[0]
 
     feature_names = all_feature_names
@@ -627,7 +597,7 @@ def main(argv):
 
     postfix = "_" + SEL_FEATURE
 
-    REMOVE_OUTLIERS = 1
+    REMOVE_OUTLIERS = 0
     if REMOVE_OUTLIERS > 0:
         postfix += "_ol_removed"
     else:
@@ -639,13 +609,15 @@ def main(argv):
 
 
     num_clusters = 11
+    if not os.path.exists( swc_screenshot_folder):
+        swc_screenshot_folder = None
     if method == "ap" or method == "all":
         num_clusters, dunn_index1 = affinity_propagation(merged, redundancy_removed_features_names,
                                                      output_dir + '/ap' + postfix,
-                                                     data_DIR + "/figures/pw_aligned_bmps", REMOVE_OUTLIERS)
+                                                    swc_screenshot_folder, REMOVE_OUTLIERS)
     if method == "ward" or method == "all":
         dunn_index2 = ward_cluster(merged, redundancy_removed_features_names, num_clusters,
-                               output_dir + '/ward' + postfix, data_DIR + "/figures/pw_aligned_bmps",
+                               output_dir + '/ward' + postfix, swc_screenshot_folder,
                                REMOVE_OUTLIERS)
 
     #     num_clusters = 10
