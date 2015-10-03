@@ -4,65 +4,37 @@ import argparse
 import pandas as pd
 import matplotlib.pyplot as plt
 import numpy as np
-
-
-
-def  plotResults(data,result_path, XLABEL = "X", YLABEL = "Y",):
-    for i in [3,4,5,6]:
-        d = pd.DataFrame(data[:,i,:], columns = r_values)
-        f = d.plot(kind='box',positions=[1, 3, 5, 6, 7, 9,11])
-        plt.xlabel(XLABEL)
-        plt.ylabel(YLABEL)
-
-        # Remove grid lines (dotted lines inside plot)
-        f.grid(False)
-        plt.title(param_names[i])
-
-        fig_file_name = result_path +"/" + XLABEL + "_"+  YLABEL+ "_"+ param_names[i]+"_plot.png"
-        plt.savefig(fig_file_name, bbox_inches="tight")
-        print "saved figure:"+ fig_file_name
-
-    plt.show()
-
-
-def  plotResults2(data,result_path, XLABEL = "X", YLABEL = "Y",):
-
-    for i in [3,4,5,6]:
-        d = pd.DataFrame(data[:,i,:], columns = p_values)
-        f = d.plot(kind='box')
-        plt.xlabel(XLABEL)
-        plt.ylabel(YLABEL)
-
-        # Remove grid lines (dotted lines inside plot)
-        f.grid(False)
-        plt.title(param_names[i])
-
-        fig_file_name = result_path +"/" + XLABEL + "_"+  YLABEL+ "_"+ param_names[i]+"_plot.png"
-        plt.savefig(fig_file_name, bbox_inches="tight")
-        print "saved figure:"+ fig_file_name
-
-    plt.show()
-
-def  plotResults3(data,result_path, XLABEL = "X", YLABEL = "Y",):
-        d = pd.DataFrame(data, columns = p_values)
-        f = d.plot(kind='box')
-        plt.xlabel(XLABEL)
-        plt.ylabel(YLABEL)
-
-        # Remove grid lines (dotted lines inside plot)
-        f.grid(False)
-
-        fig_file_name = result_path +"/" + XLABEL + "_"+  YLABEL+ "_plot.png"
-        plt.savefig(fig_file_name, bbox_inches="tight")
-        print "saved figure:"+ fig_file_name
-       
-        plt.show()
+import seaborn as sns
 
 
 param_names =['PID','A1','A2','Ri','Cm','Rm','error']
 sample_size = 55
 r_values = [0.5,0.7,0.9,1.0,1.1,1.3,1.5]
 p_values = np.arange(0,0.35,0.05)
+
+
+def  plotResults(data,result_path, column_names,  XLABEL = "X",  YLABEL = "Y",):
+    for i in [3,4,5,6]:
+#3: Ri  49.2903334908
+#4: Cm  2.3995967695
+#5: Rm  2782.21957025
+#6: Final error  0.000228200455599
+        d = pd.DataFrame(data[:,i,:], columns = column_names)
+        fig_file_name = result_path +"/" +param_names[i]+"_plot.png"
+        my_box_plot(d, result_path, column_names, XLABEL, YLABEL, fig_file_name)
+
+
+def  my_box_plot(data,result_path, column_names,  XLABEL = "X", YLABEL = "Y", output_fig_fn):
+        d = pd.DataFrame(data, columns = column_names)
+        f = sns.boxplot(data=d)
+        plt.xlabel(XLABEL)
+        plt.ylabel(YLABEL)
+
+        fig_file_name = result_path +"/" + output_fig_fn
+        plt.savefig(fig_file_name, bbox_inches="tight")
+        print "saved figure:"+ fig_file_name
+
+
 
 # scale up and down radius of neurons to see how it affects passive parameters of the NEURON model fitting
 if __name__ == "__main__":
@@ -90,23 +62,23 @@ if __name__ == "__main__":
 
 
         # plot the raw results
-        plotResults(m,result_dir,'Radius Scale', 'Fitted Parameter Value')
+        plotResults(m,result_dir, r_values,'Radius Scale', 'Fitted Parameter Value')
 
 
         norm_m = np.zeros(m.shape)
         for i in range(len(r_values)):
             norm_m[:,:,i] = np.divide(m[:,:,i], m[:,:,3]) # r=1.0 is the original model fitting results
-        plotResults(norm_m,result_dir,'Radius Scale','Fitted Parameter Factor')
+        #plotResults(norm_m,result_dir,'Radius Scale','Fitted Parameter Factor')
 
         CmTotal = np.zeros((sample_size, len(r_values)))
         for i in range(len(r_values)):
             CmTotal[:,i] = m[:,4,i] * (m[:,1,i]+ m[:,2,i])  # Cm * (A1+A2) p=0.0 is the original model fitting results
-        plotResults3(CmTotal,result_dir,'Radius Scale','Total Capacitance')
+        #plotResults3(CmTotal,result_dir,'Radius Scale','Total Capacitance')
 
         RmTotal = np.zeros((sample_size, len(r_values)))
         for i in range(len(p_values)):
             RmTotal[:,i] = m[:,5,i] / (m[:,1,i]+ m[:,2,i])  # Rm / (A1+A2) 
-        plotResults3(CmTotal,result_dir,'Prune Threshold','Total Membrane Resistance')
+        #plotResults3(RmTotal,result_dir,'Prune Threshold','Total Membrane Resistance')
 
     if True:
         result_dir = '/home/xiaoxiaol/work/data/lims2/modified_neurons_p'
