@@ -19,4 +19,5 @@ python run_feature_calculation.py
 
 
 # 5. clustering
-#python hierachical_cluster_vis.py
+# python merge_meta_info.py
+# morph_cluster.sh

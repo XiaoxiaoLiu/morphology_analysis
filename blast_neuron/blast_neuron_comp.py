@@ -6,6 +6,10 @@ import random
 import subprocess, threading
 
 
+#V3D="/Users/xiaoxiaoliu/work/v3d/v3d_external/bin/vaa3d64.app/Contents/MacOS/vaa3d64"
+V3D= "/local1/xiaoxiaol/work/v3d/v3d_external/bin/vaa3d"
+QMasterV3D = "/data/mat/xiaoxiaol/work/bin/bin_vaa3d_for_clusters/vaa3d"
+
 
 class Command(object):
     def __init__(self, cmd):
@@ -30,9 +34,6 @@ class Command(object):
         print self.process.returncode
 
 
-#V3D="/Users/xiaoxiaoliu/work/v3d/v3d_external/bin/vaa3d64.app/Contents/MacOS/vaa3d64"
-V3D= "/local1/xiaoxiaol/work/v3d/v3d_external/bin/vaa3d"
-QMasterV3D = "/data/mat/xiaoxiaol/work/bin/bin_vaa3d_for_clusters/vaa3d"
 
 
 def gen_qsub_script(cmd, job_name, script_fn):
@@ -272,5 +273,17 @@ def genLinkerFileFromList(listCSVFile, linkFile):
 
 
 
+WORK_PATH = "/local1/xiaoxiaol/work"
+MRMR= WORK_PATH+"/src/mrmr_c_src/mrmr"
+def selectFeatures_MRMR(df_all, feature_names,  threshold=0, number_of_features=10, selection_method='MID', data_DIR="."):
+    #write out feature array into a csv file, then execute MRMR
 
+
+    csvfile = data_DIR+"/zscore_for_mrmr.csv"
+    np.savetxt(csvfile, featureArray, delimiter=",")
+    # call MRMR
+    cmd = MRMR +  " -i "+ csvfile + " -t "+ threshold + " -n " + number_of_features
+    print cmd
+    os.system(cmd)
+    return
 

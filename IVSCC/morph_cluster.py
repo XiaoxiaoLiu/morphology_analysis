@@ -16,7 +16,8 @@ import glob
 
 
 ####################################
-ZSCORE_OUTLIER_THRESHOLD = 5.0
+ZSCORE_OUTLIER_THRESHOLD = 3.5
+REMOVE_OUTLIERS = 0
 ####################################
 
 def zscore(features, remove_outlier=0):
@@ -152,23 +153,36 @@ def generateLinkerFileFromDF(df_in, output_ano_file, strip_path=False):
 
 def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
 
+    # Create a custom palette for dendrite_type colors
+    dendrite_types = np.unique(df_all['dendrite_type'])
+    # dendrite_type_pal = sns.color_palette("coolwarm", len(dendrite_types))
+    dendrite_type_pal = sns.color_palette(["blue","gray","red"])
+    dendrite_type_lut = dict(zip(dendrite_types, dendrite_type_pal))
+    dendrite_type_colors = df_all['dendrite_type'].map(dendrite_type_lut)
+
+
     # Create a custom palette for creline colors
     cre_lines = np.unique(df_all['cre_line'])
     cre_line_pal = sns.color_palette("hls", len(cre_lines))
     cre_line_lut = dict(zip(cre_lines, cre_line_pal))  # map creline type to color
     cre_line_colors = df_all['cre_line'].map(cre_line_lut)
 
-    # Create a custom palette for dendrite_type colors
-    dendrite_types = np.unique(df_all['dendrite_type'])
-    dendrite_type_pal = sns.color_palette("coolwarm", len(dendrite_types))
-    dendrite_type_lut = dict(zip(dendrite_types, dendrite_type_pal))
-    dendrite_type_colors = df_all['dendrite_type'].map(dendrite_type_lut)
 
 
     layers = np.unique(df_all['layer_corrected'])
     layer_pal = sns.light_palette("green", len(layers))
-    layer_lut = dict(zip(layers, layer_pal))  # map creline type to color
+    layer_lut = dict(zip(layers, layer_pal))
     layer_colors = df_all['layer_corrected'].map(layer_lut)
+
+
+    types = np.unique(df_all['types'])
+    type_pal = sns.color_palette("hls", len(types))
+    type_lut = dict(zip(types, type_pal))
+    type_colors = df_all['types'].map(type_lut)
+
+
+
+
 
     # Create a custom colormap for the heatmap values
     #cmap = sns.diverging_palette(240, 10, as_cmap=True)
@@ -177,8 +191,8 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
 
 
 
-    g = sns.clustermap(df_zscore_features.transpose(), row_cluster = False, col_linkage=linkage, method='ward', metric='euclidean',
-                       linewidths = 0.1, col_colors = [dendrite_type_colors,cre_line_colors,layer_colors],cmap = sns.cubehelix_palette(light=1, as_cmap=True),
+    g = sns.clustermap(df_zscore_features.transpose(), row_cluster = True, col_linkage=linkage, method='ward', metric='euclidean',
+                       linewidths = 0.1, col_colors = [dendrite_type_colors,layer_colors,cre_line_colors],cmap = sns.cubehelix_palette(light=1, as_cmap=True),
                        xticklabels=False, yticklabels=True,figsize=(15,7))
     if title:
         pl.title(title)
@@ -186,16 +200,22 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
 
     # Legend for row and col colors
     for label in dendrite_types:
-       g.ax_col_dendrogram.bar(0, 0, color=dendrite_type_lut[label], label=label, linewidth=0)
-       g.ax_col_dendrogram.legend(loc="best", ncol=1)
+         g.ax_row_dendrogram.bar(0,0, color = dendrite_type_lut[label], label=label, linewidth=0.0)
+         g.ax_row_dendrogram.legend(loc="upper left", ncol=1, borderpad=0.0)
 
-    for label in cre_lines:
-         g.ax_row_dendrogram.bar(0, 0, color=cre_line_lut[label], label=label, linewidth=0)
-         g.ax_row_dendrogram.legend(loc="upper left", ncol=1, fancybox = True)
 
     for label in layers:
-         g.ax_row_dendrogram.bar(0, 0, color=layer_lut[label], label=label, linewidth=0)
-         g.ax_row_dendrogram.legend(loc="lower left", ncol=1,fancybox=True)
+         g.ax_row_dendrogram.bar(0, 0, color=layer_lut[label], label=label, linewidth=0.0)
+         g.ax_row_dendrogram.legend(loc="center left", ncol=1)
+
+
+    for label in cre_lines:
+         g.ax_row_dendrogram.bar(0, 0, color=cre_line_lut[label], label=label, linewidth=0.0)
+         g.ax_row_dendrogram.legend(loc="lower left", ncol=1,borderpad=0.5)
+    #
+    # for label in types:
+    #      g.ax_row_dendrogram.bar(0, 0, color=type_lut[label], label=label, linewidth=0.0)
+    #      g.ax_row_dendrogram.legend(loc="upper right", ncol=1,borderpad=0.5)
 
 
     pl.title('zscore')
@@ -313,6 +333,7 @@ def cluster_specific_features(df_all, assign_ids, feature_names, output_csv_fn):
     pl.yticks(rotation=0)
     pl.xticks(rotation=90)
     pl.subplots_adjust(left=0.3, right=0.9, top=0.9, bottom=0.1)
+    pl.title('-log(P value)')
     filename = output_csv_fn + '.png'
     pl.savefig(filename, dpi=300)
     pl.close()
@@ -346,9 +367,11 @@ def get_zscore_features(df_all, feature_names, out_file, REMOVE_OUTLIER=0,
             df_all_modified = df_all_modified.drop(df_all_modified.index[outlier_index])
             normalized = np.delete(normalized, outlier_index, 0)
 
-            # re-zscoring
-            #m_featureArray = df_all_modified[feature_names].astype(float)
-            #normalized = zscore(m_featureArray)
+            # re-zscoring and clipping
+            # m_featureArray = df_all_modified[feature_names].astype(float)
+            # normalized = zscore(m_featureArray)
+            # normalized[normalized < -zscore_threshold] = -zscore_threshold
+            # normalized[normalized > zscore_threshold] = zscore_threshold
 
 
             print("Removed %d outlier neurons" % len(outlier_index))
@@ -495,6 +518,32 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
     return len(np.unique(labels)), dunn_index
 
 
+
+WORK_PATH = "/local1/xiaoxiaol/work"
+MRMR= WORK_PATH+"/src/mrmr_c_src/mrmr"
+def selectFeatures_MRMR(df_all, feature_names,  threshold=0, number_of_features=10, selection_method='MID', data_DIR="."):
+    #write out feature array into a csv file, then execute MRMR
+
+    featureArray = df_all[feature_names].astype(float)
+    normalized = zscore(featureArray)
+    df_z = pd.DataFrame(normalized)
+    df_z.columns = feature_names
+    df_z['class'] = df_all['types'].values
+    list = ['class']
+    list.extend(feature_names)
+    df_z = df_z[list]  # reorder
+
+    csvfile = data_DIR+"/zscore_for_mrmr.csv"
+
+    df_z.to_csv(csvfile, index = False)
+    # call MRMR
+    cmd = MRMR +  " -i "+ csvfile + " -t "+ str(threshold) + " -n " + str(number_of_features)
+    print cmd
+    os.system(cmd)
+    return
+
+
+
 ######################################################################################################################
 
 if (platform.system() == "Linux"):
@@ -523,7 +572,7 @@ def main(argv):
     swc_screenshot_folder = default_swc_screenshot_folder
 
     method = "all"
-    SEL_FEATURE = "all"
+    SEL_FEATURE = "mrmr"
 
 
     if len(opts) < 2:
@@ -566,12 +615,12 @@ def main(argv):
          'bifurcation_angle_remote'])
 
     # remove scales
-    gl_feature_names_inv = np.array(
-        ['num_nodes', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips',
-         'average_diameter', 'total_length',
-         'total_surface', 'total_volume', 'max_euclidean_distance', 'max_path_distance', 'max_branch_order',
-         'average_contraction', 'average fragmentation', 'parent_daughter_ratio', 'bifurcation_angle_local',
-         'bifurcation_angle_remote'])
+    # gl_feature_names_inv = np.array(
+    #     ['num_nodes', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips',
+    #      'average_diameter', 'total_length',
+    #      'total_surface', 'total_volume', 'max_euclidean_distance', 'max_path_distance', 'max_branch_order',
+    #      'average_contraction', 'average fragmentation', 'parent_daughter_ratio', 'bifurcation_angle_local',
+    #      'bifurcation_angle_remote'])
 
     gmi_feature_names = np.array(
         ['moment1', 'moment2', 'moment3', 'moment4', 'moment5', 'moment6', 'moment7', 'moment8',
@@ -592,18 +641,22 @@ def main(argv):
         feature_names = gmi_feature_names
     if SEL_FEATURE == "inv":
         feature_names = gl_feature_names_inv
-        #if SEL_FEATURE ==  "mrmr"
-        #    feature_names = mrmr_feature_names
+    if SEL_FEATURE ==  "mrmr":
+         #selectFeatures_MRMR(merged, all_feature_names,4, 10,'MID', data_DIR)
+         # get the number from console
+         feature_names = all_feature_names[[26-1,28-1,22-1,19-1,27-1,17-1,29-1,31-1,33-1,20-1]]
+
+
 
     postfix = "_" + SEL_FEATURE
 
-    REMOVE_OUTLIERS = 0
+
     if REMOVE_OUTLIERS > 0:
         postfix += "_ol_removed"
     else:
         postfix += "_ol_clipped"
 
-    redundancy_removed_features_names = remove_correlated_features(merged, feature_names, 0.98)
+    redundancy_removed_features_names = remove_correlated_features(merged, feature_names, 0.95)
     print(" The %d features that are not closely correlated are %s" % (
         len(redundancy_removed_features_names), redundancy_removed_features_names))
 

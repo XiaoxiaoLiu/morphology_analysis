@@ -61,7 +61,7 @@ Meta_CSV_FILE = data_DIR + '/IVSCC_qual_calls_XiaoXiao_150cells_092915.csv'
 
 
 # require the following col names in the merged spread sheet
-col_names = ['specimen_id','specimen_name','cre_line','layer_corrected','dendrite_type','swc_file']
+col_names = ['specimen_id','specimen_name','cre_line','layer_corrected','dendrite_type','swc_file','types']
 all_feature_names = np.append(gl_feature_names, gmi_feature_names)
 col_names.extend(all_feature_names)
 
@@ -80,3 +80,4 @@ output_merged_csv = data_DIR+'/meta_merged_allFeatures.csv'
 merged.to_csv(output_merged_csv,index=False)
 
 generateLinkerFileFromCSV(output_dir, output_merged_csv,'cre_line',False)
+
