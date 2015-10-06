@@ -81,3 +81,4 @@ merged.to_csv(output_merged_csv,index=False)
 
 generateLinkerFileFromCSV(output_dir, output_merged_csv,'cre_line',False)
 
+generateLinkerFileFromCSV(output_dir, output_merged_csv,'types',False)
