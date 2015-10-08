@@ -333,7 +333,7 @@ def cluster_specific_features(df_all, assign_ids, feature_names, output_csv_fn):
     pl.yticks(rotation=0)
     pl.xticks(rotation=90)
     pl.subplots_adjust(left=0.3, right=0.9, top=0.9, bottom=0.1)
-    pl.title('-log(P value)')
+    pl.title('-log10(P value)')
     filename = output_csv_fn + '.png'
     pl.savefig(filename, dpi=300)
     pl.close()
@@ -485,8 +485,8 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_d
 
 ######  Affinity Propogation ##############
 from sklearn.cluster import AffinityPropagation
-
-
+from sklearn import metrics
+from itertools import cycle
 def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, RemoveOutliers=0):
     print("\n\n\n ***************  affinity propogation computation ****************:")
 
@@ -507,14 +507,10 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
     cluster_centers_indices = af.cluster_centers_indices_
     labels = af.labels_
     labels = labels + 1  # the default labels start from 0, to be consistent with ward, add 1 so that it starts from 1
-
     clusters_list = output_clusters(labels, df_zscores, df_all_outlier_removed, feature_names, output_dir,
                                     snapshots_dir)
     dunn_index = dunn(clusters_list)
     print("dunn index is %f" % dunn_index)
-
-
-
     return len(np.unique(labels)), dunn_index
 
 
@@ -572,7 +568,7 @@ def main(argv):
     swc_screenshot_folder = default_swc_screenshot_folder
 
     method = "all"
-    SEL_FEATURE = "mrmr_5"
+    SEL_FEATURE = "all"
 
 
     if len(opts) < 2:
