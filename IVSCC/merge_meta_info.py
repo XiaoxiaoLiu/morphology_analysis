@@ -25,13 +25,13 @@ def assemble_screenshots(input_dir, output_image_file_name, size):
     if len(files) < 1 :
         print "no BMP files found"
         return
-    # cols = len(files)
-    # rows = 1
+    cols = len(files)
+    rows = 1
     # if cols >100:
     #     assemble_image = Image.new("RGB", (size * cols,size*rows))
     #     cols = 10
     #     rows = np.ceil( len(files)/10.0)
-
+    assemble_image = Image.new("RGB", (size * cols,size*rows))
     y=0
     for infile in files:
         if infile:
@@ -69,7 +69,10 @@ gl_feature_names = np.array(
          'overall_width', 'overall_height', 'overall_depth', 'average_diameter', 'total_length',
          'total_surface', 'total_volume', 'max_euclidean_distance', 'max_path_distance', 'max_branch_order',
          'average_contraction', 'average fragmentation', 'parent_daughter_ratio', 'bifurcation_angle_local',
-         'bifurcation_angle_remote'])
+         'bifurcation_angle_remote','height_width_ratio','average_branch_length','length_surface_ratio'])
+
+
+
 
 # remove scales
 gl_feature_names_inv = np.array(
@@ -92,11 +95,15 @@ else:
     WORK_PATH = "/Users/xiaoxiaoliu/work"
 
 data_DIR = WORK_PATH + "/data/lims2/0923_pw_aligned"
-all_feature_file = data_DIR + '/preprocessed/features_with_db_tags_or.csv'
+all_feature_file = data_DIR + '/preprocessed/features_with_db_tags.csv'
+
+
+
+
+
 output_dir = data_DIR + '/clustering_results'
 Meta_CSV_FILE = data_DIR + '/IVSCC_qual_calls_XiaoXiao_150cells_092915.csv'
-
-
+to_remove_filename = data_DIR +'/wrong_scale_removed.csv'
 
 
 
@@ -106,11 +113,15 @@ all_feature_names = np.append(gl_feature_names, gmi_feature_names)
 col_names.extend(all_feature_names)
 
 
-
+# remove outliers identified in
+df_remove  = pd.read_csv(to_remove_filename)
 df_complete = pd.read_csv(all_feature_file)
+df_complete_filter = df_complete[~df_complete['specimen_name'].isin(df_remove['specimen_name'])]
+
 df_meta = pd.read_csv(Meta_CSV_FILE)
 
-merged = pd.merge(df_complete,df_meta,how='inner',on=['specimen_name'])
+
+merged = pd.merge(df_complete_filter,df_meta,how='inner',on=['specimen_name'])
 
 merged = merged[col_names]
 merged[all_feature_names] = merged[all_feature_names].astype(float)

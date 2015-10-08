@@ -14,7 +14,6 @@ import glob
 
 
 
-
 ####################################
 ZSCORE_OUTLIER_THRESHOLD = 3.5
 REMOVE_OUTLIERS = 0
@@ -573,6 +572,8 @@ def main(argv):
 
     if len(opts) < 2:
         print 'usage: morph_cluster.py -i <input_csv_file> -o <output_dir> [-m <ap/ward/all>] [-f <rr/gmi/all/inv>]'
+
+        sys.stdout = open(output_dir + '/'+method + '_' +SEL_FEATURE+'.log', 'w')
         #sys.exit(2)
 
     for opt, arg in opts:
@@ -602,14 +603,12 @@ def main(argv):
     all_feature_file = input_csv_file
     #########################################################
 
-
     gl_feature_names = np.array(
-        ['num_nodes', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips',
-         'overall_width', 'overall_height', 'overall_depth', 'average_diameter', 'total_length',
+        ['total_length', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips',
+         'overall_width', 'overall_height', 'overall_depth', 'average_diameter', 'num_nodes',
          'total_surface', 'total_volume', 'max_euclidean_distance', 'max_path_distance', 'max_branch_order',
          'average_contraction', 'average fragmentation', 'parent_daughter_ratio', 'bifurcation_angle_local',
-         'bifurcation_angle_remote'])
-
+         'bifurcation_angle_remote','height_width_ratio','average_branch_length','length_surface_ratio'])
     # remove scales
     # gl_feature_names_inv = np.array(
     #     ['num_nodes', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips',
@@ -637,10 +636,10 @@ def main(argv):
         feature_names = gmi_feature_names
     if SEL_FEATURE == "inv":
         feature_names = gl_feature_names_inv
-    if SEL_FEATURE ==  "mrmr_5":
+    if SEL_FEATURE ==  "mrmr":
          #selectFeatures_MRMR(merged, all_feature_names,4, 10,'MID', data_DIR)
          # get the number from console
-         feature_names = all_feature_names[[26-1,28-1,22-1,19-1,27-1]]#,17-1,29-1,31-1,33-1,20-1]]
+         feature_names =[]
 
 
 
