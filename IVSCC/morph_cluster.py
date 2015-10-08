@@ -192,7 +192,7 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
 
 
     g = sns.clustermap(df_zscore_features.transpose(), row_cluster = True, col_linkage=linkage, method='ward', metric='euclidean',
-                       linewidths = 0.1, col_colors = [dendrite_type_colors,layer_colors,cre_line_colors],cmap = sns.cubehelix_palette(light=1, as_cmap=True),
+                       linewidths = 0.1, col_colors = [dendrite_type_colors,layer_colors,type_colors],cmap = sns.cubehelix_palette(light=1, as_cmap=True),
                        xticklabels=False, yticklabels=True,figsize=(15,7))
     if title:
         pl.title(title)
@@ -200,22 +200,22 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
 
     # Legend for row and col colors
     for label in dendrite_types:
-         g.ax_row_dendrogram.bar(0,0, color = dendrite_type_lut[label], label=label, linewidth=0.0)
-         g.ax_row_dendrogram.legend(loc="upper left", ncol=1, borderpad=0.0)
+         g.ax_row_dendrogram.bar(0, 0, color = dendrite_type_lut[label], label=label, linewidth=1)
+         g.ax_row_dendrogram.legend(loc="best", ncol=1, borderpad=0.0)
 
 
     for label in layers:
-         g.ax_row_dendrogram.bar(0, 0, color=layer_lut[label], label=label, linewidth=0.0)
-         g.ax_row_dendrogram.legend(loc="center left", ncol=1)
+         g.ax_row_dendrogram.bar(0, 0, color=layer_lut[label], label=label, linewidth=1)
+         g.ax_row_dendrogram.legend(loc="best", ncol=1,borderpad=0.5)
 
 
-    for label in cre_lines:
-         g.ax_row_dendrogram.bar(0, 0, color=cre_line_lut[label], label=label, linewidth=0.0)
-         g.ax_row_dendrogram.legend(loc="lower left", ncol=1,borderpad=0.5)
+    # for label in cre_lines:
+    #      g.ax_row_dendrogram.bar(0, 0, color=cre_line_lut[label], label=label, linewidth=0.0)
+    #      g.ax_row_dendrogram.legend(loc="lower left", ncol=1,borderpad=0.5)
     #
-    # for label in types:
-    #      g.ax_row_dendrogram.bar(0, 0, color=type_lut[label], label=label, linewidth=0.0)
-    #      g.ax_row_dendrogram.legend(loc="upper right", ncol=1,borderpad=0.5)
+    for label in types:
+         g.ax_row_dendrogram.bar(0, 0, color=type_lut[label], label=label, linewidth=1)
+         g.ax_row_dendrogram.legend(loc="best", ncol=1,borderpad=0.5)
 
 
     pl.title('zscore')
@@ -572,7 +572,7 @@ def main(argv):
     swc_screenshot_folder = default_swc_screenshot_folder
 
     method = "all"
-    SEL_FEATURE = "mrmr"
+    SEL_FEATURE = "mrmr_5"
 
 
     if len(opts) < 2:
@@ -641,10 +641,10 @@ def main(argv):
         feature_names = gmi_feature_names
     if SEL_FEATURE == "inv":
         feature_names = gl_feature_names_inv
-    if SEL_FEATURE ==  "mrmr":
+    if SEL_FEATURE ==  "mrmr_5":
          #selectFeatures_MRMR(merged, all_feature_names,4, 10,'MID', data_DIR)
          # get the number from console
-         feature_names = all_feature_names[[26-1,28-1,22-1,19-1,27-1,17-1,29-1,31-1,33-1,20-1]]
+         feature_names = all_feature_names[[26-1,28-1,22-1,19-1,27-1]]#,17-1,29-1,31-1,33-1,20-1]]
 
 
 
@@ -661,7 +661,7 @@ def main(argv):
         len(redundancy_removed_features_names), redundancy_removed_features_names))
 
 
-    num_clusters = 11
+    num_clusters = 10
     if not os.path.exists( swc_screenshot_folder):
         swc_screenshot_folder = None
     if method == "ap" or method == "all":

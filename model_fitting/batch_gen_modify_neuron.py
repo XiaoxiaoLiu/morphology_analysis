@@ -66,7 +66,7 @@ if __name__ == "__main__":
                     outputSWC_file = outputfolder +'/'+swc_filename
                     run_radius_modifier(inputSWC_file, outputSWC_file, r_scale, x_scale,y_scale, z_scale, prune_level )
 
-    if True:  # BRANCH
+    if FALSE:  # BRANCH
         for prune_level in np.arange(0.05,0.35,0.05):
             subfolder = 'r'+ str(r_scale) +'_x'+str(x_scale) + '_y'+str(z_scale)+ '_z'+str(z_scale) + '_p'+str(prune_level)
             outputfolder = result_dir +'/'+subfolder
