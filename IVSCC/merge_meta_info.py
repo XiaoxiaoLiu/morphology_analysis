@@ -3,6 +3,46 @@ __author__ = 'xiaoxiaoliu'
 import platform
 import pandas as pd
 import numpy as np
+import os
+def copySnapshots(df_in, snapshots_dir, output_dir):
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+    swc_files = df_in['swc_file']
+    if len(swc_files) > 0:
+        for afile in swc_files:
+            filename = snapshots_dir + '/' + afile.split('/')[-1] + '.BMP'
+            if os.path.exists(filename):
+                os.system("cp  " + filename + "  " + output_dir + "/\n")
+    return
+
+
+
+import glob
+from PIL import Image
+def assemble_screenshots(input_dir, output_image_file_name, size):
+    files = glob.glob(input_dir + "/*.BMP")
+
+    if len(files) < 1 :
+        print "no BMP files found"
+        return
+    # cols = len(files)
+    # rows = 1
+    # if cols >100:
+    #     assemble_image = Image.new("RGB", (size * cols,size*rows))
+    #     cols = 10
+    #     rows = np.ceil( len(files)/10.0)
+
+    y=0
+    for infile in files:
+        if infile:
+            im = Image.open(infile)
+            im.thumbnail((size, size), Image.ANTIALIAS)
+            assemble_image.paste(im, (y, 0))
+            y += size
+    print output_image_file_name
+    assemble_image.save(output_image_file_name)
+
+    return
 
 
 
@@ -81,4 +121,15 @@ merged.to_csv(output_merged_csv,index=False)
 
 generateLinkerFileFromCSV(output_dir, output_merged_csv,'cre_line',False)
 
-generateLinkerFileFromCSV(output_dir, output_merged_csv,'types',False)
+#generateLinkerFileFromCSV(output_dir, output_merged_csv,'types',False)
+
+
+output_dir= data_DIR + '/figures/staci_types'
+swc_screenshot_folder =  data_DIR + "/figures/pw_aligned_bmps"
+types = np.unique(merged['types'])
+for type in types:
+    print type
+    df_type = merged[merged.types == type]
+    type_format_string = '_'.join(type.split(" "))
+    copySnapshots(df_type, swc_screenshot_folder, output_dir + '/' +type_format_string )
+    assemble_screenshots(output_dir + '/' + type_format_string, output_dir + '/' +type_format_string+ '_assemble.png', 128)
