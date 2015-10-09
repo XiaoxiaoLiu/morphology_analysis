@@ -51,7 +51,7 @@ else:
     WORK_PATH = "/Users/xiaoxiaoliu/work"
 
 data_DIR = WORK_PATH + "/data/lims2/0923_pw_aligned"
-df = pd.read_csv(data_DIR +'/preprocessed/list.csv')
+df = pd.read_csv(data_DIR +'/preprocessed-with_axon/list.csv')
 output_dir = data_DIR +'/axon_removed'
 if not os.path.exists(output_dir):
         os.mkdir(output_dir)
@@ -59,4 +59,4 @@ if not os.path.exists(output_dir):
 for i in range(df.shape[0]):
      swc_file = df['swc_file'][i]
      output_swc_file = output_dir+'/'+swc_file[0:-4]+'.swc'
-     remove_swc_by_id(2, data_DIR+'/preprocessed/'+swc_file, output_swc_file)
+     remove_swc_by_id(2, data_DIR+'/preprocessed-with_axon/'+swc_file, output_swc_file)

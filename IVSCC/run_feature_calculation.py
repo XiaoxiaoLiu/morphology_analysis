@@ -1,8 +1,15 @@
 import os
 from os import sys, path
+import platform
 
-p = path.dirname(path.dirname(path.abspath(__file__)))
-p=  '/local1/xiaoxiaol/work/src/cell-type-analysis'
+
+if (platform.system() == "Linux"):
+    WORK_PATH = "/local1/xiaoxiaol/work"
+else:
+    WORK_PATH = "/Users/xiaoxiaoliu/work"
+
+
+p=  WORK_PATH + '/src/cell-type-analysis'
 sys.path.append(p)
 
 sys.path.append(p + '/utilities')
@@ -13,6 +20,7 @@ import blast_neuron_comp as bn
 
 import glob
 import pandas as pd
+
 
 
 
@@ -57,7 +65,7 @@ def cal_bn_features(original_dir,preprocessed_dir):
 
         preprocessed_swc_fn = preprocessed_dir+'/' + swc_fn
         bn.resample(input_swc_path, preprocessed_swc_fn)  ## due to the pw alignment, no  alignment are necessary
-        #bn.pre_processing(input_swc_path, preprocessed_swc_fn)
+        ##bn.pre_processing(input_swc_path, preprocessed_swc_fn)
 
     preprocessed_ANO = preprocessed_dir + "/preprocessed.ano"
     bn.genLinkerFile(preprocessed_dir, preprocessed_ANO)
@@ -73,7 +81,7 @@ def cal_bn_features(original_dir,preprocessed_dir):
 
 ###############################################################################
 #data_DIR = '/data/mat/xiaoxiaol/data/lims2/0903_filtered_ephys_qc'
-data_DIR = '/data/mat/xiaoxiaol/data/lims2/0923_pw_aligned'
+data_DIR = WORK_PATH +'/data/lims2/0923_pw_aligned'
 # /original stores the downloaded swc files
 original_dir = data_DIR + "/pw_aligned"
 preprocessed_dir = data_DIR + "/preprocessed"
@@ -92,7 +100,6 @@ def main():
     # clean up db tags
     df_db_tags= cleanup_query_csv(db_tags_csv_file)
 
-
     # merge all info
     df_features = pd.read_csv(preprocessed_dir + '/features_with_tags.csv')
 
@@ -104,7 +111,19 @@ def main():
 
     merged = pd.merge(df_db_tags, df_features, how='inner', on=['swc_file_name'])
     merged.drop(['orca_path', 'swc_file_name', 'region_info'], axis=1, inplace=True)
+
+
+    # add three more tags
+    # modify height width depth
+
+
+
     merged.to_csv(preprocessed_dir + '/features_with_db_tags.csv')
+
+
+
+    # add three more tags
+    # modify height width depth
 
     return
 

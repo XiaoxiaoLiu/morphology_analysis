@@ -4,10 +4,15 @@
 import os
 import random
 import subprocess, threading
+import platform 
 
 
-#V3D="/Users/xiaoxiaoliu/work/v3d/v3d_external/bin/vaa3d64.app/Contents/MacOS/vaa3d64"
-V3D= "/local1/xiaoxiaol/work/v3d/v3d_external/bin/vaa3d"
+V3D=""
+if (platform.system() == "Linux"):
+    V3D= "/local1/xiaoxiaol/work/v3d/v3d_external/bin/vaa3d"
+else:
+    V3D="/Users/xiaoxiaoliu/work/v3d/v3d_external/bin/vaa3d64.app/Contents/MacOS/vaa3d64"
+
 QMasterV3D = "/data/mat/xiaoxiaol/work/bin/bin_vaa3d_for_clusters/vaa3d"
 
 

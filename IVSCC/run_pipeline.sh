@@ -19,12 +19,12 @@ remove_axon.py
 
 chang axon_removed to preprocessed
 
-#4. run feature calculation
+#4. run feature calculation, make sure resample is disabled
 python run_feature_calculation.py
 
 features_with_db_tags
-generate three more features in excel  (change height, width,depth
-
+#generate three more features in excel  (change height, width,depth
+add_features.py
 
 # 5. clustering
 # python merge_meta_info.py

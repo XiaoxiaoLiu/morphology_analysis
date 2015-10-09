@@ -95,14 +95,14 @@ else:
     WORK_PATH = "/Users/xiaoxiaoliu/work"
 
 data_DIR = WORK_PATH + "/data/lims2/0923_pw_aligned"
-all_feature_file = data_DIR + '/preprocessed/features_with_db_tags.csv'
+all_feature_file = data_DIR + '/preprocessed/features_with_db_tags_added.csv'
 
 
 
 
 
 output_dir = data_DIR + '/clustering_results'
-Meta_CSV_FILE = data_DIR + '/IVSCC_qual_calls_XiaoXiao_150cells_092915.csv'
+Meta_CSV_FILE = data_DIR + '/IVSCC_qual_calls_XiaoXiao_150cells_092915-UPDATED3.csv'
 to_remove_filename = data_DIR +'/wrong_scale_removed.csv'
 
 
@@ -117,6 +117,7 @@ col_names.extend(all_feature_names)
 df_remove  = pd.read_csv(to_remove_filename)
 df_complete = pd.read_csv(all_feature_file)
 df_complete_filter = df_complete[~df_complete['specimen_name'].isin(df_remove['specimen_name'])]
+# !!!!! df_complete_filter drop  dendrite_type and layer
 
 df_meta = pd.read_csv(Meta_CSV_FILE)
 
@@ -130,12 +131,13 @@ merged[all_feature_names] = merged[all_feature_names].astype(float)
 output_merged_csv = data_DIR+'/meta_merged_allFeatures.csv'
 merged.to_csv(output_merged_csv,index=False)
 
-generateLinkerFileFromCSV(output_dir, output_merged_csv,'cre_line',False)
+#generateLinkerFileFromCSV(output_dir, output_merged_csv,'cre_line',False)
 
-#generateLinkerFileFromCSV(output_dir, output_merged_csv,'types',False)
+
 
 
 output_dir= data_DIR + '/figures/staci_types'
+generateLinkerFileFromCSV(output_dir, output_merged_csv,'types',False)
 swc_screenshot_folder =  data_DIR + "/figures/pw_aligned_bmps"
 types = np.unique(merged['types'])
 for type in types:

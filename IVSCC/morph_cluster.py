@@ -11,6 +11,7 @@ from scipy.stats.stats import pearsonr
 import scipy.stats as stats
 from PIL import Image
 import glob
+from sklearn.metrics import silhouette_samples, silhouette_score
 
 
 
@@ -473,6 +474,15 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_d
     #hierarchy.dendrogram(linkage)
 
 
+    #Silhouette analysis for determining the number of clusters
+    #
+    # for n_clusters in range(5,30):
+    #      assignments = hierarchy.fcluster(linkage, n_clusters, criterion="maxclust")
+    #      silhouette_avg = silhouette_score(df_zscores, assignments)
+    #      print("For n_clusters =", n_clusters,"The average silhouette_score is :", silhouette_avg)
+
+
+
     ## put assignments into ano files and csv files
     clusters_list = output_clusters(assignments, df_zscores, df_all_outlier_removed, feature_names, output_dir,
                                     snapshots_dir)
@@ -566,7 +576,7 @@ def main(argv):
     output_dir = default_output_dir
     swc_screenshot_folder = default_swc_screenshot_folder
 
-    method = "all"
+    method = "ward"
     SEL_FEATURE = "all"
 
 
@@ -656,7 +666,7 @@ def main(argv):
         len(redundancy_removed_features_names), redundancy_removed_features_names))
 
 
-    num_clusters = 10
+    num_clusters = 13
     if not os.path.exists( swc_screenshot_folder):
         swc_screenshot_folder = None
     if method == "ap" or method == "all":
