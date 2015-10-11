@@ -47,8 +47,20 @@ def assemble_screenshots(input_dir, output_image_file_name, size):
 
 
 
-def generateLinkerFileFromCSV(result_dir, csvfile, column_name, strip_path=True):
+def generateLinkerFileFromCSV(result_dir, csvfile, column_name=None, strip_path=True):
     df = pd.read_csv(csvfile)
+    if (column_name == None):
+        swc_files = df['swc_file']
+        with open(result_dir + '/all.ano', 'w') as outf:
+            for afile in swc_files:
+                filename = afile
+                if strip_path:
+                    filename = afile.split('/')[-1]
+                line = 'SWCFILE=' + filename + '\n'
+                outf.write(line)
+            outf.close()
+        return
+
     types = df[column_name]
     for atype in np.unique(types):
         idxs = np.nonzero(types == atype)[0]
@@ -70,7 +82,6 @@ gl_feature_names = np.array(
          'total_surface', 'total_volume', 'max_euclidean_distance', 'max_path_distance', 'max_branch_order',
          'average_contraction', 'average fragmentation', 'parent_daughter_ratio', 'bifurcation_angle_local',
          'bifurcation_angle_remote','height_width_ratio','average_branch_length','length_surface_ratio'])
-
 
 
 
@@ -133,7 +144,7 @@ merged.to_csv(output_merged_csv,index=False)
 
 #generateLinkerFileFromCSV(output_dir, output_merged_csv,'cre_line',False)
 
-
+generateLinkerFileFromCSV(output_dir, output_merged_csv,None,False)
 
 
 output_dir= data_DIR + '/figures/staci_types'

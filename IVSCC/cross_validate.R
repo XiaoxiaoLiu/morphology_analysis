@@ -12,11 +12,12 @@ outdir<-paste0(data_dir,"clustering_results/cross_validation/ward_all_ol_clipped
 
 feature<-read.csv(paste0(data_dir, "meta_merged_allFeatures.csv"), sep=",",header=TRUE,stringsAsFactors=FALSE)
 # remove string columns
+rnames <- feature$specimen_name
 feature<-subset(feature, select = -c(specimen_name, specimen_id,cre_line,layer_corrected,dendrite_type,swc_file,types) )
 print(colnames(feature))
 
 FeatureMatrix<- data.matrix(feature[1:dim(feature)[2]])
-rownames(FeatureMatrix)<- feature$specimen_name
+rownames(FeatureMatrix)<-rnames
 
 
 flag.plot<-TRUE

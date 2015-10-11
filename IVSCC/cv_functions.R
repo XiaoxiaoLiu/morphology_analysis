@@ -216,7 +216,7 @@ RUN_CVRF <- function ( AssignedID_FN, Feature, outdir, flag.plot=TRUE, datver="0
   myheat.color <- rev(heat.colors(101)) ; myheat.color[101] <- "black"
   if (flag.plot) {
     pdf(paste(outdir, outfile3, sep="/"), height=8, width=16)
-    heatmap.3(t(fulltab.reordered), ColSideColors=crecolor, Colv=TRUE, Rowv=FALSE, trace="none", keysize=0.8, margins=c(10,10), col=myheat.color, margin=c(10,10), dendrogram="none", main="Cluster Validation ; 100 run of 10-fold cross validationn")
+    heatmap.3(t(fulltab.reordered), ColSideColors=crecolor, Colv=TRUE, Rowv=FALSE, trace="none", keysize=0.8, margins=c(10,10), col=myheat.color, margin=c(10,10), dendrogram="none", main=" 10-fold cross validation (100 runs) ")
     legend("bottomleft", col=leg.crecolor, pch=rep(15,11), legend=leg.str,cex=0.75)
   }
   print(" summary table")
@@ -235,7 +235,8 @@ RUN_CVRF <- function ( AssignedID_FN, Feature, outdir, flag.plot=TRUE, datver="0
   print(class.N2R)
   write.csv(class.N2R, file=paste(outdir, outfile4, sep="/"))
 
-  colnames(fulltab.reordered.woNA.R) <- paste(class.N2R[,3],colnames(fulltab.reordered.woNA.R),sep="%")
+  #colnames(fulltab.reordered.woNA.R) <- paste(class.N2R[,3],colnames(fulltab.reordered.woNA.R),sep="%")
+  colnames(fulltab.reordered.woNA.R) <- paste(colnames(fulltab.reordered.woNA.R),' (',class.N2R[,3],'%)')
   if (flag.plot) {
     heatmap.3(t(fulltab.reordered.woNA.R), ColSideColors=crecolor, Colv=TRUE, Rowv=FALSE, trace="none", keysize=0.8, margins=c(10,10), col=myheat.color, margin=c(10,10), dendrogram="none", main="Cluster Validation ; 100 run of 10-fold cross validation")
     legend("bottomleft", col=leg.crecolor, pch=rep(15,11), legend=leg.str,cex=0.75)

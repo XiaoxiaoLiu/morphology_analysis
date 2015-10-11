@@ -14,7 +14,7 @@ import glob
 from sklearn.metrics import silhouette_samples, silhouette_score
 
 
-
+sns.set_context("poster")
 ####################################
 ZSCORE_OUTLIER_THRESHOLD = 3.5
 REMOVE_OUTLIERS = 0
@@ -135,8 +135,8 @@ def generateLinkerFileFromDF(df_in, output_ano_file, strip_path=False):
 #     # Legend for row and col colors
 #
 #     for label in dendrite_types:
-#         g.ax_row_dendrogram.bar(0, 0, color=dendrite_type_lut[label], label=label, linewidth=0)
-#         g.ax_row_dendrogram.legend(loc="center", ncol=1)
+#         pl.bar(0, 0, color=dendrite_type_lut[label], label=label, linewidth=0)
+#         pl.legend(loc="center", ncol=1)
 #
 #     for label in cre_lines:
 #         g.ax_col_dendrogram.bar(0, 0, color=cre_line_lut[label], label=label, linewidth=0)
@@ -156,32 +156,33 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
     # Create a custom palette for dendrite_type colors
     dendrite_types = np.unique(df_all['dendrite_type'])
     # dendrite_type_pal = sns.color_palette("coolwarm", len(dendrite_types))
-    dendrite_type_pal = sns.color_palette(["blue","gray","red"])
+    dendrite_type_pal = sns.color_palette(["black","gray","red"])
     dendrite_type_lut = dict(zip(dendrite_types, dendrite_type_pal))
     dendrite_type_colors = df_all['dendrite_type'].map(dendrite_type_lut)
 
 
     # Create a custom palette for creline colors
-    cre_lines = np.unique(df_all['cre_line'])
-    cre_line_pal = sns.color_palette("hls", len(cre_lines))
+    #cre_lines = np.unique(df_all['cre_line'])
+    cre_lines = ['Pvalb-IRES-Cre','Sst-IRES-Cre','Gad2-IRES-Cre', 'Htr3a-Cre_NO152',
+                 'Nr5a1-Cre', 'Ntsr1-Cre','Rbp4-Cre_KL100' ,'Rorb-IRES2-Cre-D', 'Scnn1a-Tg2-Cre', 'Scnn1a-Tg3-Cre','Slc17a6-IRES-Cre' ]
+
+    cre_line_pal = sns.color_palette("BrBG", len(cre_lines))
     cre_line_lut = dict(zip(cre_lines, cre_line_pal))  # map creline type to color
     cre_line_colors = df_all['cre_line'].map(cre_line_lut)
 
 
-
-    layers = np.unique(df_all['layer_corrected'])
-    layer_pal = sns.light_palette("green", len(layers))
-    layer_lut = dict(zip(layers, layer_pal))
-    layer_colors = df_all['layer_corrected'].map(layer_lut)
+    # layers = np.unique(df_all['layer_corrected'])
+    # layer_pal = sns.light_palette("green", len(layers))
+    # layer_lut = dict(zip(layers, layer_pal))
+    # layer_colors = df_all['layer_corrected'].map(layer_lut)
 
 
     types = np.unique(df_all['types'])
-    type_pal = sns.color_palette("hls", len(types))
+    #reorder
+    types = ['NGC','multipolar','symm', 'bitufted','bipolar','tripod', 'Martinotti','cortico-cortical', 'cortico-thal','non-tufted', 'short-thick-tufted', 'tufted','thick-tufted']
+    type_pal = sns.color_palette("coolwarm", len(types))#  sns.diverging_palette(220, 20, n=len(types))# sns.color_palette("husl", len(types))
     type_lut = dict(zip(types, type_pal))
     type_colors = df_all['types'].map(type_lut)
-
-
-
 
 
     # Create a custom colormap for the heatmap values
@@ -189,36 +190,57 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
 
     linkage = hierarchy.linkage(df_zscore_features, method='ward', metric='euclidean')
 
+    data = df_zscore_features.transpose()
+    row_linkage = hierarchy.linkage(data, method='ward', metric='euclidean')
+    feature_order = hierarchy.leaves_list(row_linkage)
+
+    #print data.index
+    matchIndex = [data.index[x] for x in feature_order]
+    #print matchIndex
+    data = data.reindex(matchIndex)
+
+    #pl.figure()
+    g = sns.clustermap(data, row_cluster = False, col_linkage=linkage, method='ward', metric='euclidean',
+                       linewidths = 0.0, col_colors = [cre_line_colors,type_colors,dendrite_type_colors],
+                       cmap = sns.cubehelix_palette(light=1, as_cmap=True),
+                       xticklabels=False, yticklabels=True,figsize=(30,10))
+
+    cax = pl.gcf().axes[-1]
+    cax.tick_params(labelsize=10)
 
 
-    g = sns.clustermap(df_zscore_features.transpose(), row_cluster = True, col_linkage=linkage, method='ward', metric='euclidean',
-                       linewidths = 0.1, col_colors = [dendrite_type_colors,layer_colors,type_colors],cmap = sns.cubehelix_palette(light=1, as_cmap=True),
-                       xticklabels=False, yticklabels=True,figsize=(15,7))
     if title:
         pl.title(title)
-
-
+    location ="best"
+    num_cols=2
     # Legend for row and col colors
-    for label in dendrite_types:
-         g.ax_row_dendrogram.bar(0, 0, color = dendrite_type_lut[label], label=label, linewidth=1)
-         g.ax_row_dendrogram.legend(loc="best", ncol=1, borderpad=0.0)
+
+    for label in cre_lines:
+         g.ax_row_dendrogram.bar(0, 0, color=cre_line_lut[label], label=label, linewidth=0.0)
+         g.ax_row_dendrogram.legend(loc=location, ncol=num_cols,borderpad=0)
+
+    for i in range(6):
+        g.ax_row_dendrogram.bar(0, 0, color = "white", label=" ", linewidth=0)
+        g.ax_row_dendrogram.legend(loc=location, ncol=num_cols, borderpad=0.0)
+
+    # for label in layers:
+    #      pl.bar(0, 0, color=layer_lut[label], label=label, linewidth=1)
+    #      pl.legend(loc="left", ncol=2,borderpad=0.5)
 
 
-    for label in layers:
-         g.ax_row_dendrogram.bar(0, 0, color=layer_lut[label], label=label, linewidth=1)
-         g.ax_row_dendrogram.legend(loc="best", ncol=1,borderpad=0.5)
-
-
-    # for label in cre_lines:
-    #      g.ax_row_dendrogram.bar(0, 0, color=cre_line_lut[label], label=label, linewidth=0.0)
-    #      g.ax_row_dendrogram.legend(loc="lower left", ncol=1,borderpad=0.5)
-    #
     for label in types:
-         g.ax_row_dendrogram.bar(0, 0, color=type_lut[label], label=label, linewidth=1)
-         g.ax_row_dendrogram.legend(loc="best", ncol=1,borderpad=0.5)
+         g.ax_row_dendrogram.bar(0, 0, color=type_lut[label], label=label,linewidth=0)
+         g.ax_row_dendrogram.legend(loc=location, ncol=num_cols,borderpad=0.0)
 
 
-    pl.title('zscore')
+    g.ax_row_dendrogram.bar(0, 0, color = "white", label=" ", linewidth=0)
+    g.ax_row_dendrogram.legend(loc=location, ncol=num_cols, borderpad=0.0)
+
+    for label in dendrite_types:
+        g.ax_row_dendrogram.bar(0, 0, color = dendrite_type_lut[label], label=label, linewidth=0)
+        g.ax_row_dendrogram.legend(loc=location, ncol= num_cols, borderpad=0.0)
+
+
     filename = output_dir + '/zscore_feature_heatmap.png'
     pl.savefig(filename, dpi=300)
     print("save zscore matrix heatmap figure to :" + filename)
@@ -469,17 +491,21 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_d
     if (df_outliers.shape[0] > 0 ):
         output_single_cluster_results(df_outliers, output_dir, "outliers", snapshots_dir)
 
-    linkage = heatmap_plot_zscore(df_zscores, df_all_outlier_removed, output_dir, "zscore")
-    assignments = hierarchy.fcluster(linkage, max_cluster_num, criterion="maxclust")
-    #hierarchy.dendrogram(linkage)
+    linkage = heatmap_plot_zscore(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
 
 
     #Silhouette analysis for determining the number of clusters
-    #
-    # for n_clusters in range(5,30):
-    #      assignments = hierarchy.fcluster(linkage, n_clusters, criterion="maxclust")
-    #      silhouette_avg = silhouette_score(df_zscores, assignments)
-    #      print("For n_clusters =", n_clusters,"The average silhouette_score is :", silhouette_avg)
+
+    print("Silhouettee analysis:")
+    for n_clusters in range(2,25):
+         assignments = hierarchy.fcluster(linkage, n_clusters, criterion="maxclust")
+         silhouette_avg = silhouette_score(df_zscores, assignments)
+         print("For n_clusters =", n_clusters,"The average silhouette_score is :", silhouette_avg)
+
+
+    assignments = hierarchy.fcluster(linkage, max_cluster_num, criterion="maxclust")
+    #hierarchy.dendrogram(linkage)
+
 
 
 
@@ -576,13 +602,12 @@ def main(argv):
     output_dir = default_output_dir
     swc_screenshot_folder = default_swc_screenshot_folder
 
-    method = "ward"
+    method = "all"
     SEL_FEATURE = "all"
 
 
     if len(opts) < 2:
         print 'usage: morph_cluster.py -i <input_csv_file> -o <output_dir> [-m <ap/ward/all>] [-f <rr/gmi/all/inv>]'
-
         sys.stdout = open(output_dir + '/'+method + '_' +SEL_FEATURE+'.log', 'w')
         #sys.exit(2)
 
