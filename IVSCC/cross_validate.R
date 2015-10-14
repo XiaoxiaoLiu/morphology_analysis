@@ -21,6 +21,6 @@ rownames(FeatureMatrix)<-rnames
 
 
 flag.plot<-TRUE
-RUN_CVRF(AssignedID_FN, FeatureMatrix, outdir, flag.plot, "morph" )
+RUN_CVRF(AssignedID_FN, FeatureMatrix, outdir, flag.plot, "morph",100)
 
 

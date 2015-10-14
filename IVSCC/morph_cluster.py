@@ -171,10 +171,10 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
     cre_line_colors = df_all['cre_line'].map(cre_line_lut)
 
 
-    # layers = np.unique(df_all['layer_corrected'])
+    # layers = np.unique(df_all['layer'])
     # layer_pal = sns.light_palette("green", len(layers))
     # layer_lut = dict(zip(layers, layer_pal))
-    # layer_colors = df_all['layer_corrected'].map(layer_lut)
+    # layer_colors = df_all['layer'].map(layer_lut)
 
 
     types = np.unique(df_all['types'])

@@ -2,7 +2,7 @@
 
 import argparse
 import pandas as pd
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as pl
 import numpy as np
 import seaborn as sns
 import platform
@@ -11,7 +11,8 @@ import platform
 param_names =['PID','A1','A2','Ri','Cm','Rm','error']
 sample_size = 55
 r_values = [0.5,0.7,0.9,1.0,1.1,1.3,1.5]
-p_values = np.arange(0,0.35,0.05)
+p_values = [0.0,0.05,0.1,0.15,0.2,0.25,0.3]
+
 
 
 
@@ -27,7 +28,7 @@ def  my_box_plot(d,output_fig_file_name, XLABEL = "X", YLABEL = "Y"):
 
         #sns.boxplot(data=d)
         sns.set_context("poster")
-        ax=sns.tsplot(data=d.values, time = d.columns)
+        ax=sns.tsplot(data=d.values, time = d.columns,estimator=np.median)
         #plt.xticks(range(len(d.columns)), d.columns)
         plt.xlabel(XLABEL)
         plt.ylabel(YLABEL)
@@ -62,6 +63,11 @@ def  visResults (m, result_dir, varying_para_values = r_values, xlabel= 'Radius 
             norm_m[:,:,i] = np.divide(m[:,:,i], m[:,:,basenum]) # r=1.0 is the original model fitting results
         plotResults(norm_m,result_dir,varying_para_values,xlabel,'Normalized Fitted Parameter')
 
+        for i in range(len(varying_para_values)):
+            norm_m[:,:,i] = np.divide(m[:,:,i]- m[:,:,basenum], m[:,:,basenum]) # r=1.0 is the original model fitting results
+        plotResults(norm_m,result_dir,varying_para_values,xlabel,'Fitted Parameter Difference Percentage')
+
+
 
         CmTotal = np.zeros((sample_size, len(varying_para_values)))
         for i in range(len(varying_para_values)):
@@ -93,7 +99,7 @@ if __name__ == "__main__":
     input_para_file = args.input_para_file
     result_dir = args.result_dir
 
-    if True:
+    if 0:
         result_dir =  WORK_PATH +'/data/lims2/modified_neurons'
         #results are stored as:  r0.5_x1.0_y1.0_z1.0_p0/passive_paras_results.csv
         m = np.zeros( (sample_size,len(param_names),len(r_values)) )
@@ -109,7 +115,7 @@ if __name__ == "__main__":
 
 
 
-    if True:
+    if 0:
         result_dir =  WORK_PATH +'/data/lims2/modified_neurons_p'
         m = np.zeros( (sample_size,len(param_names),len(p_values)) )
         i = 0
@@ -120,4 +126,34 @@ if __name__ == "__main__":
             m[:,:,i] = df.values
             i = i+1
         visResults (m, result_dir, p_values, 'Prune Length',0)
+
+
+
+
+    if 1:   # heatmap plot of all values in pairs
+        df_pam= pd.read_csv(WORK_PATH +'/data/morph_alt_results/parameter_fit.csv',index_col=0)
+        df_fea= pd.read_csv(WORK_PATH +'/data/morph_alt_results/feature_fit.csv',index_col=0)
+        df_pam = df_pam.astype(float)
+        df_fea = df_fea.astype(float)
+        df_pam_diff = pd.DataFrame()
+        for col in df_pam.columns[1:5]:
+           df_pam_diff[col] =  (df_pam[col]-df_pam.Org0)/df_pam.Org0
+
+
+        sns.heatmap(df_pam_diff)
+        pl.yticks(rotation=90)
+        pl.show()
+        print df_pam_diff
+
+
+
+        df_fea_diff = pd.DataFrame()
+        for col in df_fea.columns[1:7]:
+           df_fea_diff[col] =  (df_fea[col]-df_fea.Org0)/df_fea.Org0
+
+        sns.heatmap(df_fea_diff)
+        pl.yticks(rotation=90)
+        print df_fea_diff
+        pl.show()
+
 

@@ -66,7 +66,7 @@ gl_feature_names = np.array(
          'overall_width', 'overall_height', 'overall_depth', 'average_diameter', 'total_length',
          'total_surface', 'total_volume', 'max_euclidean_distance', 'max_path_distance', 'max_branch_order',
          'average_contraction', 'average fragmentation', 'parent_daughter_ratio', 'bifurcation_angle_local',
-         'bifurcation_angle_remote'])
+         'bifurcation_angle_remote','height_width_ratio','average_branch_length','length_surface_ratio'])
 
 gmi_feature_names = np.array(
     ['moment1', 'moment2', 'moment3', 'moment4', 'moment5', 'moment6', 'moment7', 'moment8',
@@ -78,12 +78,12 @@ cluster_specific_features(df_all, types_id['types'], all_feature_names, data_dir
 
 
 #http://stackoverflow.com/questions/5821125/how-to-plot-confusion-matrix-with-string-axis-rather-than-integer-in-python
-unique_layers, a = np.unique(df_all.layer_corrected, return_inverse=True)
-unique_types, b = np.unique(df_all.types, return_inverse=True)
-cm = confusion_matrix(a,b)
-print cm.shape
-print a.shape
-print b.shape
+# unique_layers, a = np.unique(df_all.layer_corrected, return_inverse=True)
+# unique_types, b = np.unique(df_all.types, return_inverse=True)
+# cm = confusion_matrix(a,b)
+# print cm.shape
+# print a.shape
+# print b.shape
 
 #
 # #ax = fig.add_subplot(111)

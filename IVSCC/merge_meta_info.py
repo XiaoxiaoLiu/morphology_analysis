@@ -119,7 +119,7 @@ to_remove_filename = data_DIR +'/wrong_scale_removed.csv'
 
 
 # require the following col names in the merged spread sheet
-col_names = ['specimen_id','specimen_name','cre_line','layer_corrected','dendrite_type','swc_file','types']
+col_names = ['specimen_id','specimen_name','cre_line','layer','dendrite_type','swc_file','types']
 all_feature_names = np.append(gl_feature_names, gmi_feature_names)
 col_names.extend(all_feature_names)
 
