@@ -79,20 +79,20 @@ def cal_bn_features(original_dir,preprocessed_dir):
 
     return
 
-###############################################################################
-#data_DIR = '/data/mat/xiaoxiaol/data/lims2/0903_filtered_ephys_qc'
-data_DIR = WORK_PATH +'/data/lims2/0923_pw_aligned'
-# /original stores the downloaded swc files
-original_dir = data_DIR + "/pw_aligned"
-preprocessed_dir = data_DIR + "/preprocessed"
-##
-db_tags_csv_file = data_DIR + '/0923_filtered_ephys_qc.csv'  # 153 neurons
-
-###############################################################################
 
 
 
 def main():
+    ###############################################################################
+    #data_DIR = '/data/mat/xiaoxiaol/data/lims2/0903_filtered_ephys_qc'
+    data_DIR = WORK_PATH +'/data/lims2/0923_pw_aligned'
+    # /original stores the downloaded swc files
+    original_dir = data_DIR + "/pw_aligned"
+    preprocessed_dir = data_DIR + "/preprocessed"
+    ##
+    db_tags_csv_file = data_DIR + '/0923_filtered_ephys_qc.csv'  # 153 neurons
+
+    ###############################################################################
 
     # run blast neuron  features
     cal_bn_features(original_dir,preprocessed_dir)

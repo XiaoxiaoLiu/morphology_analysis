@@ -12,13 +12,16 @@ import scipy.stats as stats
 from PIL import Image
 import glob
 from sklearn.metrics import silhouette_samples, silhouette_score
+import math
+
+from sklearn.cluster import AffinityPropagation
+from sklearn import metrics
+from itertools import cycle
+
 
 
 sns.set_context("poster")
-####################################
-ZSCORE_OUTLIER_THRESHOLD = 3.5
-REMOVE_OUTLIERS = 0
-####################################
+
 
 def zscore(features, remove_outlier=0):
     zscores = scipy.stats.zscore(features, 0)
@@ -318,7 +321,7 @@ def dunn(k_list):
 
 
 ###############################  cluster specific features #####
-import math
+
 def cluster_specific_features(df_all, assign_ids, feature_names, output_csv_fn):
     #student t to get cluster specific features
 
@@ -518,11 +521,10 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_d
 
     return dunn_index
 
-######  Affinity Propogation ##############
-from sklearn.cluster import AffinityPropagation
-from sklearn import metrics
-from itertools import cycle
+
 def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, RemoveOutliers=0):
+    ######  Affinity Propogation ##############
+
     print("\n\n\n ***************  affinity propogation computation ****************:")
 
     if not os.path.exists(output_dir):
@@ -550,8 +552,7 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
 
 
 
-WORK_PATH = "/local1/xiaoxiaol/work"
-MRMR= WORK_PATH+"/src/mrmr_c_src/mrmr"
+
 def selectFeatures_MRMR(df_all, feature_names,  threshold=0, number_of_features=10, selection_method='MID', data_DIR="."):
     #write out feature array into a csv file, then execute MRMR
 
@@ -575,22 +576,27 @@ def selectFeatures_MRMR(df_all, feature_names,  threshold=0, number_of_features=
 
 
 
-######################################################################################################################
-
-if (platform.system() == "Linux"):
-    WORK_PATH = "/local1/xiaoxiaol/work"
-else:
-    WORK_PATH = "/Users/xiaoxiaoliu/work"
-
-data_DIR = WORK_PATH + "/data/lims2/0923_pw_aligned"
-default_all_feature_merged_file = data_DIR + '/meta_merged_allFeatures.csv'
-default_output_dir = data_DIR + '/clustering_results'
-default_swc_screenshot_folder =  data_DIR + "/figures/pw_aligned_bmps"
-
-#######################################################################################################################
-
-
 def main(argv):
+
+    ######################################################################################################################
+
+    if (platform.system() == "Linux"):
+        WORK_PATH = "/local1/xiaoxiaol/work"
+    else:
+        WORK_PATH = "/Users/xiaoxiaoliu/work"
+    MRMR= WORK_PATH+"/src/mrmr_c_src/mrmr"
+    data_DIR = WORK_PATH + "/data/lims2/0923_pw_aligned"
+    default_all_feature_merged_file = data_DIR + '/meta_merged_allFeatures.csv'
+    default_output_dir = data_DIR + '/clustering_results'
+    default_swc_screenshot_folder =  data_DIR + "/figures/pw_aligned_bmps"
+
+    #######################################################################################################################
+
+    ####################################
+    ZSCORE_OUTLIER_THRESHOLD = 3.5
+    REMOVE_OUTLIERS = 0
+    ####################################
+
     try:
         opts, args = getopt.getopt(argv, "hi:o:m:f:", ["ifile=", "ofile=", "method=", "feature="])
     except getopt.GetoptError:

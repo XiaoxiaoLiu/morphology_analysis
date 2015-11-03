@@ -425,7 +425,6 @@ def main(argv):
 
 
         if method == "ap":
-
             num_clusters, dunn_index1 = affinity_propagation(merged, redundancy_removed_features_names, output_dir,cluster_id_fn )
         if method == "ward":
             num_clusters, dunn_index1 = affinity_propagation(merged, redundancy_removed_features_names, output_dir,cluster_id_fn )

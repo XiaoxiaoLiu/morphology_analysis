@@ -41,41 +41,47 @@ def applyTransformBySpecimenName(swc_path, transform_path, output_path):
     os.system(cmd)
 
 
-#####################################################################################################
-data_dir = '/local1/xiaoxiaol/work/data/lims2/0923_pw_aligned'
-csv_file = data_dir + "/0923_pw_aligned.csv"  ## where the transform parameters are, obtained from lims
-origin_data_DIR = data_dir + "/original"
-####################################################################################################
+
+def main(argv):
+
+    #####################################################################################################
+    data_dir = '/local1/xiaoxiaol/work/data/lims2/0923_pw_aligned'
+    csv_file = data_dir + "/0923_pw_aligned.csv"  ## where the transform parameters are, obtained from lims
+    origin_data_DIR = data_dir + "/original"
+    ####################################################################################################
 
 
 
-#########
-# output dirs
-transform_DIR = data_dir + "/transforms"  ## where to store the transform.txt
-output_DIR = data_dir + "/pw_aligned"
+    #########
+    # output dirs
+    transform_DIR = data_dir + "/transforms"  ## where to store the transform.txt
+    output_DIR = data_dir + "/pw_aligned"
 
 
-#########
-# generate transform txt files
-if not os.path.exists(transform_DIR):
-    os.makedirs(transform_DIR)
+    #########
+    # generate transform txt files
+    if not os.path.exists(transform_DIR):
+        os.makedirs(transform_DIR)
 
-generateTransformFilesfromCSV(transform_DIR, csv_file)
+    generateTransformFilesfromCSV(transform_DIR, csv_file)
 
-##########
-# apply transforms to swc files
-if not os.path.exists(output_DIR):
-    os.makedirs(output_DIR)
+    ##########
+    # apply transforms to swc files
+    if not os.path.exists(output_DIR):
+        os.makedirs(output_DIR)
 
-df = pd.read_csv(csv_file)
-df = df[df.specimen_id != 464326095]  # this specimenid's alignments are wrong
-data_table = df.values
-num_samples, num_cols = data_table.shape
+    df = pd.read_csv(csv_file)
+    df = df[df.specimen_id != 464326095]  # this specimenid's alignments are wrong
+    data_table = df.values
+    num_samples, num_cols = data_table.shape
 
 
-for i in range(num_samples):
-    orca_path = data_table[i][num_cols - 1]
-    fn = orca_path.split('/')[-1]
-    transform_fn = transform_DIR + "/%s.txt" % fn.split('.swc')[0]
-    output_fn = output_DIR + "/" + fn
-    applyTransformBySpecimenName(origin_data_DIR + '/' + fn, transform_fn, output_fn)
+    for i in range(num_samples):
+        orca_path = data_table[i][num_cols - 1]
+        fn = orca_path.split('/')[-1]
+        transform_fn = transform_DIR + "/%s.txt" % fn.split('.swc')[0]
+        output_fn = output_DIR + "/" + fn
+        applyTransformBySpecimenName(origin_data_DIR + '/' + fn, transform_fn, output_fn)
+
+if __name__ == "__main__":
+    main()

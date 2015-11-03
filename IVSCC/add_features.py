@@ -1,4 +1,7 @@
 
+####  TO BE REMOVED, included in the ipython notebook
+
+
 
 import pandas as pd
 
