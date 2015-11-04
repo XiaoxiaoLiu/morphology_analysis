@@ -2,7 +2,7 @@
 
 import argparse
 import pandas as pd
-import matplotlib.pyplot as pl
+import matplotlib.pyplot as plt
 import numpy as np
 import seaborn as sns
 import platform
@@ -13,7 +13,7 @@ sample_size = 55
 r_values = [0.5,0.7,0.9,1.0,1.1,1.3,1.5]
 p_values = [0.0,0.05,0.1,0.15,0.2,0.25,0.3]
 
-
+sns.set_context("poster")
 
 
 if (platform.system() == "Linux"):
@@ -27,8 +27,10 @@ data_DIR = WORK_PATH + "/data/lims2/0923_pw_aligned"
 def  my_box_plot(d,output_fig_file_name, XLABEL = "X", YLABEL = "Y"):
 
         #sns.boxplot(data=d)
-        sns.set_context("poster")
-        ax=sns.tsplot(data=d.values, time = d.columns,estimator=np.median)
+        dims = (5, 5)
+        fig, ax = plt.subplots(figsize=dims)
+
+        ax=sns.tsplot(data=d.values, time = d.columns,estimator=np.median, ci=[68,95],ax=ax)
         #plt.xticks(range(len(d.columns)), d.columns)
         plt.xlabel(XLABEL)
         plt.ylabel(YLABEL)
@@ -55,17 +57,17 @@ def  plotResults(data,result_path, column_names,  XLABEL = "X",  YLABEL = "Y",):
 def  visResults (m, result_dir, varying_para_values = r_values, xlabel= 'Radius Scale Factor', basenum = 0):
 
         # plot the raw results
-        plotResults(m,result_dir, varying_para_values,xlabel, 'Fitted Parameter Value')
+        plotResults(m,result_dir, varying_para_values,xlabel, 'Fitted')
 
         # plot the normalized results
         norm_m = np.zeros(m.shape)
         for i in range(len(varying_para_values)):
             norm_m[:,:,i] = np.divide(m[:,:,i], m[:,:,basenum]) # r=1.0 is the original model fitting results
-        plotResults(norm_m,result_dir,varying_para_values,xlabel,'Normalized Fitted Parameter')
+        plotResults(norm_m,result_dir,varying_para_values,xlabel,'Normalized')
 
         for i in range(len(varying_para_values)):
-            norm_m[:,:,i] = np.divide(m[:,:,i]- m[:,:,basenum], m[:,:,basenum]) # r=1.0 is the original model fitting results
-        plotResults(norm_m,result_dir,varying_para_values,xlabel,'Fitted Parameter Difference Percentage')
+            norm_m[:,:,i] = 100 * np.divide(m[:,:,i]- m[:,:,basenum], m[:,:,basenum]) # r=1.0 is the original model fitting results
+        plotResults(norm_m,result_dir,varying_para_values,xlabel,'Difference')
 
 
 
@@ -131,29 +133,56 @@ if __name__ == "__main__":
 
 
     if 1:   # heatmap plot of all values in pairs
+        result_dir =  WORK_PATH +'/data/lims2/active_model_fitting'
         df_pam= pd.read_csv(WORK_PATH +'/data/morph_alt_results/parameter_fit.csv',index_col=0)
         df_fea= pd.read_csv(WORK_PATH +'/data/morph_alt_results/feature_fit.csv',index_col=0)
         df_pam = df_pam.astype(float)
         df_fea = df_fea.astype(float)
-        df_pam_diff = pd.DataFrame()
-        for col in df_pam.columns[1:5]:
-           df_pam_diff[col] =  (df_pam[col]-df_pam.Org0)/df_pam.Org0
+        df_pam_diff = df_pam
+        # for col in df_pam.columns[0:5]:
+        #    df_pam_diff[col] =  (df_pam[col]-df_pam.Original)/df_pam.Original*100
+        thre =100
+        # df_pam_diff[df_pam_diff>thre]=thre
+        # df_pam_diff[df_pam_diff<-thre]=-thre
 
 
-        sns.heatmap(df_pam_diff)
-        pl.yticks(rotation=90)
-        pl.show()
+        mins=[0,0,0,0,0,0,0,0,0,0,0,20,1e-07,1e-07,1e-07,1e-07]
+        maxs=[0.1,0.1,15,0.1,1,1,1,3,0.001,0.01,0.05,1000,0.001,0.001,0.001,0.001]
+        for row in range(len(df_pam.index)):
+            m_max = maxs[row] #np.max(df_pam.values[row,1:5])
+            m_min = mins[row]#np.min(df_pam.values[row,1:5])
+            for col in range(len(df_pam.columns)):
+                df_pam_diff.iloc[row,col] = (df_pam.values[row,col]-m_min) /(m_max-m_min)
+
+
+
+        ax = sns.heatmap(df_pam_diff)
+        plt.title('Scaled By Each Parameter\'s Range')
+
+        ax.autoscale(tight=True)
+        plt.yticks(rotation=0)
+        plt.subplots_adjust(left=0.3,  bottom=0.2, top=0.9, right=0.9)
+        #plt.show()
+
+        plt.savefig(result_dir +'/param_'+str(thre)+'.png', dpi=300)
         print df_pam_diff
+        plt.close()
 
 
 
         df_fea_diff = pd.DataFrame()
-        for col in df_fea.columns[1:7]:
-           df_fea_diff[col] =  (df_fea[col]-df_fea.Org0)/df_fea.Org0
-
+        for col in df_fea.columns[1:9]:
+           df_fea_diff[col] =  (df_fea[col]-df_fea.Original)/df_fea.Original*100
+        df_fea_diff[df_fea_diff>thre] =thre
+        df_fea_diff[df_fea_diff<-thre] =-thre
         sns.heatmap(df_fea_diff)
-        pl.yticks(rotation=90)
+        plt.title('difference percentage (w.r.t. original fit)')
+        plt.yticks(rotation=0)
+        plt.subplots_adjust(left=0.3,  bottom=0.2, top=0.9, right=0.9)
+        #plt.show()
+        plt.savefig(result_dir +'/feature_'+str(thre)+'.png', dpi=300)
+
         print df_fea_diff
-        pl.show()
+        plt.close()
 
 

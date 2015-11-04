@@ -49,7 +49,6 @@ if __name__ == "__main__":
 
 
         os.system('mkdir '+save_data_dir)
-        
         df = pd.read_csv(input_csv_file)
 
         #copyBySpecimenId(df)

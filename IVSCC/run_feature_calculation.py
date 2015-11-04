@@ -41,6 +41,8 @@ def cleanup_query_csv(db_tags_csv_file):
         creline = 'NA'
         if not pd.isnull(df_db_tags['specimen_name'][i]):
             creline = df_db_tags['specimen_name'][i].split(';')[0]
+        if creline == 'Sst-IRES-Cre-19768.06.02.01' : # database error
+            creline = 'Sst-IRES-Cre'
         cre_lines.append(creline)
 
         layer = 'NA'
@@ -54,7 +56,7 @@ def cleanup_query_csv(db_tags_csv_file):
     return df_db_tags
 
 
-def cal_bn_features(original_dir,preprocessed_dir):
+def resample(original_dir,preprocessed_dir):
 
     if not os.path.exists(preprocessed_dir):
         os.mkdir(preprocessed_dir)
@@ -67,6 +69,10 @@ def cal_bn_features(original_dir,preprocessed_dir):
         bn.resample(input_swc_path, preprocessed_swc_fn)  ## due to the pw alignment, no  alignment are necessary
         ##bn.pre_processing(input_swc_path, preprocessed_swc_fn)
 
+    return
+
+
+def cal_bn_features(preprocessed_dir):
     preprocessed_ANO = preprocessed_dir + "/preprocessed.ano"
     bn.genLinkerFile(preprocessed_dir, preprocessed_ANO)
 
@@ -76,7 +82,6 @@ def cal_bn_features(original_dir,preprocessed_dir):
 
     ###  convert feature file into csv file
     nfb.generateALLFeatureCSV(feature_file, preprocessed_dir + '/features_with_tags.csv')
-
     return
 
 

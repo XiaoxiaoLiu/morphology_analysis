@@ -19,6 +19,9 @@ from sklearn import metrics
 from itertools import cycle
 
 
+####################################
+ZSCORE_OUTLIER_THRESHOLD = 3.5
+####################################
 
 sns.set_context("poster")
 
@@ -157,19 +160,22 @@ def generateLinkerFileFromDF(df_in, output_ano_file, strip_path=False):
 def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
 
     # Create a custom palette for dendrite_type colors
-    dendrite_types = np.unique(df_all['dendrite_type'])
+    dendrite_types = [np.nan, 'aspiny', 'sparsely spiny', 'spiny']
     # dendrite_type_pal = sns.color_palette("coolwarm", len(dendrite_types))
-    dendrite_type_pal = sns.color_palette(["black","gray","red"])
+    dendrite_type_pal = sns.color_palette(["gray","black","purple","red"])
     dendrite_type_lut = dict(zip(dendrite_types, dendrite_type_pal))
     dendrite_type_colors = df_all['dendrite_type'].map(dendrite_type_lut)
 
 
     # Create a custom palette for creline colors
-    #cre_lines = np.unique(df_all['cre_line'])
+    cre_lines = np.unique(df_all['cre_line'])
+    print cre_lines
     cre_lines = ['Pvalb-IRES-Cre','Sst-IRES-Cre','Gad2-IRES-Cre', 'Htr3a-Cre_NO152',
-                 'Nr5a1-Cre', 'Ntsr1-Cre','Rbp4-Cre_KL100' ,'Rorb-IRES2-Cre-D', 'Scnn1a-Tg2-Cre', 'Scnn1a-Tg3-Cre','Slc17a6-IRES-Cre' ]
+                 'Nr5a1-Cre', 'Ntsr1-Cre','Rbp4-Cre_KL100' ,'Rorb-IRES2-Cre-D', 'Scnn1a-Tg2-Cre',
+                 'Scnn1a-Tg3-Cre','Slc17a6-IRES-Cre','Cux2-CreERT2']
 
     cre_line_pal = sns.color_palette("BrBG", len(cre_lines))
+
     cre_line_lut = dict(zip(cre_lines, cre_line_pal))  # map creline type to color
     cre_line_colors = df_all['cre_line'].map(cre_line_lut)
 
@@ -179,13 +185,13 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
     # layer_lut = dict(zip(layers, layer_pal))
     # layer_colors = df_all['layer'].map(layer_lut)
 
-
-    types = np.unique(df_all['types'])
-    #reorder
-    types = ['NGC','multipolar','symm', 'bitufted','bipolar','tripod', 'Martinotti','cortico-cortical', 'cortico-thal','non-tufted', 'short-thick-tufted', 'tufted','thick-tufted']
-    type_pal = sns.color_palette("coolwarm", len(types))#  sns.diverging_palette(220, 20, n=len(types))# sns.color_palette("husl", len(types))
-    type_lut = dict(zip(types, type_pal))
-    type_colors = df_all['types'].map(type_lut)
+    # # only if types are available
+    # types = np.unique(df_all['types'])
+    # #reorder
+    # types = ['NGC','multipolar','symm', 'bitufted','bipolar','tripod', 'Martinotti','cortico-cortical', 'cortico-thal','non-tufted', 'short-thick-tufted', 'tufted','thick-tufted']
+    # type_pal = sns.color_palette("coolwarm", len(types))#  sns.diverging_palette(220, 20, n=len(types))# sns.color_palette("husl", len(types))
+    # type_lut = dict(zip(types, type_pal))
+    # type_colors = df_all['types'].map(type_lut)
 
 
     # Create a custom colormap for the heatmap values
@@ -202,11 +208,13 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
     #print matchIndex
     data = data.reindex(matchIndex)
 
-    #pl.figure()
+    pl.figure()
     g = sns.clustermap(data, row_cluster = False, col_linkage=linkage, method='ward', metric='euclidean',
-                       linewidths = 0.0, col_colors = [cre_line_colors,type_colors,dendrite_type_colors],
+                       linewidths = 0.0,col_colors = [cre_line_colors,dendrite_type_colors],
                        cmap = sns.cubehelix_palette(light=1, as_cmap=True),
                        xticklabels=False, yticklabels=True,figsize=(30,10))
+
+
 
     cax = pl.gcf().axes[-1]
     cax.tick_params(labelsize=10)
@@ -222,7 +230,7 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
          g.ax_row_dendrogram.bar(0, 0, color=cre_line_lut[label], label=label, linewidth=0.0)
          g.ax_row_dendrogram.legend(loc=location, ncol=num_cols,borderpad=0)
 
-    for i in range(6):
+    for i in range(3):
         g.ax_row_dendrogram.bar(0, 0, color = "white", label=" ", linewidth=0)
         g.ax_row_dendrogram.legend(loc=location, ncol=num_cols, borderpad=0.0)
 
@@ -230,14 +238,15 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
     #      pl.bar(0, 0, color=layer_lut[label], label=label, linewidth=1)
     #      pl.legend(loc="left", ncol=2,borderpad=0.5)
 
+    #
+    # for label in types:
+    #      g.ax_row_dendrogram.bar(0, 0, color=type_lut[label], label=label,linewidth=0)
+    #      g.ax_row_dendrogram.legend(loc=location, ncol=num_cols,borderpad=0.0)
+    #
+    #
+    # g.ax_row_dendrogram.bar(0, 0, color = "white", label=" ", linewidth=0)
+    # g.ax_row_dendrogram.legend(loc=location, ncol=num_cols, borderpad=0.0)
 
-    for label in types:
-         g.ax_row_dendrogram.bar(0, 0, color=type_lut[label], label=label,linewidth=0)
-         g.ax_row_dendrogram.legend(loc=location, ncol=num_cols,borderpad=0.0)
-
-
-    g.ax_row_dendrogram.bar(0, 0, color = "white", label=" ", linewidth=0)
-    g.ax_row_dendrogram.legend(loc=location, ncol=num_cols, borderpad=0.0)
 
     for label in dendrite_types:
         g.ax_row_dendrogram.bar(0, 0, color = dendrite_type_lut[label], label=label, linewidth=0)
@@ -245,7 +254,7 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
 
 
     filename = output_dir + '/zscore_feature_heatmap.png'
-    pl.savefig(filename, dpi=300)
+    #pl.savefig(filename, dpi=300)
     print("save zscore matrix heatmap figure to :" + filename)
     pl.close()
     return linkage
@@ -472,7 +481,7 @@ def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, s
 
 
 ####### ward  hierachichal clustering  ###########
-def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_dir=None, RemoveOutliers=0):
+def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_dir=None, RemoveOutliers = 0):
     print("\n\n\n  ***************  ward computation, max_cluster = %d  *************:" % max_cluster_num)
 
     if not os.path.exists(output_dir):
@@ -592,10 +601,6 @@ def main(argv):
 
     #######################################################################################################################
 
-    ####################################
-    ZSCORE_OUTLIER_THRESHOLD = 3.5
-    REMOVE_OUTLIERS = 0
-    ####################################
 
     try:
         opts, args = getopt.getopt(argv, "hi:o:m:f:", ["ifile=", "ofile=", "method=", "feature="])
@@ -682,7 +687,7 @@ def main(argv):
          # get the number from console
          feature_names =[]
 
-
+    REMOVE_OUTLIERS = 0
 
     postfix = "_" + SEL_FEATURE
 
