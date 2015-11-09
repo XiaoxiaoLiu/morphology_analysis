@@ -223,7 +223,7 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
     if title:
         pl.title(title)
     location ="best"
-    num_cols=2
+    num_cols=1
     # Legend for row and col colors
 
     for label in cre_lines:
@@ -254,7 +254,8 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
 
 
     filename = output_dir + '/zscore_feature_heatmap.png'
-    #pl.savefig(filename, dpi=300)
+    pl.savefig(filename, dpi=300)
+    pl.show()
     print("save zscore matrix heatmap figure to :" + filename)
     pl.close()
     return linkage
@@ -370,6 +371,7 @@ def cluster_specific_features(df_all, assign_ids, feature_names, output_csv_fn):
     pl.title('-log10(P value)')
     filename = output_csv_fn + '.png'
     pl.savefig(filename, dpi=300)
+    pl.show()
     pl.close()
 
 
@@ -471,81 +473,118 @@ def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, s
 
         cluster_list.append(df_zscore_cluster.values)
 
-
-
     ## pick the cluster specific feature and plot histogram
     cluster_specific_features(df_all, assign_ids, feature_names, output_dir+'/pvalues.csv')
-
-
     return cluster_list
 
 
 ####### ward  hierachichal clustering  ###########
 def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_dir=None, RemoveOutliers = 0):
-    print("\n\n\n  ***************  ward computation, max_cluster = %d  *************:" % max_cluster_num)
+  print("\n\n\n  ***************  ward computation, max_cluster = %d  *************:" % max_cluster_num)
 
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
-    else:
-        os.system("rm -r  " + output_dir + '/*')
+  if not os.path.exists(output_dir):
+    os.mkdir(output_dir)
+  else:
+    os.system("rm -r  " + output_dir + '/*')
 
-
-    #### similarity plots
-    # df_simMatrix = distance_matrix(df_all, feature_names, output_dir + "/morph_features_similarity_matrix.csv", 1)
-    # # visualize heatmap using ward on similarity matrix
-    # out = heatmap_plot_distancematrix(df_simMatrix, df_all, output_dir, "Similarity")
-    # linkage = out.dendrogram_row.calculated_linkage
-
-
-    ##### zscores  featuer plots
-    df_zscores, df_all_outlier_removed, df_outliers = get_zscore_features(df_all, feature_names,
-                                                                          output_dir + '/zscore.csv', RemoveOutliers)
-    if (df_outliers.shape[0] > 0 ):
-        output_single_cluster_results(df_outliers, output_dir, "outliers", snapshots_dir)
-
-    linkage = heatmap_plot_zscore(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
+  #### similarity plots
+  # df_simMatrix = distance_matrix(df_all, feature_names, output_dir + "/morph_features_similarity_matrix.csv", 1)
+  # # visualize heatmap using ward on similarity matrix
+  # out = heatmap_plot_distancematrix(df_simMatrix, df_all, output_dir, "Similarity")
+  # linkage = out.dendrogram_row.calculated_linkage
 
 
+  ##### zscores  featuer plots
+  df_zscores, df_all_outlier_removed, df_outliers = get_zscore_features(df_all, feature_names,
+      output_dir + '/zscore.csv', RemoveOutliers)
+  if (df_outliers.shape[0] > 0 ):
+    output_single_cluster_results(df_outliers, output_dir, "outliers", snapshots_dir)
+  linkage = heatmap_plot_zscore(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
+
+  assignments = hierarchy.fcluster(linkage, max_cluster_num, criterion="maxclust")
+  #hierarchy.dendrogram(linkage)
+
+  ## put assignments into ano files and csv files
+  clusters_list = output_clusters(assignments, df_zscores, df_all_outlier_removed, feature_names, output_dir, snapshots_dir)
+  dunn_index = dunn(clusters_list)
+  print("dunn index is %f" % dunn_index)
+  return linkage,df_zscores
+
+
+def silhouette_clusternumber(linkage,df_zscores,output_dir ="."):
     #Silhouette analysis for determining the number of clusters
 
     print("Silhouettee analysis:")
-    for n_clusters in range(2,25):
+    scores=[]
+    for n_clusters in range(2,30):
          assignments = hierarchy.fcluster(linkage, n_clusters, criterion="maxclust")
          silhouette_avg = silhouette_score(df_zscores, assignments)
          print("For n_clusters =", n_clusters,"The average silhouette_score is :", silhouette_avg)
+         scores.append(silhouette_avg)
+    # plot sihouettee and cut
+    pl.plot(range(2,30),scores,"*-")
+    pl.xlabel("cluster number")
+    pl.ylabel("average sihouettee coefficient")
+    fig = pl.gcf()
+    fig.savefig(output_dir+'/sihouettee_clusternumber.pdf')
+    pl.show()
+    return
 
 
-    assignments = hierarchy.fcluster(linkage, max_cluster_num, criterion="maxclust")
-    #hierarchy.dendrogram(linkage)
+def dunnindex_clusternumber(linkage,df_zscores, output_dir ="."):
+     index_list=[]
+     for n_clusters in range(2,30):
+         assignments = hierarchy.fcluster(linkage, n_clusters, criterion="maxclust")
+         df_assign_id = pd.DataFrame()
+
+         df_assign_id['cluster_id'] = assignments
+
+         clusters = np.unique(assignments)
+         num_cluster = len(clusters)
+
+         cluster_list = []  # for dunn index calculation
+
+         df_cluster = pd.DataFrame()
+         df_zscore_cluster = pd.DataFrame()
+         for i in clusters:
+            ids = np.nonzero(assignments == i)[0]  # starting from  0
+            df_zscore_cluster = df_zscores.iloc[ids]
+            cluster_list.append(df_zscore_cluster.values)
+
+         dunn_index = dunn(cluster_list)
+         index_list.append(dunn_index)
+     pl.figure()
+     pl.plot(range(2,30),index_list,"*-")
+     pl.xlabel("cluster number")
+     pl.ylabel("dunn index")
+     fig = pl.gcf()
+     fig.savefig(output_dir+'/dunnindex_clusternumber.pdf')
+     pl.show()
+     return
 
 
 
 
-    ## put assignments into ano files and csv files
-    clusters_list = output_clusters(assignments, df_zscores, df_all_outlier_removed, feature_names, output_dir,
-                                    snapshots_dir)
-    dunn_index = dunn(clusters_list)
 
-    print("dunn index is %f" % dunn_index)
 
-    return dunn_index
+
 
 
 def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, RemoveOutliers=0):
-    ######  Affinity Propogation ##############
+  ######  Affinity Propogation ##############
 
     print("\n\n\n ***************  affinity propogation computation ****************:")
 
     if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
+      os.mkdir(output_dir)
     else:
-        os.system("rm -r  " + output_dir + '/*')
+      os.system("rm -r  " + output_dir + '/*')
 
 
         # Compute Affinity Propagation
     df_zscores, df_all_outlier_removed, df_outliers = get_zscore_features(df_all, feature_names, None, RemoveOutliers)
     if (df_outliers.shape[0] > 0 ):
-        output_single_cluster_results(df_outliers, output_dir, "outliers", snapshots_dir)
+      output_single_cluster_results(df_outliers, output_dir, "outliers", snapshots_dir)
 
     X = df_zscores.as_matrix()
 
@@ -554,7 +593,7 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
     labels = af.labels_
     labels = labels + 1  # the default labels start from 0, to be consistent with ward, add 1 so that it starts from 1
     clusters_list = output_clusters(labels, df_zscores, df_all_outlier_removed, feature_names, output_dir,
-                                    snapshots_dir)
+        snapshots_dir)
     dunn_index = dunn(clusters_list)
     print("dunn index is %f" % dunn_index)
     return len(np.unique(labels)), dunn_index
@@ -563,7 +602,7 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
 
 
 def selectFeatures_MRMR(df_all, feature_names,  threshold=0, number_of_features=10, selection_method='MID', data_DIR="."):
-    #write out feature array into a csv file, then execute MRMR
+  #write out feature array into a csv file, then execute MRMR
 
     featureArray = df_all[feature_names].astype(float)
     normalized = zscore(featureArray)
