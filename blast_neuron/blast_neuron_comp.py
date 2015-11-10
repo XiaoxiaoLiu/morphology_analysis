@@ -23,10 +23,10 @@ class Command(object):
 
     def run(self, timeout):
         def target():
-            print 'Thread started'
+            #print 'Thread started'
             self.process = subprocess.Popen(self.cmd, shell=True)
             self.process.communicate()
-            print 'Thread finished'
+            #print 'Thread finished'
 
         thread = threading.Thread(target=target)
         thread.start()
@@ -114,24 +114,24 @@ def sort_swc(inputswc_path, outputswc_path, GEN_QSUB = 0, qsub_script_dir= "."):
     return
 
 
-def resample(inputswc_path, outputswc_path,GEN_QSUB = 0, qsub_script_dir= "."):
+def resample(inputswc_path, outputswc_path,step_len = 1, GEN_QSUB = 0, qsub_script_dir= "."):
     output_dir = os.path.dirname(outputswc_path)
     if not os.path.exists(output_dir):
         os.system("mkdir -p  " + output_dir)
         print "create output dir: ", output_dir
-    arguments = " -x resample_swc -f resample_swc -i " + inputswc_path + " -o " + outputswc_path + " -p 1 "
+    arguments = " -x resample_swc -f resample_swc -i " + inputswc_path + " -o " + outputswc_path + " -p "+ str(step_len) + " >tmp.log"
 
     if GEN_QSUB :
         cmd = QMasterV3D + arguments
-        print cmd
+        #print cmd
         script_fn = qsub_script_dir +'/'+inputswc_path.split('/')[-1]+'.qsub'
         jobname = qsub_script_dir+inputswc_path.split('/')[-1]
         gen_qsub_script(cmd, jobname, script_fn)
     else:
         cmd = V3D + arguments
-        print cmd
+        #print cmd
         command = Command(cmd)
-        command.run(timeout=60*5)
+        command.run(timeout=60*3)
     return
 
 def run_neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSUB = 0, qsub_script_dir= "."):
@@ -143,7 +143,7 @@ def run_neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSU
     # log file format
     # file1 file2   8.20009e-07  0 0
 
-    arguments = " -x neuron_distance -f neuron_distance -i " + inputswc_path1 + " " + inputswc_path2 + " -o " + logfile
+    arguments = " -x neuron_distance -f neuron_distance -i " + inputswc_path1 + " " + inputswc_path2 + " -o " + logfile + " >tmp.log"
 
     if GEN_QSUB :
         cmd = QMasterV3D + arguments
@@ -153,7 +153,7 @@ def run_neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSU
         gen_qsub_script(cmd, jobname, script_fn)
     else:
         cmd = V3D + arguments
-        print cmd
+        #print cmd
         command = Command(cmd)
         command.run(timeout=60*5)
     return

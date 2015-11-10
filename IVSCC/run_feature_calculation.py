@@ -12,11 +12,10 @@ else:
 p=  WORK_PATH + '/src/cell-type-analysis'
 sys.path.append(p)
 
-sys.path.append(p + '/utilities')
-import morph_nfb_2_csv as nfb
 
-sys.path.append(p + '/blast_neuron')
-import blast_neuron_comp as bn
+import utilities.morph_nfb_2_csv as nfb
+
+import blast_neuron.blast_neuron_comp as bn
 
 import glob
 import pandas as pd
