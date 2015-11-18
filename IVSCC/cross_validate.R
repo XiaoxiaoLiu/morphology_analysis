@@ -1,7 +1,7 @@
 
 
 ######################################
-SRCDIR <- "/Users/xiaoxiaoliu/work/src/cell-type-analysis/IVSCC"
+SRCDIR <- "/Users/xiaoxiaoliu/work/src/morphology_analysis/IVSCC"
 source(paste0(SRCDIR, "/cv_functions.R"))
 
 data_dir<-"/Users/xiaoxiaoliu/work/data/lims2/1027_pw_aligned/"

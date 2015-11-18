@@ -11,7 +11,7 @@ else:
     WORK_PATH = "/Users/xiaoxiaoliu/work"
 
 
-p=  WORK_PATH + '/src/cell-type-analysis'
+p=  WORK_PATH + '/src/morphology_analysis'
 sys.path.append(p)
 
 sys.path.append(p + '/utilities')

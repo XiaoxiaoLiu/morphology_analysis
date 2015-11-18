@@ -1,4 +1,4 @@
-source("/home/xiaoxiaol/work/src/cell-type-analysis/stats_analysis/analysis.function.Ephys.r")
+source("/home/xiaoxiaol/work/src/morphology_analysis/stats_analysis/analysis.function.Ephys.r")
 options(warn=-1)
 
 

@@ -113,6 +113,28 @@ def sort_swc(inputswc_path, outputswc_path, GEN_QSUB = 0, qsub_script_dir= "."):
 
     return
 
+def consensus(input_ano_path, output_eswc_path, GEN_QSUB = 0, qsub_script_dir= "."):
+    output_dir = os.path.dirname(output_eswc_path)
+    logfile = output_eswc_path+'.log'
+    if not os.path.exists(output_dir):
+        os.system("mkdir -p  " + output_dir)
+        print "create output dir: ", output_dir
+
+    arguments = " -x consensus_swc -f consensus_swc -i " + input_ano_path + " -o " + output_eswc_path + " -p 1 >"+logfile
+
+    if GEN_QSUB :
+        cmd = QMasterV3D + arguments
+        #print cmd
+        script_fn = qsub_script_dir +'/'+input_ano_path.split('/')[-1]+'.qsub'
+        jobname = qsub_script_dir+input_ano_path.split('/')[-1]
+        gen_qsub_script(cmd, jobname, script_fn)
+    else:
+        cmd = V3D + arguments
+        #print cmd
+        command = Command(cmd)
+        command.run(timeout=60*3)
+    return
+
 
 def resample(inputswc_path, outputswc_path,step_len = 1, GEN_QSUB = 0, qsub_script_dir= "."):
     output_dir = os.path.dirname(outputswc_path)
@@ -244,13 +266,13 @@ def genLinkerFile(swcDir, linker_file):
     input_swc_paths = [os.path.join(dirpath, f)
                        for dirpath, dirnames, files in os.walk(swcDir)
                        for f in files if f.endswith('.swc')]
-
-    with open(linker_file, 'w') as f:
-        for input_swc_path in input_swc_paths:
-            print input_swc_path
-            line = "SWCFILE=" + input_swc_path + '\n'
-            f.write(line)
-    f.close()
+    if len(input_swc_paths)> 0:
+        with open(linker_file, 'w') as f:
+            for input_swc_path in input_swc_paths:
+                print input_swc_path
+                line = "SWCFILE=" + input_swc_path + '\n'
+                f.write(line)
+        f.close()
     return
 
 

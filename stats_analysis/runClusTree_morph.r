@@ -1,8 +1,8 @@
 library(multtest)
 library(sigclust)
 library(ape)
-source("/home/xiaoxiaol/work/src/cell-type-analysis/stats_analysis/stepbystep10featsel.r")
-source("/home/xiaoxiaol/work/src/cell-type-analysis/stats_analysis/analysis.function.Ephys.r")
+source("/home/xiaoxiaol/work/src/morphology_analysis/stats_analysis/stepbystep10featsel.r")
+source("/home/xiaoxiaol/work/src/morphology_analysis/stats_analysis/analysis.function.Ephys.r")
 
 
 #############################################
