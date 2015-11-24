@@ -45,6 +45,8 @@ if RUN_RESULTS:
 
 failure_file.close()
 
+
+
 FEATURE_CALC = 0
 if FEATURE_CALC:
   sorted_ANO = sorted_dir+"/sorted.ano"
@@ -53,3 +55,42 @@ if FEATURE_CALC:
   ##batch computing
   feature_file =  sorted_dir+ "/features.nfb"
   bn.batch_compute (sorted_ANO,feature_file)
+
+
+
+
+STATS_CALC = 0
+if STATS_CALC:
+    # run consensus skeleton algorithm
+    RUN_CONSENSUS = 0
+    if RUN_CONSENSUS:
+        anofiles = glob.glob(os.path.join(sorted_dir+'/ano/', '*.ano'))
+        print "there are "+str(len(anofiles))+ " sorted datasets"
+        output_dir = data_DIR+"/consensus"
+        if  not os.path.exists(output_dir):
+             os.mkdir(output_dir)
+        for anofile in anofiles:
+             bn.consensus(anofile,output_dir+'/'+anofile.split('/')[-1]+'.consensus.eswc')
+
+
+    RUN_VoteMap = 0
+    if RUN_VoteMap:
+        anofiles = glob.glob(os.path.join(sorted_dir+'/ano/', '*.ano'))
+        print "there are "+str(len(anofiles))+ " sorted datasets"
+        output_dir = data_DIR+"/votemaps"
+        if  not os.path.exists(output_dir):
+             os.mkdir(output_dir)
+        for anofile in anofiles:
+             bn.votemap(anofile,output_dir+'/'+anofile.split('/')[-1]+'.votemap.swc')
+
+    RUN_Median = 0
+    if RUN_VoteMap:
+        anofiles = glob.glob(os.path.join(sorted_dir+'/ano/', '*.ano'))
+        print "there are "+str(len(anofiles))+ " sorted datasets"
+        output_dir = data_DIR+"/medians"
+        if  not os.path.exists(output_dir):
+             os.mkdir(output_dir)
+        for anofile in anofiles:
+             bn.median_swc(anofile,output_dir+'/'+anofile.split('/')[-1]+'.median.swc')
+
+

@@ -14,11 +14,11 @@ from os import sys, path
 
 p = path.dirname(path.dirname(path.abspath(__file__)))
 sys.path.append(p)
-print sys.path
 
-sys.path.append(p + '/blast_neuron')
 
-import blast_neuron_comp as bn
+sys.path.append(p)
+
+import blast_neuron.blast_neuron_comp as bn
 import matplotlib.pyplot as plt
 import seaborn as sb
 

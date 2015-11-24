@@ -5,8 +5,11 @@ Created on Mon Aug 24 17:18:00 2015
 @author: xiaoxiaol
 """
 
+import sys
 
-
+WORK_PATH = "/Users/xiaoxiaoliu/work"
+p =  WORK_PATH + '/src/morphology_analysis'
+sys.path.append(p)
 import utilities.morph_nfb_2_csv as nfb
 
 def generateALLFeatureCSV_gold166(feature_file, feature_csv_file):
@@ -55,7 +58,8 @@ rerun_Gold_standard = 0
 if rerun_Gold_standard == 1:
 
     ########################################## Gold Standard
-    data_DIR= "/data/mat/xiaoxiaol/data/gold166/checked_final_swcs/preprocessed"
+    #data_DIR= "/data/mat/xiaoxiaol/data/gold166/checked_final_swcs/preprocessed"
+    data_DIR= WORK_PATH+"/data/gold79/sorted"
     #########################################################
     FEATURE_FILE = data_DIR + '/features.nfb'
     nfb.generateALLFeatureCSV_gold166(FEATURE_FILE, data_DIR +'/features_with_tags.csv')
@@ -64,17 +68,18 @@ if rerun_Gold_standard == 1:
 
 
 # ##########################################  recon results
-data_DIR= "/data/mat/xiaoxiaol/data/20151030_rhea_reconstructions_for_allen300_silver_set"
+#data_DIR= "/data/mat/xiaoxiaol/data/20151030_rhea_reconstructions_for_allen300_silver_set/79/sorted"
+data_DIR = WORK_PATH+"/data/20151030_rhea_reconstructions_for_allen300_silver_set/79/sorted"
 #/data/mat/xiaoxiaol/data/gold166/gold166_results_combined/sorted"
 #########################################################
 
 FEATURE_FILE = data_DIR + '/features.nfb'
 
 # generate features with meta tags
-generateALLFeatureCSV_gold166(FEATURE_FILE, data_DIR +'/features_with_tags.csv')
+nfb.generateALLFeatureCSV_gold166(FEATURE_FILE, data_DIR +'/features_with_tags.csv')
 
 # generate ano files
-nfb.generateLinkerFileFromCSV(data_DIR, data_DIR +'/features_with_tags.csv', 'image')
+#nfb.generateLinkerFileFromCSV(data_DIR, data_DIR +'/features_with_tags.csv', 'image')
 #
 
 

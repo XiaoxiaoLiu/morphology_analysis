@@ -7,21 +7,12 @@ import os
 import sys
 
 
-
-
-
 WORK_PATH = "/Users/xiaoxiaoliu/work"
 p =  WORK_PATH + '/src/morphology_analysis'
 sys.path.append(p)
 import blast_neuron.blast_neuron_comp as bn
 import glob
 
-data_DIR =WORK_PATH+"/data/20151030_rhea_reconstructions_for_allen300_silver_set"
-
-
-original_dir = data_DIR + "/auto_recons"
-preprocessed_dir = data_DIR +"/resampled"
-sorted_dir = data_DIR +"/sorted"
 
 
 # generate ano files into a single top folder with absoluate paths to swc files reconstructed for one image
@@ -56,7 +47,9 @@ def recon_table_gen(data_root):
                 for line in f_ano:
 
                     swc_file = line.split('SWCFILE=')[-1]
+                    swc_file = swc_file.split('\n')[0]
                     fn = swc_file.split('/')[-1]
+
                     algorithm = fn.split('v3dpbd_')[-1]
                     algorithm = algorithm.split('.')[0]
                     if "app1" in algorithm:   # for patterns like *x245_y234_z234_app1.swc
@@ -76,6 +69,11 @@ def recon_table_gen(data_root):
         df_silver['swc_file'] =pd.Series(swc_list)
         df_silver.to_csv(data_root + '/recon_table.csv', index=False)
 #####################################################
+
+data_DIR = WORK_PATH+"/data/20151030_rhea_reconstructions_for_allen300_silver_set"
+original_dir = data_DIR + "/auto_recons"
+preprocessed_dir = data_DIR +"/resampled"
+sorted_dir = data_DIR +"/sorted"
 
 
 #one-time operation
@@ -99,58 +97,33 @@ if GEN_GOLD_CSV:
 
 
 
+
 ######################
 ###### tmp
 #sorted_dir = original_dir
 ######
 
-
+sorted_dir = WORK_PATH+"/data/20151030_rhea_reconstructions_for_allen300_silver_set/79/sorted"
 recon_table_gen(sorted_dir)
 
 #merge to get the common set between gold and silver
 
 
 
+SELECT_SWC_WITH_GOLD = 0
+if  SELECT_SWC_WITH_GOLD:
+    df_gold = pd.read_csv(WORK_PATH+"/data/gold79/sorted/gold.csv")
+    df_silver=pd.read_csv((original_dir+'/recon_table.csv'))
 
+    df_share = pd.DataFrame([],columns = df_silver.columns)
 
+    j=0
+    for i in range(df_silver.shape[0]):
+         if df_silver.image[i] in df_gold.image.values:
+             df_share.loc[j] = df_silver.iloc[i].values
+             j=j+1
 
-
-
-# run consensus skeleton algorithm
-RUN_CONSENSUS = 0
-if RUN_CONSENSUS:
-    anofiles = glob.glob(os.path.join(sorted_dir+'/ano/', '*.ano'))
-    print "there are "+str(len(anofiles))+ " sorted datasets"
-    output_dir = data_DIR+"/consensus"
-    if  not os.path.exists(output_dir):
-         os.mkdir(output_dir)
-    for anofile in anofiles:
-         bn.consensus(anofile,output_dir+'/'+anofile.split('/')[-1]+'.consensus.eswc')
-
-
-RUN_VoteMap = 0
-if RUN_VoteMap:
-    anofiles = glob.glob(os.path.join(sorted_dir+'/ano/', '*.ano'))
-    print "there are "+str(len(anofiles))+ " sorted datasets"
-    output_dir = data_DIR+"/votemaps"
-    if  not os.path.exists(output_dir):
-         os.mkdir(output_dir)
-    for anofile in anofiles:
-         bn.votemap(anofile,output_dir+'/'+anofile.split('/')[-1]+'.votemap.swc')
-
-RUN_Median = 0
-if RUN_VoteMap:
-    anofiles = glob.glob(os.path.join(sorted_dir+'/ano/', '*.ano'))
-    print "there are "+str(len(anofiles))+ " sorted datasets"
-    output_dir = data_DIR+"/medians"
-    if  not os.path.exists(output_dir):
-         os.mkdir(output_dir)
-    for anofile in anofiles:
-         bn.median_swc(anofile,output_dir+'/'+anofile.split('/')[-1]+'.median.swc')
-
-
-
-
+    df_share.to_csv(original_dir+"/shared.csv", index=False)
 
 # compare consensus to gold standard
 # generate the gold standard
