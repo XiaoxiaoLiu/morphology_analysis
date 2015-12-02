@@ -24,6 +24,14 @@ votemaps_dir = data_DIR+"/votemaps"
 
 
 ######  plot##################################################
+
+PLOT_TIME =1
+# swc file, seconds
+
+
+
+
+
 NEURON_DISTANCE_PLOT = 1
 df_nd = pd.read_csv(data_DIR + "/neuron_distance.r.csv")
 outputDir = data_DIR +"/neuron_distance_plots"

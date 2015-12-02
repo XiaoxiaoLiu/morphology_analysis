@@ -316,7 +316,7 @@ def genLinkerFile(swcDir, linker_file):
     if len(input_swc_paths)> 0:
         with open(linker_file, 'w') as f:
             for input_swc_path in input_swc_paths:
-                print input_swc_path
+                #print input_swc_path
                 line = "SWCFILE=" + input_swc_path + '\n'
                 f.write(line)
         f.close()
