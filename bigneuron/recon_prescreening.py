@@ -94,7 +94,7 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
 
         df_image = df_results_s[df_results_s.image_file_name == imageName]
 
-        if df_image.shape[0] > 3:  # too few samples
+        if df_image.shape[0] > 5:  # too few samples
             df_image[selected_cols] = df_image[selected_cols].astype(float)  # some moment values are interpreted as strings
             df_gold_image = df_gold_s[df_gold_s.image_file_name == imageName]
 
@@ -106,9 +106,12 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
 
             for col in selected_cols:
                 if (df_image[col].std() == 0.0 ):
-                    print "std = 0!", col, " ", imageName
-                df_normalized_per_image[col] = (df_image[col] - df_image[col].median() ) / (df_image[col].std() + 0.0000001)
-                df_gold_normalized_per_image[col] = ( df_gold_image[col] - df_image[col].median() ) / (df_image[col].std() + 0.0000001)
+                    print "warning: std = 0!", col, " ", imageName
+                    df_normalized_per_image[col] =  (df_image[col] - df_image[col].median() ) / 1.0
+                    df_gold_normalized_per_image[col] = ( df_gold_image[col] - df_image[col].median() ) / 1.0
+                else:
+                    df_normalized_per_image[col] = (df_image[col] - df_image[col].median() ) / (df_image[col].std() + 0.0000001)
+                    df_gold_normalized_per_image[col] = ( df_gold_image[col] - df_image[col].median() ) / (df_image[col].std() + 0.0000001)
 
             # append the results for this image
             df_normalized = df_normalized.append(df_normalized_per_image, ignore_index=True)
@@ -117,6 +120,7 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
     output_dir = os.path.dirname(output_csv)
     df_gold_normalized.to_csv(output_dir +"/normalized_bnfeatures_gold.csv")
     df_normalized.to_csv(output_dir+"/normalized_bnfeatures.csv")
+
     #calculated sit
     ssd_metrics = []
     for rowIdx in range(df_normalized.shape[0]):
@@ -125,10 +129,13 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
 
         #normalize restuls with mean and std
         result = df_normalized.iloc[rowIdx]
-        print result[selected_cols]
-        print gold_df[selected_cols]
-        sumsquare = SSD(result[selected_cols], gold_df[selected_cols])
-        ssd_metrics.append(sumsquare)
+        if gold_df.shape[0] > 0 and result.shape[0] >0 :
+             sumsquare = SSD(result[selected_cols], gold_df[selected_cols])
+             ssd_metrics.append(sumsquare)
+        else:
+            print "warning"
+            print result
+            print gold_df
 
     df_normalized['SSD'] = ssd_metrics
     ## reordering columns

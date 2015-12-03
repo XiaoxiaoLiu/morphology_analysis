@@ -41,7 +41,7 @@ def plot_neuron_distance(neuron_distance_csv, outputDir,algorithms,CASE_BY_CASE_
     sb.set_context("talk", font_scale=3.0)
     plt.xticks(rotation="90")
     plt.subplots_adjust(bottom=0.5)
-    plt.savefig(outputDir + '/all_algorithm_distance.png', format='png')
+    plt.savefig(outputDir + '/all_algorithm_nd_distance.png', format='png')
     plt.show()
     plt.close()
 
@@ -59,12 +59,13 @@ def plot_blasneuron_distance(bn_csv,outputDir,algorithms,CASE_BY_CASE_PLOT=0):
     if not os.path.exists(outputDir):
         os.mkdir(outputDir)
 
-    images = np.unique(df_nd.image)
+    images = np.unique(df_nd.image_file_name)
     print "there are "+str(images.size)+" images"
-    if CASE_BY_CASE_PLOT:
 
-        for image in images:
-            df_image_cur = df_nd[df_nd.image == image]
+
+    if CASE_BY_CASE_PLOT:
+       for image in images:
+            df_image_cur = df_nd[df_nd.image_file_name == image]
             if df_image_cur.shape[0] > 0:
                 plt.figure()
                 plt.bar(range(df_image_cur.swc_file.size), df_image_cur['SSD'])
@@ -77,24 +78,37 @@ def plot_blasneuron_distance(bn_csv,outputDir,algorithms,CASE_BY_CASE_PLOT=0):
 
 
     plt.figure()
+
+    myalgorithms = np.unique(df_nd.algorithm)
+    if myalgorithms.size !=  algorithms.size:
+        print "error: algorithms size is wrong"
+
     sb.barplot(x='algorithm', y='SSD', data=df_nd,order=algorithms)
+    sb.set_context("talk", font_scale=3.0)
 
     #sb.stripplot(y='algorithm', x='SSD', data=df_nd,jitter=True, edgecolor="gray")
     plt.xticks(rotation="90")
-    plt.subplots_adjust(bottom=0.4)
+    plt.subplots_adjust(bottom=0.5)
 
-    #plt.show()
-    plt.savefig(outputDir + '/all_algorithm_distance.png', format='png')
+
+    plt.savefig(outputDir + '/all_algorithm_bn_distance.png', format='png')
+    plt.show()
     plt.close()
 
+def plot_sample_size(bn_csv,outputDir,algorithms):
+
+
+
+    df_nd = pd.read_csv(bn_csv)
     plt.figure()
 
     sample_size=[]
     print "there are "+str(algorithms.size)+" algorithms"
     for alg in algorithms:
             df_alg = df_nd[df_nd.algorithm == alg]
-            sample_size.append(df_alg.image.size)
+            sample_size.append(df_alg.image_file_name.size)
     sb.barplot(range(algorithms.size),np.array(sample_size))
+    #sb.set_context("paper", font_scale=1.0)
     plt.xticks(range(algorithms.size), algorithms,
                rotation="90")
     plt.subplots_adjust(bottom=0.6,top=0.9)

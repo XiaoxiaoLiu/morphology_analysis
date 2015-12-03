@@ -70,11 +70,11 @@ output_feature_csv = data_DIR +'/features_with_tags.csv'
 
 bn_csv = data_DIR+"/blastneuron_ssd.csv"
 
-rp.cal_blastneuron_distance(output_feature_csv,gold_feature_csv,merged_csv_file,bn_csv)
+#rp.cal_blastneuron_distance(output_feature_csv,gold_feature_csv,merged_csv_file,bn_csv)
 
 
 # plot
 #plt_dist.plot_blasneuron_distance(bn_csv,data_DIR,algorithms,CASE_BY_CASE_PLOT=0)
-
+plt_dist.plot_sample_size(bn_csv,data_DIR,algorithms)
 
 
