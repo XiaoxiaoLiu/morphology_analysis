@@ -20,27 +20,28 @@ import blast_neuron.blast_neuron_comp as bn
 import glob
 import numpy as np
 
-import sys.path as path
+import os.path as path
 ######################################################
 
 
+
 def cal_bn_features(sorted_dir,results_feature_csv):
-  #results_feature_csv = sorted_dir +'/features_with_tags.csv'
-  sorted_ANO = sorted_dir+"/sorted.ano"
-  bn.genLinkerFile( sorted_dir, sorted_ANO)
+      #results_feature_csv = sorted_dir +'/features_with_tags.csv'
+      sorted_ANO = sorted_dir+"/sorted.ano"
+      bn.genLinkerFile( sorted_dir, sorted_ANO)
 
-  ##batch computing
-  feature_file =  sorted_dir+ "/features.nfb"
-  bn.batch_compute (sorted_ANO,feature_file)
+      ##batch computing
+      feature_file =  sorted_dir+ "/features.nfb"
+      bn.batch_compute (sorted_ANO,feature_file)
 
-  print "output feature file:"+feature_file
-  print "output ano file:"+sorted_ANO
+      print "output feature file:"+feature_file
+      print "output ano file:"+sorted_ANO
 
-  nfb.generateALLFeatureCSV_gold166(feature_file,results_feature_csv)
-  print "output features with tag:"+ results_feature_csv
+      nfb.generateALLFeatureCSV_gold166(feature_file,results_feature_csv)
+      print "output features with tag:"+ results_feature_csv
 
 
-  return
+      return
 
 
 
@@ -60,7 +61,7 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
 
     # common set of images
     df_merged = pd.read_csv(merged_csv)
-    final_images = df_merged.image_file_name
+    final_images = np.unique( df_merged.image_file_name)
 
     #output_csv =data_DIR + '/normalized_bn_dist.csv'
     feature_cols = [u'num_nodes', u'soma_surface', u'num_stems', u'num_bifurcations', u'num_branches',\
@@ -90,18 +91,18 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
 
     for i in range(final_images.size):
         imageName = final_images[i]
-        df_image = df_results_s[df_results_s.image == imageName]
 
-        if df_image.shape[0] > 5:  # too few samples
+        df_image = df_results_s[df_results_s.image_file_name == imageName]
+
+        if df_image.shape[0] > 3:  # too few samples
             df_image[selected_cols] = df_image[selected_cols].astype(float)  # some moment values are interpreted as strings
-            df_gold_image = df_gold_s[df_gold_s.image == imageName]
+            df_gold_image = df_gold_s[df_gold_s.image_file_name == imageName]
 
             df_normalized_per_image = pd.DataFrame(columns=my_cols1)
             df_gold_normalized_per_image = pd.DataFrame(columns=my_cols2)
 
-            df_normalized_per_image[[u'image', u'algorithm', u'swc_file']] = df_image[[u'image', u'algorithm', u'swc_file']]
-            df_gold_normalized_per_image[u'image'] = df_gold_image.image
-            print imageName
+            df_normalized_per_image[[u'image_file_name', u'algorithm', u'swc_file']] = df_image[[u'image_file_name', u'algorithm', u'swc_file']]
+            df_gold_normalized_per_image[u'image_file_name'] = df_gold_image.image_file_name
 
             for col in selected_cols:
                 if (df_image[col].std() == 0.0 ):
@@ -113,21 +114,26 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
             df_normalized = df_normalized.append(df_normalized_per_image, ignore_index=True)
             df_gold_normalized= df_gold_normalized.append(df_gold_normalized_per_image, ignore_index=True)
 
-
+    output_dir = os.path.dirname(output_csv)
+    df_gold_normalized.to_csv(output_dir +"/normalized_bnfeatures_gold.csv")
+    df_normalized.to_csv(output_dir+"/normalized_bnfeatures.csv")
     #calculated sit
     ssd_metrics = []
     for rowIdx in range(df_normalized.shape[0]):
-        imageName = df_normalized.image[rowIdx]
-        gold_df = df_gold_normalized.loc[df_gold_normalized.image == imageName]
+        imageName = df_normalized.image_file_name[rowIdx]
+        gold_df = df_gold_normalized.loc[df_gold_normalized.image_file_name == imageName]
 
         #normalize restuls with mean and std
         result = df_normalized.iloc[rowIdx]
+        print result[selected_cols]
+        print gold_df[selected_cols]
         sumsquare = SSD(result[selected_cols], gold_df[selected_cols])
         ssd_metrics.append(sumsquare)
 
     df_normalized['SSD'] = ssd_metrics
     ## reordering columns
-    df_normalized.to_csv(output_csv)
+    df_normalized.to_csv(output_csv,index=False)
+    print "output:"+output_csv
     return
 
 
@@ -139,13 +145,14 @@ def cal_neuron_dist(merged_csv_file,output_csv):
 
     df_neuron_distance = pd.DataFrame(columns=('swc_file', 'gold_swc_file', 'algorithm', 'neuron_distance'))
     for i in range(df_merged.image_file_name.size):
-            df_swc = df_merged.swc_file.iloc[i]
-            logfile = df_swc.swc_file + ".r.log"
+            tmp = df_merged.iloc[i].swc_file
+            logfile = tmp + ".r.log"
             if path.isfile(logfile):
                 nd = bn.read_neuron_dist_log(logfile)
                 df_neuron_distance.loc[i] = [df_merged.iloc[i].swc_file, df_merged.iloc[i].gold_swc_file, df_merged.iloc[i].algorithm, nd['ave']]
 
-    df_neuron_distance.to_csv(output_csv)
+    df_neuron_distance.to_csv(output_csv,index=False)
+    print "output:"+output_csv
     return
 
 
@@ -175,6 +182,21 @@ def generate_ano_files_dir(my_dir):
          dataset_path = os.path.abspath(subdir)
          bn.genLinkerFile( dataset_path, my_dir+'/ano/'+subdir.split('/')[-1]+'.recons.ano')
 
+
+
+def map_image_name(tmp_feature_csv,lookup_image_id_table_file, output_feature_csv):
+        df_in = pd.read_csv(tmp_feature_csv)
+        df_lookup_table = pd.read_csv(lookup_image_id_table_file)
+        df_output = df_in
+        for i in range(df_in.image_file_name.size):
+            image_id = int(df_in.iloc[i].image_file_name)
+            if image_id > df_lookup_table.image_file_name.size:
+                print "error in looking image ids"
+            image_file_name = df_lookup_table.image_file_name[image_id-1]
+            df_output.loc[i,'image_file_name']= image_file_name
+
+        df_output.to_csv(output_feature_csv,index=False)
+        return
 
 
 def recon_table_gen(data_root, lookup_image_id_table_file=None, output_csv_file=None):
@@ -219,7 +241,7 @@ def recon_table_gen(data_root, lookup_image_id_table_file=None, output_csv_file=
                         df_lookup_table = pd.read_csv(lookup_image_id_table_file)
                         image_id = int(image)
                         if image_id > df_lookup_table.image_file_name.size:
-                            print "error! line 87 at recon_prescreening.py"
+                            print "error!"
                         image_file_name = df_lookup_table.image_file_name[image_id-1]
 
                     algorithmList.append(algorithm)
@@ -254,7 +276,7 @@ def merge_gold_silver(GOLD_CSV,SILVER_CSV, output_merged_csv):
     return
 
 
-def gen_gold_csv(gold_dir,output_gold_csv_file):
+def gen_gold_feature_csv(gold_dir,output_gold_csv_file,output_gold_feature_csv):
     #sorted_GMR_57C10_AD_01-1xLwt_attp40_4stop1-m-A02-20111101_2_F3-left_optic_lobe.v3draw.extract_6.v3dpbd.ano_stamp_2015_06_17_12_23.swc
     gold_files = glob.glob(os.path.join(gold_dir, '*.swc'))
     df_gold = pd.DataFrame()
@@ -273,6 +295,15 @@ def gen_gold_csv(gold_dir,output_gold_csv_file):
     df_gold['image_file_name'] = pd.Series(images)
     df_gold['gold_swc_file'] = pd.Series(gold_swc_files)
     df_gold.to_csv(output_gold_csv_file, index=False)
+
+    # generate ano file for feature calcuation
+    out_sorted_ANO = gold_dir+"/sorted.ano"
+    bn.genLinkerFile(gold_dir , out_sorted_ANO)
+
+    out_feature_file =  gold_dir + "/features.nfb"
+    bn.batch_compute (out_sorted_ANO,out_feature_file)
+    nfb.generateALLFeatureCSV_gold166(out_feature_file, output_gold_feature_csv)
+
     return
 
 
@@ -318,8 +349,8 @@ def main():
     ###### generate gold standard 166 table
     gold_dir = "/data/mat/xiaoxiaol/data/gold166/checked_final_swcs/preprocessed"
     GOLD_CSV = "/data/mat/xiaoxiaol/data/gold166/gold.csv"
-    gen_gold_csv(gold_dir, GOLD_CSV)
-
+    gold_feature_csv="/data/mat/xiaoxiaol/data/gold166/gold_features.csv"
+    gen_gold_feature_csv(gold_dir, GOLD_CSV,gold_feature_csv)
 
 
     ######  resample and sort

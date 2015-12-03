@@ -3,7 +3,7 @@ __author__ = 'xiaoxiaol'
 import matplotlib.pyplot as plt
 import seaborn as sb
 import os
-import sys.path as path
+import os.path as path
 import numpy as np
 import pandas as pd
 
