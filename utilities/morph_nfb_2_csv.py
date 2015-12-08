@@ -71,23 +71,30 @@ def generateALLFeatureCSV_gold166(feature_file, feature_csv_file):
     imageList = []
     for swc_file in swc_file_nameList:
         fn = swc_file.split('/')[-1]
-        algorithm = fn.split('v3dpbd_')[-1]
-        algorithm = algorithm.split('.')[0]
+        if fn.find("v3dpbd") >-1:
+             tmp = fn.split('v3dpbd_')[-1]
+        else:
+             tmp = fn.split('v3draw_')[-1]
+        algorithm = tmp.split('.')[0]
         if "app1" in algorithm:   # for patterns like *x245_y234_z234_app1.swc
               algorithm = "app1"
         if "app2" in algorithm:
               algorithm = "app2"
         if  "spanningtree" in algorithm: # fastmarching_spanningtree is too long
               algorithm = "spanningtree"
-        image = fn.split('.v3dpbd')[0]
-        image = image.split('sorted_')[-1]  # for sorted_* swc_files
+
+        if fn.find("v3dpbd") >-1:
+             tmp = fn.split('.v3dpbd')[0] +".v3dpbd"
+        else:
+             tmp = fn.split('.v3draw')[0] +".v3draw"
+        image = tmp.split('sorted_')[-1]  # for sorted_* swc_files
         algorithmList.append(algorithm)
         imageList.append(image)
 
     df['algorithm'] = pd.Series(algorithmList, index=df.index)
-    df['image'] = pd.Series(imageList, index=df.index)
+    df['image_file_name'] = pd.Series(imageList, index=df.index)
 
-    allColumns = np.append(np.array(['image', 'algorithm', 'swc_file']), allColumns, 0)
+    allColumns = np.append(np.array(['image_file_name', 'algorithm', 'swc_file']), allColumns, 0)
 
     df = df[allColumns]
 

@@ -16,7 +16,7 @@ sys.path.append(p)
 
 
 import utilities.morph_nfb_2_csv as nfb
-import blast_neuron.blast_neuron_comp as bn
+import vaa3d_calls.vaa3d_calls as bn
 import glob
 import numpy as np
 
@@ -39,7 +39,6 @@ def cal_bn_features(sorted_dir,results_feature_csv):
 
       nfb.generateALLFeatureCSV_gold166(feature_file,results_feature_csv)
       print "output features with tag:"+ results_feature_csv
-
 
       return
 
@@ -146,17 +145,20 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
 
 def cal_neuron_dist(merged_csv_file,output_csv):
     #output_csv= data_DIR + "/neuron_distance.r.csv"
-    df_merged = pd.read_csv(merged_csv_file)
-    for i in range(df_merged.image_file_name.size):
-        bn.run_neuron_dist(df_merged.iloc[i].swc_file, df_merged.iloc[i].gold_swc_file,df_merged.iloc[i].swc_file + ".r.log", 0, "nd")
 
-    df_neuron_distance = pd.DataFrame(columns=('swc_file', 'gold_swc_file', 'algorithm', 'neuron_distance'))
+    # calculate distances
+    df_merged = pd.read_csv(merged_csv_file)
+    # for i in range(df_merged.image_file_name.size):
+    #     bn.run_neuron_dist(df_merged.iloc[i].swc_file, df_merged.iloc[i].gold_swc_file,df_merged.iloc[i].swc_file + ".r.log", 0, "nd")
+
+    #collect results from log files
+    df_neuron_distance = pd.DataFrame(columns=('image_file_name','swc_file', 'gold_swc_file', 'algorithm', 'neuron_distance','neuron_distance_diff','neuron_distance_perc'))
     for i in range(df_merged.image_file_name.size):
             tmp = df_merged.iloc[i].swc_file
             logfile = tmp + ".r.log"
             if path.isfile(logfile):
                 nd = bn.read_neuron_dist_log(logfile)
-                df_neuron_distance.loc[i] = [df_merged.iloc[i].swc_file, df_merged.iloc[i].gold_swc_file, df_merged.iloc[i].algorithm, nd['ave']]
+                df_neuron_distance.loc[i] = [df_merged.iloc[i].image_file_name,df_merged.iloc[i].swc_file, df_merged.iloc[i].gold_swc_file, df_merged.iloc[i].algorithm, nd['ave'],nd['diff'],nd['perc']]
 
     df_neuron_distance.to_csv(output_csv,index=False)
     print "output:"+output_csv
@@ -196,9 +198,9 @@ def map_image_name(tmp_feature_csv,lookup_image_id_table_file, output_feature_cs
         df_lookup_table = pd.read_csv(lookup_image_id_table_file)
         df_output = df_in
         for i in range(df_in.image_file_name.size):
-            image_id = int(df_in.iloc[i].image_file_name)
+            image_id = int(df_in.iloc[i].image_file_name.split(".")[0])
             if image_id > df_lookup_table.image_file_name.size:
-                print "error in looking image ids"
+                  print "error in looking image ids"
             image_file_name = df_lookup_table.image_file_name[image_id-1]
             df_output.loc[i,'image_file_name']= image_file_name
 
@@ -234,8 +236,12 @@ def recon_table_gen(data_root, lookup_image_id_table_file=None, output_csv_file=
                           algorithm = "app1"
                     if "app2" in algorithm:
                           algorithm = "app2"
-                    if  "spanningtree" in algorithm: # fastmarching_spanningtree is too long
+                    if  "fastmarching_spanningtree" in algorithm: # fastmarching_spanningtree is too long
                           algorithm = "spanningtree"
+
+                    if "tubularity_model_S" in algorithm:
+                         algorithm = "RegMST"
+
 
                     if fn.find("v3dpbd") >-1:
                         tmp = fn.split('.v3dpbd')[0]
@@ -267,10 +273,12 @@ def recon_table_gen(data_root, lookup_image_id_table_file=None, output_csv_file=
 def merge_gold_silver(GOLD_CSV,SILVER_CSV, output_merged_csv):
     df_gold = pd.read_csv(GOLD_CSV)
     df_silver = pd.read_csv(SILVER_CSV)
-    print df_silver.columns
-    print df_gold.columns
+    #print df_silver.columns
+    #print df_gold.columns
 
     df_share = pd.merge(df_silver,df_gold,on="image_file_name")
+
+
     # df_share = pd.DataFrame([],columns = df_silver.columns)
     #
     # j=0
@@ -317,15 +325,23 @@ def gen_gold_feature_csv(gold_dir,output_gold_csv_file,output_gold_feature_csv):
 def resample_and_sort(data_dir,preprocessed_dir,sorted_dir, GEN_QSUB = 0):
     failure_file = open(data_dir +"/failurecases_via_size.txt","w")
     i = 0
-    print data_dir
-    for input_swc_path in glob.glob(data_dir+"/*/*.swc"):
+    subfolder = 1
+    filelist= glob.glob(data_dir+"/*/*.swc")
+    if len(filelist)<1 :
+        filelist= glob.glob(data_dir+"/*.swc")
+        subfolder = 0
+         
+    for input_swc_path in filelist:
          i = i+1
          print "\n\n "
          print i
          print "resample and sort : "+ input_swc_path
-         if(( os.path.getsize(input_swc_path) > 1000) and ( os.path.getsize(input_swc_path) < 1024*1024/2)):
+         if(( os.path.getsize(input_swc_path) > 1000) and ( os.path.getsize(input_swc_path) < 1024*1024)):
             if not "tmp_cache_img"  in input_swc_path:   # skip the tmp files
-              swc_fn = "/".join (input_swc_path.split("/")[-2:]) # to keep the subfolder structure
+              if subfolder >0:
+                   swc_fn = "/".join (input_swc_path.split("/")[-2:]) # to keep the subfolder structure
+              else:
+                   swc_fn = "/".join (input_swc_path.split("/")[-1:])
 
               # resample
               preprocessed_swc_path = preprocessed_dir+ '/'+swc_fn

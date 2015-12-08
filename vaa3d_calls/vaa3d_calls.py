@@ -225,7 +225,7 @@ def global_retrieve(inputswc_fn, feature_fn, result_fn, retrieve_number, logfile
 # ===================================================================
 
 
-def run_neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSUB = 0, qsub_script_dir= "."):
+def cal_neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSUB = 0, qsub_script_dir= "."):
     #Distance between neuron 1 /home/xiaoxiaol/work/data/test_frog2-2.swc and neuron 2 /home/xiaoxiaol/work/data/test_frog2-2.swc is:
     #entire-structure-average = 8.20009e-07
     #differen-structure-average = 0
@@ -245,15 +245,15 @@ def read_neuron_dist_log(logfile):
     f = open(logfile, 'r')
     line = f.readline()
 
-    ave = float(line.split()[2])  # read the average difference number
-    diff = float(line.split()[3])  # read the average difference number
-    perc = float(line.split()[4])  # read the average difference number
+    ave = float(line.split()[2])  # entire-structure-average
+    diff = float(line.split()[3])  #differen-structure-average
+    perc = float(line.split()[4])  #percent of different-structure
     return {'ave': ave, 'diff': diff, 'perc': perc}
 
 
 
 def neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log', GEN_QSUB = 0, qsub_script_dir = "."):
-    run_neuron_dist(inputswc_path1, inputswc_path2,logfile)
+    cal_neuron_dist(inputswc_path1, inputswc_path2,logfile,GEN_QSUB,qsub_script_dir)
     dist = read_neuron_dist_log(logfile)
     return dist
 

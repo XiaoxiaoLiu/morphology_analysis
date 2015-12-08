@@ -9,36 +9,47 @@ import pandas as pd
 
 
 
-
-
 def plot_neuron_distance(neuron_distance_csv, outputDir,algorithms,CASE_BY_CASE_PLOT = 0):
     #neuron_distance_csv = data_DIR + "/neuron_distance.r.csv"
     #outputDir = data_DIR + "/neuron_dist_plots_r"
     df_nd = pd.read_csv(neuron_distance_csv)
-
+    all_images = np.unique(df_nd.image_file_name)
     if not path.exists(outputDir):
         os.mkdir(outputDir)
 
-
-
+    shared_images = []
     if CASE_BY_CASE_PLOT:
-        images = np.unique(df_nd.gold_swc_file)
-        for image in images:
-            df_image_cur = df_nd[df_nd.gold_swc_file == image]
-            if df_image_cur.shape[0] > 10:
+        for image in all_images:
+            df_image_cur = df_nd[df_nd.image_file_name == image]
+            if df_image_cur.shape[0] > 0:
                 plt.figure()
                 plt.bar(range(df_image_cur.swc_file.size), df_image_cur.neuron_distance)
                 plt.xticks(range(df_image_cur.swc_file.size), df_image_cur['algorithm'].values[:],
                            rotation="90")
                 plt.ylabel('Neuron Distance')
                 plt.subplots_adjust(bottom=0.3)
-                plt.savefig(outputDir + '/' + image.split('/')[-1] + '_nd.png', format='png')
+                plt.savefig(outputDir + '/sorted/' + image.split('/')[-1] + '_nd.png', format='png')
                 #plt.show()
                 plt.close()
+            else:
+                print image
+            if df_image_cur.shape[0] > 20:
+                shared_images.append(image)
+        print "there are "+ str(len(shared_images)) +" images that have reconstructions from all " + str(20) +" algorithms."
+
+
     ### all algorithm plot
+    dfg = df_nd.groupby('algorithm')
+    sample_size_per_algorithm=[]
+    for alg in algorithms:
+        sample_size_per_algorithm.append(dfg.get_group(alg).shape[0])
+
     plt.figure()
-    sb.barplot(x='algorithm', y='neuron_distance', data=df_nd,order=algorithms)
-    sb.set_context("talk", font_scale=3.0)
+    a=sb.barplot(x='algorithm', y='neuron_distance', data=df_nd,order=algorithms)
+
+
+    a.set_xticklabels(['%s ($n$=%d )'%(algorithms[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
+    #sb.set_context("talk", font_scale=3.0)
     plt.xticks(rotation="90")
     plt.subplots_adjust(bottom=0.5)
     plt.savefig(outputDir + '/all_algorithm_nd_distance.png', format='png')
@@ -77,28 +88,35 @@ def plot_blasneuron_distance(bn_csv,outputDir,algorithms,CASE_BY_CASE_PLOT=0):
 
 
 
-    plt.figure()
 
     myalgorithms = np.unique(df_nd.algorithm)
     if myalgorithms.size !=  algorithms.size:
         print "error: algorithms size is wrong"
 
-    sb.barplot(x='algorithm', y='SSD', data=df_nd,order=algorithms)
-    sb.set_context("talk", font_scale=3.0)
+
+
+    dfg = df_nd.groupby('algorithm')
+    sample_size_per_algorithm=[]
+    for alg in algorithms:
+        sample_size_per_algorithm.append(dfg.get_group(alg).shape[0])
+
+    plt.figure()
+    a=sb.barplot(x='algorithm', y='SSD', data=df_nd,order=algorithms)
+    #sb.set_context("talk", font_scale=3.0)
+    a.set_xticklabels(['%s ($n$=%d )'%(algorithms[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
 
     #sb.stripplot(y='algorithm', x='SSD', data=df_nd,jitter=True, edgecolor="gray")
     plt.xticks(rotation="90")
     plt.subplots_adjust(bottom=0.5)
 
-
     plt.savefig(outputDir + '/all_algorithm_bn_distance.png', format='png')
     plt.show()
     plt.close()
 
+
+
+
 def plot_sample_size(bn_csv,outputDir,algorithms):
-
-
-
     df_nd = pd.read_csv(bn_csv)
     plt.figure()
 
@@ -121,6 +139,7 @@ def plot_sample_size(bn_csv,outputDir,algorithms):
 
 
 
+def plot_common_set():
 
-
+    return
 
