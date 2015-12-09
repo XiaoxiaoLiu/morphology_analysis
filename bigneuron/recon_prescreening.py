@@ -16,7 +16,7 @@ sys.path.append(p)
 
 
 import utilities.morph_nfb_2_csv as nfb
-import vaa3d_calls.vaa3d_calls as bn
+import blast_neuron.blast_neuron_comp as bn
 import glob
 import numpy as np
 
@@ -41,7 +41,6 @@ def cal_bn_features(sorted_dir,results_feature_csv):
       print "output features with tag:"+ results_feature_csv
 
       return
-
 
 
 
@@ -120,7 +119,7 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
     df_gold_normalized.to_csv(output_dir +"/normalized_bnfeatures_gold.csv")
     df_normalized.to_csv(output_dir+"/normalized_bnfeatures.csv")
 
-    #calculated sit
+
     ssd_metrics = []
     for rowIdx in range(df_normalized.shape[0]):
         imageName = df_normalized.image_file_name[rowIdx]
@@ -143,22 +142,36 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
     return
 
 
-def cal_neuron_dist(merged_csv_file,output_csv):
-    #output_csv= data_DIR + "/neuron_distance.r.csv"
+def cal_neuron_dist(input_csv_file,output_csv,overwrite_existing = 1, old_output_csv=None):
 
-    # calculate distances
-    df_merged = pd.read_csv(merged_csv_file)
-    # for i in range(df_merged.image_file_name.size):
-    #     bn.run_neuron_dist(df_merged.iloc[i].swc_file, df_merged.iloc[i].gold_swc_file,df_merged.iloc[i].swc_file + ".r.log", 0, "nd")
+    df_input = pd.read_csv(input_csv_file)
+    df_already_have = pd.DataFrame()
+
+    if (not overwrite_existing):
+        if os.path.isfile(old_output_csv):
+            # only run new data
+            df_old = pd.read_csv(old_output_csv)
+            df_already_have = pd.merge(df_input, df_old, on='swc_file')
+            print "there are already "+ str(df_already_have['swc_file'].size) +"  swcs calculated"
+
+    print " Calculate neuron distances:"
+    for i in range(df_input.image_file_name.size):
+             print i
+             swc_f = df_input.iloc[i].swc_file
+             if not swc_f in list(df_already_have['swc_file']):
+                   bn.run_neuron_dist(swc_f, df_input.iloc[i].gold_swc_file,df_input.iloc[i].swc_file + ".r.log", 0, "nd")
 
     #collect results from log files
     df_neuron_distance = pd.DataFrame(columns=('image_file_name','swc_file', 'gold_swc_file', 'algorithm', 'neuron_distance','neuron_distance_diff','neuron_distance_perc'))
-    for i in range(df_merged.image_file_name.size):
-            tmp = df_merged.iloc[i].swc_file
+    for i in range(df_input.image_file_name.size):
+            tmp = df_input.iloc[i].swc_file
             logfile = tmp + ".r.log"
             if path.isfile(logfile):
                 nd = bn.read_neuron_dist_log(logfile)
-                df_neuron_distance.loc[i] = [df_merged.iloc[i].image_file_name,df_merged.iloc[i].swc_file, df_merged.iloc[i].gold_swc_file, df_merged.iloc[i].algorithm, nd['ave'],nd['diff'],nd['perc']]
+                df_neuron_distance.loc[i] = [df_input.iloc[i].image_file_name,df_input.iloc[i].swc_file, df_input.iloc[i].gold_swc_file, df_input.iloc[i].algorithm, nd['ave'],nd['diff'],nd['perc']]
+            else:
+                print "Warning: no neuron distance log output for "+tmp +" :output NAs."
+                df_neuron_distance.loc[i]= [df_input.iloc[i].image_file_name,df_input.iloc[i].swc_file, df_input.iloc[i].gold_swc_file, df_input.iloc[i].algorithm, np.nan, np.nan, np.nan]
 
     df_neuron_distance.to_csv(output_csv,index=False)
     print "output:"+output_csv
@@ -322,14 +335,15 @@ def gen_gold_feature_csv(gold_dir,output_gold_csv_file,output_gold_feature_csv):
     return
 
 
-def resample_and_sort(data_dir,preprocessed_dir,sorted_dir, GEN_QSUB = 0):
+def resample_and_sort(data_dir,preprocessed_dir,sorted_dir, GEN_QSUB = 0,overwrite_sorted = 1,filelist=None):
     failure_file = open(data_dir +"/failurecases_via_size.txt","w")
     i = 0
     subfolder = 1
-    filelist= glob.glob(data_dir+"/*/*.swc")
-    if len(filelist)<1 :
-        filelist= glob.glob(data_dir+"/*.swc")
-        subfolder = 0
+    if filelist == None:
+        filelist= glob.glob(data_dir+"/*/*.swc")
+        if len(filelist)<1 :
+            filelist= glob.glob(data_dir+"/*.swc")
+            subfolder = 0
          
     for input_swc_path in filelist:
          i = i+1
@@ -343,15 +357,18 @@ def resample_and_sort(data_dir,preprocessed_dir,sorted_dir, GEN_QSUB = 0):
               else:
                    swc_fn = "/".join (input_swc_path.split("/")[-1:])
 
-              # resample
-              preprocessed_swc_path = preprocessed_dir+ '/'+swc_fn
-              bn.resample(input_swc_path, preprocessed_swc_path,3,GEN_QSUB,data_dir+'/qsub/resample')  # generate QSUB scripts
 
-              # sort
               sorted_swc_path = sorted_dir+ '/'+swc_fn
-              bn.sort_swc(preprocessed_swc_path, sorted_swc_path,GEN_QSUB,data_dir+'/qsub/sort')
+              if not os.path.isfile(sorted_swc_path) or overwrite_sorted:  # if already generated
+                 # resample
+                 preprocessed_swc_path = preprocessed_dir+ '/'+swc_fn
+                 bn.resample(input_swc_path, preprocessed_swc_path,3,GEN_QSUB,data_dir+'/qsub/resample')  # generate QSUB scripts
+
+                # sort
+                 sorted_swc_path = sorted_dir+ '/'+swc_fn
+                 bn.sort_swc(preprocessed_swc_path, sorted_swc_path,GEN_QSUB,data_dir+'/qsub/sort')
          else:
-            failure_file.write(input_swc_path+" "+os.path.getsize(input_swc_path)+"\n ")
+            failure_file.write(input_swc_path+" "+str(os.path.getsize(input_swc_path))+"\n ")
 
     failure_file.close()
     print "failure cases with file sizes that are too big or too small are logged at:"+ data_dir+"/failurecases_via_size.txt"
@@ -363,34 +380,7 @@ def resample_and_sort(data_dir,preprocessed_dir,sorted_dir, GEN_QSUB = 0):
 
 
 def main():
-    data_DIR ="/data/mat/xiaoxiaol/data/20151130_rhea_reconstructions_for_allen300_silver_set"
-    original_dir = data_DIR +"/auto_recons"
-    preprocessed_dir = data_DIR+ "/resampled"
-    sorted_dir = data_DIR +"/sorted"
 
-
-    ###### generate gold standard 166 table
-    gold_dir = "/data/mat/xiaoxiaol/data/gold166/checked_final_swcs/preprocessed"
-    GOLD_CSV = "/data/mat/xiaoxiaol/data/gold166/gold.csv"
-    gold_feature_csv="/data/mat/xiaoxiaol/data/gold166/gold_features.csv"
-    gen_gold_feature_csv(gold_dir, GOLD_CSV,gold_feature_csv)
-
-
-    ######  resample and sort
-    resample_and_sort(original_dir,preprocessed_dir,sorted_dir)
-
-
-    ###### genearte sliver data table
-    SILVER_CSV = data_DIR+'/recon_table.csv'
-    lookup_image_id_table_file = data_DIR +"/image_name_lookup_table.csv"
-    recon_table_gen(sorted_dir,lookup_image_id_table_file,SILVER_CSV)
-
-
-    #####merge to get the common set between gold and silver
-    merged_csv_file = data_DIR+'/shared.csv'
-    merge_gold_silver(GOLD_CSV,SILVER_CSV,merged_csv_file)
-
-    cal_neuron_dist(merged_csv_file)
     return
 
 

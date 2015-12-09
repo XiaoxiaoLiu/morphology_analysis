@@ -6,11 +6,16 @@ import numpy as np
 
 
 data_dir = "/data/mat/xiaoxiaol/data/reconstructions_2015_1207/auto_recons"
-df_r=pd.read_csv(data_dir+'/list.csv')
+df_r = pd.read_csv(data_dir+'/list.csv')
+
+df_gold79 = pd.read_csv('/data/mat/xiaoxiaol/data/gold79/gold.csv')
+#df_merged = pd.merge(df_r,df_gold79, on="image_file_name" )
+#df.loc[df['image_file'].isin(df_gold79.image_file_name)]
 
 lookup_image_id_table_file = data_dir +"/../image_name_lookup_table.csv"
 df_lookup_table = pd.read_csv(lookup_image_id_table_file)
-out_folder = "org_by_alg"
+out_folder = "org_by_alg_gold79"
+
 
 
 for swc_file  in df_r.swc_file:
@@ -32,22 +37,21 @@ for swc_file  in df_r.swc_file:
     if "tubularity_model_S" in algorithm:
          algorithm = "RegMST"
 
-
-
-
-
     image_id = int(fn.split(".v3d")[0])
     if image_id > df_lookup_table.image_file_name.size:
           print "error in looking image ids"
     image_file_name = df_lookup_table.image_file_name[image_id-1]
-    #print image_file_name
 
-    outfilename = image_file_name+".swc"
-    outdir= data_dir+"/"+out_folder+"/"+algorithm
-    os.system("mkdir -p "+outdir)
-    os.system("cp "+data_dir+"/"+swc_file +" "+ outdir+"/"+outfilename)
 
-    #print data_dir+"/"+swc_file
-    #print data_dir+"/pack/"+algorithm+"/"+outfilename
+    if  df_gold79.loc[df_gold79.image_file_name == image_file_name].size >0:
+            #print image_file_name
+
+            outfilename = image_file_name+".swc"
+            outdir= data_dir+"/"+out_folder+"/"+algorithm
+            os.system("mkdir -p "+outdir)
+            os.system("cp "+data_dir+"/"+swc_file +" "+ outdir+"/"+outfilename)
+
+            print data_dir+"/"+swc_file
+            #print data_dir+"/pack/"+algorithm+"/"+outfilename
 
 

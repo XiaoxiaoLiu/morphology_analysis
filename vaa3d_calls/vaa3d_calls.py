@@ -111,11 +111,10 @@ def image_profiling(input_image_file,output_csv_file, dialation_ratio=3, flip=0,
     if not os.path.exists(output_dir):
         os.system("mkdir -p  " + output_dir)
         print "create output dir: ", output_dir
-o
-    arguments = " -x neuron_image_profiling -f profile_swc -i "+ input_image_file + " -o "+ output_csv_file +" -p "+
-str(dialation_ratio) + " "+ str( flip)  + " "+ str(invert) +" >"+logfile
 
-    execute_command(arguments,GEN_QSUB,qsub_script_dir)
+    arguments = " -x neuron_image_profiling -f profile_swc -i "+ input_image_file + " -o "+ output_csv_file +" -p "+str(dialation_ratio) + " "+ str( flip)  + " "+ str(invert) +" >"+logfile
+
+    execute_command(arguments)
     return
 
 
