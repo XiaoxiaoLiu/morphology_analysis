@@ -25,6 +25,124 @@ import os.path as path
 
 
 
+
+
+
+
+def SSD(feature_array1, feature_array2):
+    diff_v = np.array(feature_array1) - np.array(feature_array2)
+    ssd = np.sum(np.abs(diff_v) ** 2)
+    return ssd
+
+
+GL_FEATURE_TAGS = np.array(
+['num_nodes', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips', 'overall_width',
+ 'overall_height', 'overall_depth', 'average_diameter', 'total_length', 'total_surface', 'total_volume',
+ 'max_euclidean_distance', 'max_path_distance', 'max_branch_order', 'average_contraction', 'average fragmentation',
+ 'parent_daughter_ratio', 'bifurcation_angle_local', 'bifurcation_angle_remote'])
+GMI_FEATURE_TAGS = np.array(
+['moment1', 'moment2', 'moment3', 'moment4', 'moment5', 'moment6', 'moment7', 'moment8', 'moment9', 'moment10',
+ 'moment11', 'moment12', 'moment13', 'avgR'])
+
+
+
+def readDBFeatures(FEATURE_FILE):
+    # TODO: detect nan values
+    glf_featureList = []  # each row is a feature vector
+    gmi_featureList = []
+    swc_file_nameList = []
+    with open(FEATURE_FILE, 'r') as  f:
+        for fn_line in f:  # ignore the SWCFILE=* line
+
+            swc_file = fn_line[8:].strip()
+            swc_file_nameList.append(swc_file)
+
+            line_globalFeature = (f.next()).strip()
+            glf = map(float, line_globalFeature.split('\t'))
+            glf_featureList.append(glf)
+
+            line_GMI = (f.next()).strip()
+            gmi = map(float, line_GMI.split('\t'))
+            gmi_featureList.append(gmi)
+
+    return swc_file_nameList, np.array(glf_featureList), np.array(gmi_featureList)
+
+
+def generateALLFeatureCSV(feature_file, feature_csv_file):
+    swc_file_nameList, glFeatures, gmiFeatures = readDBFeatures(feature_file)
+
+    allFeatures = np.append(glFeatures, gmiFeatures, 1)
+    allColumns = np.append(GL_FEATURE_TAGS, GMI_FEATURE_TAGS, 0)
+
+    df = pd.DataFrame(allFeatures, columns=allColumns)
+
+    df['swc_file'] = pd.Series(swc_file_nameList, index=df.index)
+
+    allColumns = np.append(np.array(['swc_file']), allColumns, 0)
+
+    df = df[allColumns]
+
+    df.to_csv(feature_csv_file, index=False)
+
+    print 'output all feature csv file to :', feature_csv_file
+    return
+
+
+
+def generateALLFeatureCSV_gold166(feature_file, feature_csv_file):
+
+    swc_file_nameList, glFeatures, gmiFeatures = readDBFeatures(feature_file)
+
+    allFeatures = np.append(glFeatures, gmiFeatures, 1)
+    allColumns = np.append(GL_FEATURE_TAGS, GMI_FEATURE_TAGS, 0)
+
+    df = pd.DataFrame(allFeatures, columns=allColumns)
+
+    df['swc_file'] = pd.Series(swc_file_nameList, index=df.index)
+
+    algorithmList = []
+    imageList = []
+    for swc_file in swc_file_nameList:
+        fn = swc_file.split('/')[-1]
+        if fn.find("v3dpbd") >-1:
+             tmp = fn.split('v3dpbd_')[-1]
+        else:
+             tmp = fn.split('v3draw_')[-1]
+        algorithm = tmp.split('.')[0]
+        if "app1" in algorithm:   # for patterns like *x245_y234_z234_app1.swc
+              algorithm = "app1"
+        if "app2" in algorithm:
+              algorithm = "app2"
+
+        if  "fastmarching_spanningtree" in algorithm: # fastmarching_spanningtree is too long
+              algorithm = "spanningtree"
+
+        if "tubularity_model_S" in algorithm:
+              algorithm = "RegMST"
+
+
+
+        if fn.find("v3dpbd") >-1:
+             tmp = fn.split('.v3dpbd')[0] +".v3dpbd"
+        else:
+             tmp = fn.split('.v3draw')[0] +".v3draw"
+        image = tmp.split('sorted_')[-1]  # for sorted_* swc_files
+        algorithmList.append(algorithm)
+        imageList.append(image)
+
+    df['algorithm'] = pd.Series(algorithmList, index=df.index)
+    df['image_file_name'] = pd.Series(imageList, index=df.index)
+
+    allColumns = np.append(np.array(['image_file_name', 'algorithm', 'swc_file']), allColumns, 0)
+
+    df = df[allColumns]
+
+    df.to_csv(feature_csv_file, index=False)
+
+    print 'output all feature csv file to :', feature_csv_file
+    return
+
+
 def cal_bn_features(sorted_dir,results_feature_csv):
       #results_feature_csv = sorted_dir +'/features_with_tags.csv'
       sorted_ANO = sorted_dir+"/sorted.ano"
@@ -37,20 +155,10 @@ def cal_bn_features(sorted_dir,results_feature_csv):
       print "output feature file:"+feature_file
       print "output ano file:"+sorted_ANO
 
-      nfb.generateALLFeatureCSV_gold166(feature_file,results_feature_csv)
+      generateALLFeatureCSV_gold166(feature_file,results_feature_csv)
       print "output features with tag:"+ results_feature_csv
 
       return
-
-
-
-
-def SSD(feature_array1, feature_array2):
-    diff_v = np.array(feature_array1) - np.array(feature_array2)
-    ssd = np.sum(np.abs(diff_v) ** 2)
-    return ssd
-
-
 
 def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, output_csv):
 
@@ -87,33 +195,41 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
     df_normalized = pd.DataFrame(columns=my_cols1)
     df_gold_normalized = pd.DataFrame(columns=my_cols2)
 
-    for i in range(final_images.size):
-        imageName = final_images[i]
 
-        df_image = df_results_s[df_results_s.image_file_name == imageName]
+    for col in selected_cols:
+            df_normalized[col] = (df_results_s[col] - df_results_s[col].mean() ) / (df_results_s[col].std() + 0.0000001)
+            df_gold_normalized[col] = ( df_gold_s[col] - df_results_s[col].mean() ) / (df_results_s[col].std() + 0.0000001)
 
-        if df_image.shape[0] > 5:  # too few samples
-            df_image[selected_cols] = df_image[selected_cols].astype(float)  # some moment values are interpreted as strings
-            df_gold_image = df_gold_s[df_gold_s.image_file_name == imageName]
 
-            df_normalized_per_image = pd.DataFrame(columns=my_cols1)
-            df_gold_normalized_per_image = pd.DataFrame(columns=my_cols2)
 
-            df_normalized_per_image[[u'image_file_name', u'algorithm', u'swc_file']] = df_image[[u'image_file_name', u'algorithm', u'swc_file']]
-            df_gold_normalized_per_image[u'image_file_name'] = df_gold_image.image_file_name
-
-            for col in selected_cols:
-                if (df_image[col].std() == 0.0 ):
-                    print "warning: std = 0!", col, " ", imageName
-                    df_normalized_per_image[col] =  (df_image[col] - df_image[col].median() ) / 1.0
-                    df_gold_normalized_per_image[col] = ( df_gold_image[col] - df_image[col].median() ) / 1.0
-                else:
-                    df_normalized_per_image[col] = (df_image[col] - df_image[col].median() ) / (df_image[col].std() + 0.0000001)
-                    df_gold_normalized_per_image[col] = ( df_gold_image[col] - df_image[col].median() ) / (df_image[col].std() + 0.0000001)
-
-            # append the results for this image
-            df_normalized = df_normalized.append(df_normalized_per_image, ignore_index=True)
-            df_gold_normalized= df_gold_normalized.append(df_gold_normalized_per_image, ignore_index=True)
+    # for i in range(final_images.size):
+    #     imageName = final_images[i]
+    #
+    #     df_image = df_results_s[df_results_s.image_file_name == imageName]
+    #
+    #     if df_image.shape[0] > 0:  # too few samples
+    #         df_image[selected_cols] = df_image[selected_cols].astype(float)  # some moment values are interpreted as strings
+    #         df_gold_image = df_gold_s[df_gold_s.image_file_name == imageName]
+    #
+    #         df_normalized_per_image = pd.DataFrame(columns=my_cols1)
+    #         df_gold_normalized_per_image = pd.DataFrame(columns=my_cols2)
+    #
+    #         df_normalized_per_image[[u'image_file_name', u'algorithm', u'swc_file']] = df_image[[u'image_file_name', u'algorithm', u'swc_file']]
+    #         df_gold_normalized_per_image[u'image_file_name'] = df_gold_image.image_file_name
+    #
+    #         for col in selected_cols:
+    #             if (df_image[col].std() == 0.0 ):
+    #                 print "warning: std = 0!", col, " ", imageName
+    #
+    #                 df_normalized_per_image[col] =  (df_image[col] - df_image[col].mean() ) / 1.0
+    #                 df_gold_normalized_per_image[col] = ( df_gold_image[col] - df_image[col].mean() ) / 1.0
+    #             else:
+    #                 df_normalized_per_image[col] = (df_image[col] - df_image[col].mean() ) / (df_image[col].std() + 0.0000001)
+    #                 df_gold_normalized_per_image[col] = ( df_gold_image[col] - df_image[col].mean() ) / (df_image[col].std() + 0.0000001)
+    #
+    #         # append the results for this image
+    #         df_normalized = df_normalized.append(df_normalized_per_image, ignore_index=True)
+    #         df_gold_normalized= df_gold_normalized.append(df_gold_normalized_per_image, ignore_index=True)
 
     output_dir = os.path.dirname(output_csv)
     df_gold_normalized.to_csv(output_dir +"/normalized_bnfeatures_gold.csv")
@@ -173,6 +289,9 @@ def cal_neuron_dist(input_csv_file,output_csv,overwrite_existing = 1, old_output
                 print "Warning: no neuron distance log output for "+tmp +" :output NAs."
                 df_neuron_distance.loc[i]= [df_input.iloc[i].image_file_name,df_input.iloc[i].swc_file, df_input.iloc[i].gold_swc_file, df_input.iloc[i].algorithm, np.nan, np.nan, np.nan]
 
+
+    df_neuron_distance['neuron_difference'] = df_neuron_distance['neuron_distance_diff'] *df_neuron_distance['neuron_distance_perc']
+
     df_neuron_distance.to_csv(output_csv,index=False)
     print "output:"+output_csv
     return
@@ -219,6 +338,8 @@ def map_image_name(tmp_feature_csv,lookup_image_id_table_file, output_feature_cs
 
         df_output.to_csv(output_feature_csv,index=False)
         return
+
+
 
 
 def recon_table_gen(data_root, lookup_image_id_table_file=None, output_csv_file=None):
@@ -330,7 +451,7 @@ def gen_gold_feature_csv(gold_dir,output_gold_csv_file,output_gold_feature_csv):
 
     out_feature_file =  gold_dir + "/features.nfb"
     bn.batch_compute (out_sorted_ANO,out_feature_file)
-    nfb.generateALLFeatureCSV_gold166(out_feature_file, output_gold_feature_csv)
+    generateALLFeatureCSV_gold166(out_feature_file, output_gold_feature_csv)
 
     return
 

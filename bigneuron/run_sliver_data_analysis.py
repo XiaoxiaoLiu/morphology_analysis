@@ -53,8 +53,8 @@ rp.merge_gold_silver(GOLD_CSV,SILVER_CSV,merged_csv_file)
 
 
 #####  report which gold dataset did not have any recons?
-df_merge=pd.read_csv(merged_csv_file)
-df_gold=pd.read_csv(GOLD_CSV)
+df_merge = pd.read_csv(merged_csv_file)
+df_gold = pd.read_csv(GOLD_CSV)
 m = pd.unique(df_merge.image_file_name)
 g = pd.unique(df_gold.image_file_name)
 
@@ -70,21 +70,23 @@ for i in g:
 
 #### compute neuron distances
 neuron_distance_csv = data_DIR+'/nd.csv'
-rp.cal_neuron_dist(merged_csv_file,neuron_distance_csv,overwrite_existing = 0, old_output_csv= data_DIR+'/nd_old.csv') # build on top of previous results
+#rp.cal_neuron_dist(merged_csv_file,neuron_distance_csv,overwrite_existing = 0, old_output_csv= data_DIR+'/nd_old.csv') # build on top of previous results
+
+
 
 
 ###### compute blastneuron features
 tmp_feature_csv = sorted_dir +'/tmp_features_with_tags.csv'
 
-#rp.cal_bn_features(sorted_dir,tmp_feature_csv)
+rp.cal_bn_features(sorted_dir,tmp_feature_csv)
 output_feature_csv = data_DIR +'/features_with_tags.csv'
 rp.map_image_name(tmp_feature_csv,lookup_image_id_table_file, output_feature_csv)
 
 bn_csv = data_DIR+"/blastneuron_ssd.csv"
 
-rp.cal_blastneuron_distance(output_feature_csv,gold_feature_csv,merged_csv_file,bn_csv)
+rp.cal_blastneuron_distance(output_feature_csv,gold_feature_csv,merged_csv_file,output_csv=bn_csv)
 
-
+exit()  # change smarttracing to app2_auto_thre
 
 ###########################  plotting ###########################################################
 
@@ -104,16 +106,21 @@ algorithms_ordered = algorithms[order[::-1]]
 
 
 
-plt_dist.plot_sample_size(neuron_distance_csv,data_DIR,algorithms_ordered)
-
-
-
-plt_dist.plot_neuron_distance(neuron_distance_csv, data_DIR,algorithms_ordered,CASE_BY_CASE_PLOT = 0)
 
 
 
 # plot
 plt_dist.plot_blasneuron_distance(bn_csv,data_DIR,algorithms_ordered,CASE_BY_CASE_PLOT=0)
+plt_dist.plot_similarities(bn_csv, data_DIR,algorithms_ordered,metric='SSD',CASE_BY_CASE_PLOT = 0,value_label='Similarity (0~1) on BlastNeuron Feature Score')
+
+exit()
+
+
+plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance',CASE_BY_CASE_PLOT = 0,value_label='Similarity (0~1) on Average Neuron Distance')
+plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_difference',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Neuron Difference')
 
 
 
+plt_dist.plot_sample_size(neuron_distance_csv,data_DIR,algorithms_ordered)
+
+plt_dist.plot_neuron_distance(neuron_distance_csv, data_DIR,algorithms_ordered,CASE_BY_CASE_PLOT = 0)

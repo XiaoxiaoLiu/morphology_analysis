@@ -80,8 +80,14 @@ def generateALLFeatureCSV_gold166(feature_file, feature_csv_file):
               algorithm = "app1"
         if "app2" in algorithm:
               algorithm = "app2"
-        if  "spanningtree" in algorithm: # fastmarching_spanningtree is too long
+
+        if  "fastmarching_spanningtree" in algorithm: # fastmarching_spanningtree is too long
               algorithm = "spanningtree"
+
+        if "tubularity_model_S" in algorithm:
+              algorithm = "RegMST"
+
+
 
         if fn.find("v3dpbd") >-1:
              tmp = fn.split('.v3dpbd')[0] +".v3dpbd"

@@ -15,9 +15,7 @@ def calculate_similarities(neuron_distance_csv,metric='neuron_distance', output_
     all_images = np.unique(df_nd.image_file_name)
     all_algorithms = np.unique(df_nd.algorithm)
 
-
     dfg = df_nd.groupby('image_file_name')
-
 
     df_out = pd.DataFrame()
     #sample_size_per_algorithm=[]
@@ -49,14 +47,13 @@ def calculate_similarities(neuron_distance_csv,metric='neuron_distance', output_
 
 
 
-def plot_similarities(neuron_distance_csv, outputDir,algorithms,metric='neuron_distance',CASE_BY_CASE_PLOT = 0):
+def plot_similarities(neuron_distance_csv, outputDir,algorithms,metric='neuron_distance',CASE_BY_CASE_PLOT = 0, value_label=None):
     #df_nd = pd.read_csv(neuron_distance_csv)
 
     df_nd = calculate_similarities(neuron_distance_csv,metric)
     all_images = np.unique(df_nd.image_file_name)
     if not path.exists(outputDir):
         os.mkdir(outputDir)
-
 
     if CASE_BY_CASE_PLOT:
         dfg = df_nd.groupby('image_file_name')
@@ -69,7 +66,7 @@ def plot_similarities(neuron_distance_csv, outputDir,algorithms,metric='neuron_d
                 plt.bar(range(df_image_cur.swc_file.size), df_image_cur['similarity'])
                 plt.xticks(range(df_image_cur.swc_file.size), df_image_cur['algorithm'].values[:],
                            rotation="90")
-                plt.ylabel(' Similarity (0~1) by' +metric)
+                plt.ylabel(' Similarity (0~1) by ' +metric)
                 plt.subplots_adjust(bottom=0.3)
                 plt.savefig(outputDir + '/sorted/' + image.split('/')[-1] + '_'+metric+'_similarity.png', format='png')
                 #plt.show()
@@ -78,26 +75,30 @@ def plot_similarities(neuron_distance_csv, outputDir,algorithms,metric='neuron_d
                 print image+" has no valid reconstructions"
 
 
-
     dfg = df_nd.groupby('algorithm')
-    sample_size_per_algorithm=[]
+    rate_per_algorithm=[]
     for alg in algorithms:
-        sample_size_per_algorithm.append(dfg.get_group(alg).shape[0])
+        df_a = dfg.get_group(alg)
+        sucessrate= float(np.count_nonzero(df_a['similarity']))/df_a.shape[0] * 100
+        number = np.count_nonzero(df_a['similarity'])
+        rate_per_algorithm.append(number)
 
 
     plt.figure()
-    a=sb.barplot(x='algorithm', y='similarity', data=df_nd,order=algorithms)
-    a.set_xticklabels(['%s ($n$=%d )'%(algorithms[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
+    a=sb.barplot(y='algorithm', x='similarity', data=df_nd,order=algorithms)
+    a.set_yticklabels(['%s ($n$=%d )'%(algorithms[i], rate_per_algorithm[i]) for i in range(algorithms.size) ])
     #sb.set_context("talk", font_scale=3.0)
-    plt.xticks(rotation="90")
-    plt.xlabel('algorithm (n = #images)')
-    plt.subplots_adjust(bottom=0.5)
+    #plt.xticks(rotation="90")
+    if value_label == None:
+        value_label = ' Similarity (0~1) by '+ metric
+    plt.ylabel('algorithm (n = # recons)')
+    plt.xlabel(value_label)
+    plt.subplots_adjust(left=0.4)
     plt.savefig(outputDir + '/all_algorithm_'+metric+'_similarity.png', format='png')
     plt.show()
     plt.close()
 
     return
-
 
 
 
@@ -140,24 +141,26 @@ def plot_neuron_distance(neuron_distance_csv, outputDir,algorithms,CASE_BY_CASE_
 
     #plot the average node distances
     plt.figure()
-    a=sb.barplot(x='algorithm', y='neuron_distance', data=df_nd,order=algorithms)
-    a.set_xticklabels(['%s ($n$=%d )'%(algorithms[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
+    a=sb.barplot(y='algorithm', x='neuron_distance', data=df_nd,order=algorithms)
+    a.set_yticklabels(['%s ($n$=%d )'%(algorithms[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
     #sb.set_context("talk", font_scale=3.0)
-    plt.xticks(rotation="90")
-    plt.subplots_adjust(bottom=0.5)
-    plt.savefig(outputDir + '/all_algorithm_nd_distance.png', format='png')
+    #plt.xticks(rotation="90")
+    plt.xlabel('Average Neuron Distance')
+    plt.subplots_adjust(left=0.4)
+    plt.savefig(outputDir + '/all_algorithm_average_neuron_distance.png', format='png')
     plt.show()
     plt.close()
 
     #plot the differences
     plt.figure()
-    df_nd['difference'] = df_nd['neuron_distance_diff'] *df_nd['neuron_distance_perc']
-    a=sb.barplot(x='algorithm', y='neuron_difference', data=df_nd,order=algorithms)
-    a.set_xticklabels(['%s ($n$=%d )'%(algorithms[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
+    #df_nd['neuron_difference'] = df_nd['neuron_distance_diff'] *df_nd['neuron_distance_perc']
+    a=sb.barplot(y='algorithm', x='neuron_difference', data=df_nd,order=algorithms,orient='h')
+    a.set_yticklabels(['%s ($n$=%d )'%(algorithms[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
     #sb.set_context("talk", font_scale=3.0)
-    plt.xticks(rotation="90")
-    plt.subplots_adjust(bottom=0.5)
-    plt.savefig(outputDir + '/all_algorithm_nd_difference.png', format='png')
+    #plt.xticks(rotation="90")
+    plt.xlabel('Neuron Difference Score')
+    plt.subplots_adjust(left=0.4)
+    plt.savefig(outputDir + '/all_algorithm_neuron_difference.png', format='png')
     plt.show()
     plt.close()
     return
@@ -167,7 +170,6 @@ def plot_neuron_distance(neuron_distance_csv, outputDir,algorithms,CASE_BY_CASE_
 def plot_blasneuron_distance(bn_csv,outputDir,algorithms,CASE_BY_CASE_PLOT=0):
 
     #outputDir = data_DIR + '/bn_dist'
-
     df_nd = pd.read_csv(bn_csv)
 
     if not os.path.exists(outputDir):
@@ -189,14 +191,13 @@ def plot_blasneuron_distance(bn_csv,outputDir,algorithms,CASE_BY_CASE_PLOT=0):
                 plt.savefig(outputDir + '/sorted/' + image.split('/')[-1] + '_bn_dist.png', format='png')
                 plt.close()
 
-
-
-
     myalgorithms = np.unique(df_nd.algorithm)
     if myalgorithms.size !=  algorithms.size:
         print "error: algorithms size is wrong"
+        print myalgorithms.size
+        print algorithms.size
 
-
+    print myalgorithms
 
     dfg = df_nd.groupby('algorithm')
     sample_size_per_algorithm=[]
@@ -204,18 +205,18 @@ def plot_blasneuron_distance(bn_csv,outputDir,algorithms,CASE_BY_CASE_PLOT=0):
         sample_size_per_algorithm.append(dfg.get_group(alg).shape[0])
 
     plt.figure()
-    a=sb.barplot(x='algorithm', y='SSD', data=df_nd,order=algorithms)
+    a=sb.barplot(y='algorithm', x='SSD', data=df_nd,order=algorithms,orient="h")
     #sb.set_context("talk", font_scale=3.0)
-    a.set_xticklabels(['%s ($n$=%d )'%(algorithms[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
+    a.set_yticklabels(['%s ($n$=%d )'%(algorithms[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
 
     #sb.stripplot(y='algorithm', x='SSD', data=df_nd,jitter=True, edgecolor="gray")
-    plt.xticks(rotation="90")
-    plt.subplots_adjust(bottom=0.5)
+    #plt.xticks(rotation="90")
+    plt.xlabel('BlastNeuron Feature Score Distance')
+    plt.subplots_adjust(left=0.4)
 
-    plt.savefig(outputDir + '/all_algorithm_bn_distance.png', format='png')
+    plt.savefig(outputDir + '/all_algorithm_blastneuron_feature_ssd.png', format='png')
     plt.show()
     plt.close()
-
 
 
 
@@ -228,17 +229,14 @@ def plot_sample_size(bn_csv,outputDir,algorithms):
     for alg in algorithms:
             df_alg = df_nd[df_nd.algorithm == alg]
             sample_size.append(df_alg.image_file_name.size)
-    sb.barplot(range(algorithms.size),np.array(sample_size))
+    sb.barplot(y=range(algorithms.size),x=np.array(sample_size),orient="h")
     #sb.set_context("paper", font_scale=1.0)
-    plt.xticks(range(algorithms.size), algorithms,
-               rotation="90")
-    plt.subplots_adjust(bottom=0.6,top=0.9)
-    plt.ylabel('Number of reconstructions')
-    plt.savefig(outputDir + '/all_algorithm_sample_size.png', format='png')
+    plt.yticks(range(algorithms.size), algorithms)
+    plt.subplots_adjust(left=0.4,right=0.9)
+    plt.xlabel('Number of reconstructions')
+    plt.savefig(outputDir + '/all_algorithm_valid_reconstruction_number.png', format='png')
     plt.show()
     plt.close()
-
-
 
 
 
