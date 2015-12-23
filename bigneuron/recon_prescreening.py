@@ -26,12 +26,11 @@ import os.path as path
 
 
 
-
-
-
 def SSD(feature_array1, feature_array2):
-    diff_v = np.array(feature_array1) - np.array(feature_array2)
-    ssd = np.sum(np.abs(diff_v) ** 2)
+    ssd = -1
+    if  feature_array1.size >0 and feature_array2.size >0:
+        diff_v = np.array(feature_array1) - np.array(feature_array2)
+        ssd = np.sum(np.abs(diff_v) ** 2)
     return ssd
 
 
@@ -43,8 +42,6 @@ GL_FEATURE_TAGS = np.array(
 GMI_FEATURE_TAGS = np.array(
 ['moment1', 'moment2', 'moment3', 'moment4', 'moment5', 'moment6', 'moment7', 'moment8', 'moment9', 'moment10',
  'moment11', 'moment12', 'moment13', 'avgR'])
-
-
 
 def readDBFeatures(FEATURE_FILE):
     # TODO: detect nan values
@@ -111,7 +108,7 @@ def generateALLFeatureCSV_gold166(feature_file, feature_csv_file):
         algorithm = tmp.split('.')[0]
         if "app1" in algorithm:   # for patterns like *x245_y234_z234_app1.swc
               algorithm = "app1"
-        if "app2" in algorithm:
+        if (algorithm != "app2_autothre") and ("app2" in algorithm):
               algorithm = "app2"
 
         if  "fastmarching_spanningtree" in algorithm: # fastmarching_spanningtree is too long
@@ -143,31 +140,34 @@ def generateALLFeatureCSV_gold166(feature_file, feature_csv_file):
     return
 
 
-def cal_bn_features(sorted_dir,results_feature_csv):
+def cal_bn_features(input_dir,results_feature_csv):
       #results_feature_csv = sorted_dir +'/features_with_tags.csv'
-      sorted_ANO = sorted_dir+"/sorted.ano"
-      bn.genLinkerFile( sorted_dir, sorted_ANO)
+      input_ANO = input_dir+"/input.ano"
+      bn.genLinkerFile( input_dir, input_ANO)
 
       ##batch computing
-      feature_file =  sorted_dir+ "/features.nfb"
-      bn.batch_compute (sorted_ANO,feature_file)
+      feature_file =  input_dir+ "/features.nfb"
+      bn.batch_compute (input_ANO,feature_file)
 
       print "output feature file:"+feature_file
-      print "output ano file:"+sorted_ANO
+      print "output ano file:"+input_ANO
 
       generateALLFeatureCSV_gold166(feature_file,results_feature_csv)
       print "output features with tag:"+ results_feature_csv
 
       return
 
-def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, output_csv):
+def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, output_csv, LMEASURE_ONLY = 1):
 
     df_results = pd.read_csv(results_feature_csv)
     df_gold = pd.read_csv(gold_feature_csv)
 
+
     # common set of images
     df_merged = pd.read_csv(merged_csv)
     final_images = np.unique( df_merged.image_file_name)
+    print "\n\n Calculating blastneuron ssd scores  for " +str(df_merged.shape[0])+" reconstructions"
+
 
     #output_csv =data_DIR + '/normalized_bn_dist.csv'
     feature_cols = [u'num_nodes', u'soma_surface', u'num_stems', u'num_bifurcations', u'num_branches',\
@@ -178,9 +178,21 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
                 u'moment2', u'moment3', u'moment4', u'moment5', u'moment6', u'moment7', u'moment8', u'moment9',\
                 u'moment10', u'moment11', u'moment12', u'moment13', u'avgR']
 
-    selected_cols = [u'num_nodes', u'num_bifurcations', u'num_branches', u'num_of_tips', u'overall_width',u'overall_height', u'overall_depth',u'total_length', u'average fragmentation',
-            u'bifurcation_angle_local', u'bifurcation_angle_remote', u'moment1',u'moment2', u'moment3', u'moment4', u'moment5', u'moment6', u'moment7', u'moment8', u'moment9',u'moment10', u'moment11', u'moment12', u'moment13']
 
+    # the following three features can easlily have NA values: average_contraction,       average fragmentation ,      parent_daughter_ratio
+
+    selected_allfea_cols = [u'num_nodes', u'num_bifurcations', u'num_branches', u'num_of_tips', u'overall_width',u'overall_height', u'overall_depth',u'total_length',
+                     u'bifurcation_angle_remote', u'max_euclidean_distance',u'max_path_distance',
+                     u'moment1',u'moment2', u'moment3', u'moment4', u'moment5', u'moment6', u'moment7', u'moment8', u'moment9',u'moment10', u'moment11', u'moment12', u'moment13']
+    selected_lmeasure_cols = [ u'num_bifurcations', u'num_branches', u'num_of_tips', u'overall_width',u'overall_height', u'overall_depth',u'total_length',
+                     u'bifurcation_angle_remote']
+    prefix=""
+    if LMEASURE_ONLY:
+        selected_cols = selected_lmeasure_cols
+        prefix="lm"
+    else:
+        selected_cols = selected_allfea_cols
+        prefix=""
 
     my_cols1 = [u'image_file_name', u'algorithm', u'swc_file']
     my_cols1.extend(selected_cols)
@@ -191,13 +203,26 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
     df_gold_s = df_gold[my_cols2]
     del df_gold
 
+    ### remove na entries
+    df_results_s = df_results_s.dropna(axis=0)
+
+    df_results_s[selected_cols]= df_results_s[selected_cols].astype(float)
+    df_gold_s[selected_cols]= df_gold_s[selected_cols].astype(float)
+
+
     # calcualte std for each image, calculate normalized results
     df_normalized = pd.DataFrame(columns=my_cols1)
     df_gold_normalized = pd.DataFrame(columns=my_cols2)
 
+    df_normalized[[u'image_file_name', u'algorithm', u'swc_file']] = df_results_s[[u'image_file_name', u'algorithm', u'swc_file']]
+    df_gold_normalized[u'image_file_name'] = df_gold_s.image_file_name
+
+
 
     for col in selected_cols:
             df_normalized[col] = (df_results_s[col] - df_results_s[col].mean() ) / (df_results_s[col].std() + 0.0000001)
+            print df_results_s[col].std()
+            print df_results_s[col].mean()
             df_gold_normalized[col] = ( df_gold_s[col] - df_results_s[col].mean() ) / (df_results_s[col].std() + 0.0000001)
 
 
@@ -232,50 +257,85 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
     #         df_gold_normalized= df_gold_normalized.append(df_gold_normalized_per_image, ignore_index=True)
 
     output_dir = os.path.dirname(output_csv)
-    df_gold_normalized.to_csv(output_dir +"/normalized_bnfeatures_gold.csv")
-    df_normalized.to_csv(output_dir+"/normalized_bnfeatures.csv")
+    df_gold_normalized.to_csv(output_dir +"/normalized_bnfeatures"+prefix+"_gold.csv",index=False)
+    df_normalized.to_csv(output_dir+"/normalized_bnfeatures"+prefix+".csv",index=False)
 
 
-    ssd_metrics = []
+    mycols= ['image_file_name', 'algorithm', 'swc_file','SSD']
+    df_final = pd.DataFrame()
+    i = 0
     for rowIdx in range(df_normalized.shape[0]):
         imageName = df_normalized.image_file_name[rowIdx]
-        gold_df = df_gold_normalized.loc[df_gold_normalized.image_file_name == imageName]
+        print imageName
+        if imageName in final_images:
+            gold_df = df_gold_normalized.loc[df_gold_normalized.image_file_name == imageName]
 
-        #normalize restuls with mean and std
-        result = df_normalized.iloc[rowIdx]
-        if gold_df.shape[0] > 0 and result.shape[0] >0 :
-             sumsquare = SSD(result[selected_cols], gold_df[selected_cols])
-             ssd_metrics.append(sumsquare)
-        else:
-            print "warning"
-            print result
+            #normalize restuls with mean and std
+            result = df_normalized.iloc[rowIdx]
             print gold_df
+            print result
+            if gold_df.shape[0] > 0 and result.shape[0] >0 :
+                 sumsquare = SSD(result[selected_cols], gold_df[selected_cols])
+                 print result[selected_cols]
+                 print  "gold: "
+                 print gold_df[selected_cols]
+                 exit()
 
-    df_normalized['SSD'] = ssd_metrics
+                 df_final = df_final.append({'image_file_name': df_normalized.iloc[rowIdx]['image_file_name'],
+                                             'algorithm': df_normalized.iloc[rowIdx]['algorithm'],
+                                             'swc_file':  df_normalized.iloc[rowIdx]['swc_file'],
+                                             'SSD': sumsquare}, ignore_index=True)
+
+                 i=i+1
+
+            else:
+                print "warning"
+                print imageName
+                print result.shape[0]
+                print gold_df.shape[0]
+
+
+    # for rowIdx in range(df_normalized.shape[0]):
+    #     imageName = df_normalized.image_file_name[rowIdx]
+    #     gold_df = df_gold_normalized.loc[df_gold_normalized.image_file_name == imageName]
+    #
+    #     #normalize restuls with mean and std
+    #     result = df_normalized.iloc[rowIdx]
+    #     if gold_df.shape[0] > 0 and result.shape[0] >0 :
+    #          sumsquare = SSD(result[selected_cols], gold_df[selected_cols])
+    #          ssd_metrics.append(sumsquare)
+    #     else:
+    #         print "warning"
+    #         print result
+    #         print gold_df
+
+    #df_final['SSD'] = ssd_metrics
     ## reordering columns
-    df_normalized.to_csv(output_csv,index=False)
+    df_final.to_csv(output_csv,index=False)
     print "output:"+output_csv
     return
 
 
-def cal_neuron_dist(input_csv_file,output_csv,overwrite_existing = 1, old_output_csv=None):
+def cal_neuron_dist(input_csv_file,output_csv,overwrite_existing = 1,GEN_QSUB = 0 ):
 
     df_input = pd.read_csv(input_csv_file)
-    df_already_have = pd.DataFrame()
+    df_already_have = pd.DataFrame(columns = df_input.columns)
 
-    if (not overwrite_existing):
-        if os.path.isfile(old_output_csv):
-            # only run new data
-            df_old = pd.read_csv(old_output_csv)
-            df_already_have = pd.merge(df_input, df_old, on='swc_file')
-            print "there are already "+ str(df_already_have['swc_file'].size) +"  swcs calculated"
+    # if (not overwrite_existing):
+    #     if os.path.isfile(old_output_csv):
+    #         # only run new data
+    #         df_old = pd.read_csv(old_output_csv)
+    #         df_already_have = pd.merge(df_input, df_old, on='swc_file')
+    #         print "there are already "+ str(df_already_have['swc_file'].size) +"  swcs calculated"
 
     print " Calculate neuron distances:"
     for i in range(df_input.image_file_name.size):
-             print i
+             print "swc file :" + str(i)
              swc_f = df_input.iloc[i].swc_file
-             if not swc_f in list(df_already_have['swc_file']):
-                   bn.run_neuron_dist(swc_f, df_input.iloc[i].gold_swc_file,df_input.iloc[i].swc_file + ".r.log", 0, "nd")
+             log_file = df_input.iloc[i].swc_file + ".r.log"
+             #if not swc_f in list(df_already_have['swc_file'])
+             if overwrite_existing   or   not os.path.isfile(log_file) :
+                   bn.run_neuron_dist(swc_f, df_input.iloc[i].gold_swc_file,log_file, GEN_QSUB, "nd")
 
     #collect results from log files
     df_neuron_distance = pd.DataFrame(columns=('image_file_name','swc_file', 'gold_swc_file', 'algorithm', 'neuron_distance','neuron_distance_diff','neuron_distance_perc'))
@@ -330,6 +390,7 @@ def map_image_name(tmp_feature_csv,lookup_image_id_table_file, output_feature_cs
         df_lookup_table = pd.read_csv(lookup_image_id_table_file)
         df_output = df_in
         for i in range(df_in.image_file_name.size):
+            #print df_in.iloc[i].image_file_name
             image_id = int(df_in.iloc[i].image_file_name.split(".")[0])
             if image_id > df_lookup_table.image_file_name.size:
                   print "error in looking image ids"
@@ -368,8 +429,9 @@ def recon_table_gen(data_root, lookup_image_id_table_file=None, output_csv_file=
 
                     if "app1" in algorithm:   # for patterns like *x245_y234_z234_app1.swc
                           algorithm = "app1"
-                    if "app2" in algorithm:
+                    if (algorithm != "app2_autothre") and ("app2" in algorithm):
                           algorithm = "app2"
+
                     if  "fastmarching_spanningtree" in algorithm: # fastmarching_spanningtree is too long
                           algorithm = "spanningtree"
 
@@ -456,7 +518,9 @@ def gen_gold_feature_csv(gold_dir,output_gold_csv_file,output_gold_feature_csv):
     return
 
 
-def resample_and_sort(data_dir,preprocessed_dir,sorted_dir, GEN_QSUB = 0,overwrite_sorted = 1,filelist=None):
+
+
+def resample_and_sort(data_dir,resampled_dir,sorted_dir, GEN_QSUB = 0,overwrite_sorted = 1,filelist=None):
     failure_file = open(data_dir +"/failurecases_via_size.txt","w")
     i = 0
     subfolder = 1
@@ -470,9 +534,9 @@ def resample_and_sort(data_dir,preprocessed_dir,sorted_dir, GEN_QSUB = 0,overwri
          i = i+1
          print "\n\n "
          print i
-         print "resample and sort : "+ input_swc_path
-         if(( os.path.getsize(input_swc_path) > 1000) and ( os.path.getsize(input_swc_path) < 1024*1024)):
-            if not "tmp_cache_img"  in input_swc_path:   # skip the tmp files
+
+         #if( os.path.getsize(input_swc_path) < 1024*1024)):
+         if not "tmp_cache_img"  in input_swc_path:   # skip the tmp files
               if subfolder >0:
                    swc_fn = "/".join (input_swc_path.split("/")[-2:]) # to keep the subfolder structure
               else:
@@ -480,22 +544,59 @@ def resample_and_sort(data_dir,preprocessed_dir,sorted_dir, GEN_QSUB = 0,overwri
 
 
               sorted_swc_path = sorted_dir+ '/'+swc_fn
-              if not os.path.isfile(sorted_swc_path) or overwrite_sorted:  # if already generated
+              resampled_swc_path = resampled_dir+ '/'+swc_fn
+              if not os.path.isfile(resampled_swc_path) or overwrite_sorted:  # if already generated
                  # resample
-                 preprocessed_swc_path = preprocessed_dir+ '/'+swc_fn
-                 bn.resample(input_swc_path, preprocessed_swc_path,3,GEN_QSUB,data_dir+'/qsub/resample')  # generate QSUB scripts
+                 resampled_swc_path = resampled_dir+ '/'+swc_fn
+                 print "resample : "+ input_swc_path
+                 bn.resample(input_swc_path, resampled_swc_path,3,GEN_QSUB,data_dir+'/qsub/resample')  # generate QSUB scripts
 
-                # sort
+                 # sort
                  sorted_swc_path = sorted_dir+ '/'+swc_fn
-                 bn.sort_swc(preprocessed_swc_path, sorted_swc_path,GEN_QSUB,data_dir+'/qsub/sort')
-         else:
-            failure_file.write(input_swc_path+" "+str(os.path.getsize(input_swc_path))+"\n ")
+                 #bn.sort_swc(preprocessed_swc_path, sorted_swc_path,GEN_QSUB,data_dir+'/qsub/sort')
+         #else:
+          #  failure_file.write(input_swc_path+" "+str(os.path.getsize(input_swc_path))+"\n ")
 
-    failure_file.close()
-    print "failure cases with file sizes that are too big or too small are logged at:"+ data_dir+"/failurecases_via_size.txt"
-    print "done resampling and sorting"
+    #failure_file.close()
+    #print "failure cases with file sizes that are too big or too small are logged at:"+ data_dir+"/failurecases_via_size.txt"
+    print "done resampling "#and sorting"
     return
 
+
+
+def summerize_running_time(time_csv, algorithm_plugin_match_csv, lookup_image_id_table_file, output_csv):
+
+    # time_csv="/data/mat/xiaoxiaol/data/reconstructions_2015_1214/auto_recons/running_time.csv"
+    # output_csv= "/data/mat/xiaoxiaol/data/reconstructions_2015_1214/auto_recons/running_time_algorithm.csv"
+    # algorithm_plugin_match_csv ="/data/mat/xiaoxiaol/data/reconstructions_2015_1214/ported_neuron_tracing_spreadsheet.csv"
+
+
+    df_time = pd.read_csv(time_csv)
+    #image,plugin,running_time
+
+
+    df_check_table = pd.read_csv(algorithm_plugin_match_csv)
+    df_lookup_table = pd.read_csv(lookup_image_id_table_file)
+
+
+    keys = df_check_table['plugin_function']
+    values = df_check_table['algorithm']
+    #print np.unique(df_check_table.algorithm)
+    dictionary = dict(zip(keys, values))
+
+
+    for i in range(df_time.shape[0]):
+        plugin= df_time.iloc[i].plugin
+        #print plugin
+        alg = dictionary.get(plugin)
+        df_time.ix[i,'algorithm'] = alg
+        image_id = int(df_time.iloc[i]['image'].split(".")[0])
+        image_file_name = df_lookup_table.image_file_name[image_id-1]
+        df_time.ix[i,'image_file_name']= image_file_name
+
+
+    df_time.to_csv(output_csv, index=False)
+    return
 
 #####################################################
 

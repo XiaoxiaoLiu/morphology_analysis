@@ -34,9 +34,10 @@ class Command(object):
         thread.join(timeout)
         if thread.is_alive():
             print 'Terminating process'
+            print self.cmd
             self.process.terminate()
             thread.join()
-        print self.process.returncode
+        #print self.process.returncode
 
 
 
@@ -112,7 +113,7 @@ def sort_swc(inputswc_path, outputswc_path, GEN_QSUB = 0, qsub_script_dir= "."):
         cmd = V3D + arguments
         print cmd
         command = Command(cmd)
-        command.run(timeout=60*5)
+        command.run(timeout=60*10)
 
     return
 
@@ -203,7 +204,7 @@ def resample(inputswc_path, outputswc_path,step_len = 1, GEN_QSUB = 0, qsub_scri
         cmd = V3D + arguments
         #print cmd
         command = Command(cmd)
-        command.run(timeout=60*3)
+        command.run(timeout=60*10)
     return
 
 def run_neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSUB = 0, qsub_script_dir= "."):
