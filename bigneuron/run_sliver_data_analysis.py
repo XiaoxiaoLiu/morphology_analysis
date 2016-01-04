@@ -31,17 +31,16 @@ gold_feature_csv= "/data/mat/xiaoxiaol/data/gold166/features_with_tags.csv"
 
 
 ###########################  preprocessing and organize data ##################################
-data_DIR ="/data/mat/xiaoxiaol/data/reconstructions_2015_1207"
+data_DIR ="/data/mat/xiaoxiaol/data/reconstructions_2015_1214"
 original_dir = data_DIR +"/auto_recons"
 resampled_dir = data_DIR+ "/resampled"
 sorted_dir = data_DIR +"/sorted"
 lookup_image_id_table_file = data_DIR +"/image_name_lookup_table.csv"
 
 
-
 ########################  increamenatal data ##########################
-updated_data_DIR = "/data/mat/xiaoxiaol/data/reconstructions_20151214"
-new_data_Dir = "/data/mat/xiaoxiaol/data/reconstructions_2015_1214"
+updated_data_DIR = "/data/mat/xiaoxiaol/data/reconstructions_2016_0104"
+new_data_Dir = "/data/mat/xiaoxiaol/data/reconstructions_2016_0104"
 
 # copy old data to new folder ( to avoid errors while reorganizing)
 #os.system( 'cp -r  '+data_DIR + "  "+ new_data_Dir+'/auto_recons')
@@ -64,12 +63,12 @@ sorted_dir = data_DIR +"/sorted"
 
 ######  sliver data table
 SILVER_CSV = data_DIR+'/recon_table.csv'
-#rp.recon_table_gen(original_dir,lookup_image_id_table_file,SILVER_CSV)
+rp.recon_table_gen(original_dir,lookup_image_id_table_file,SILVER_CSV)
 
 
 #####  merge to get the common set between gold and silver
 merged_csv_file = data_DIR+'/shared_with_gold_set.csv'
-#rp.merge_gold_silver(GOLD_CSV,SILVER_CSV,merged_csv_file)
+rp.merge_gold_silver(GOLD_CSV,SILVER_CSV,merged_csv_file)
 
 
 #####  report which gold dataset did not have any recons?
@@ -89,10 +88,14 @@ for i in g:
 
 ###########################   distance calculation  ########################################
 
+
+ND = 1
+BD = 0
 #### compute neuron distances
-neuron_distance_csv = data_DIR+'/neuron_distances_with_gold.csv'
-##rp.cal_neuron_dist(merged_csv_file,neuron_distance_csv,overwrite_existing = 0, old_output_csv= data_DIR+'/nd_old.csv') # build on top of previous results
-#rp.cal_neuron_dist(merged_csv_file,neuron_distance_csv,overwrite_existing = 0,GEN_QSUB = 1) # build on top of previous results
+if ND :
+    neuron_distance_csv = data_DIR+'/neuron_distances_with_gold.csv'
+    ##rp.cal_neuron_dist(merged_csv_file,neuron_distance_csv,overwrite_existing = 0, old_output_csv= data_DIR+'/nd_old.csv') # build on top of previous results
+    rp.cal_neuron_dist(merged_csv_file,neuron_distance_csv,overwrite_existing = 0,GEN_QSUB = 1) # build on top of previous results
 
 
 
@@ -103,21 +106,24 @@ df_nd2= df_nd1.dropna(axis=0)
 df_nd2.to_csv(data_DIR +'/neuron_distances_with_gold_filtered.csv', index=False)
 neuron_distance_csv = data_DIR +'/neuron_distances_with_gold_filtered.csv'
 
+
+
 ###### compute blastneuron features
-tmp_feature_csv = original_dir +'/tmp_features_with_tags.csv'
 
-#rp.cal_bn_features(original_dir,tmp_feature_csv)
-output_feature_csv = data_DIR +'/features_with_tags.csv'
-#rp.map_image_name(tmp_feature_csv,lookup_image_id_table_file, output_feature_csv)
+if BD:
+    tmp_feature_csv = original_dir +'/tmp_features_with_tags.csv'
+
+    rp.cal_bn_features(original_dir,tmp_feature_csv)
+    output_feature_csv = data_DIR +'/features_with_tags.csv'
+    rp.map_image_name(tmp_feature_csv,lookup_image_id_table_file, output_feature_csv)
+
+    df_m = pd.read_csv(output_feature_csv)
+    df_m1 = df_m[df_m['num_nodes'] != 0]
+    df_m1.to_csv(output_feature_csv+'filered.csv', index=False)
 
 
-bn_csv = data_DIR+"/blastneuron_lm_ssd.csv"
-rp.cal_blastneuron_distance(output_feature_csv,gold_feature_csv,merged_csv_file,output_csv=bn_csv, LMEASURE_ONLY = 1)
-exit()
-  # change smarttracing to app2_auto_thre
-
-
-
+    bn_csv = data_DIR+"/blastneuron_lm_ssd.csv"
+    rp.cal_blastneuron_distance(output_feature_csv,gold_feature_csv,merged_csv_file,output_csv=bn_csv, LMEASURE_ONLY = 1)
 
 
 
@@ -138,20 +144,23 @@ algorithms_ordered = algorithms[order[::-1]]
 
 
 # plot
-plt_dist.plot_blasneuron_distance(bn_csv,data_DIR,algorithms_ordered,CASE_BY_CASE_PLOT=1)
-plt_dist.plot_similarities(bn_csv, data_DIR,algorithms_ordered,metric='SSD',CASE_BY_CASE_PLOT = 0,value_label='Similarity (0~1) on Global Morph Feature Score')
+if BD:
+   plt_dist.plot_blasneuron_distance(bn_csv,data_DIR,algorithms_ordered,CASE_BY_CASE_PLOT=1)
+   plt_dist.plot_similarities(bn_csv, data_DIR,algorithms_ordered,metric='SSD',CASE_BY_CASE_PLOT = 0,value_label='Similarity (0~1) on Global Morph Feature Score')
 
 
 
-plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance',CASE_BY_CASE_PLOT = 0,value_label='Similarity (0~1) on Average Neuron Distance(s1)')
-plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_difference',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Neuron Difference Score (s2*s3)')
-plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance_diff',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Average Neuron Distance on Different Structures (s2)')
-plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance_perc',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Neuron Different Structure Percentage (s3)')
+if ND:
+
+    plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance',CASE_BY_CASE_PLOT = 0,value_label='Similarity (0~1) on Average Neuron Distance(s1)')
+    plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_difference',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Neuron Difference Score (s2*s3)')
+    plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance_diff',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Average Neuron Distance on Different Structures (s2)')
+    plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance_perc',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Neuron Different Structure Percentage (s3)')
 
 
 
 #plt_dist.plot_sample_size(neuron_distance_csv,data_DIR,algorithms_ordered)
-plt_dist.plot_neuron_distance(neuron_distance_csv, data_DIR,algorithms_ordered,CASE_BY_CASE_PLOT = 1)
+#plt_dist.plot_neuron_distance(neuron_distance_csv, data_DIR,algorithms_ordered,CASE_BY_CASE_PLOT = 1)
 
 
 ########################################  for all generated reconstructions ############################

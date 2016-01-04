@@ -108,8 +108,8 @@ def generateALLFeatureCSV_gold166(feature_file, feature_csv_file):
         algorithm = tmp.split('.')[0]
         if "app1" in algorithm:   # for patterns like *x245_y234_z234_app1.swc
               algorithm = "app1"
-        if (algorithm != "app2_autothre") and ("app2" in algorithm):
-              algorithm = "app2"
+        #if (algorithm != "app2_autothre") and ("app2" in algorithm):
+        #      algorithm = "app2"
 
         if  "fastmarching_spanningtree" in algorithm: # fastmarching_spanningtree is too long
               algorithm = "spanningtree"
@@ -328,6 +328,7 @@ def cal_neuron_dist(input_csv_file,output_csv,overwrite_existing = 1,GEN_QSUB = 
     #         df_already_have = pd.merge(df_input, df_old, on='swc_file')
     #         print "there are already "+ str(df_already_have['swc_file'].size) +"  swcs calculated"
 
+    output_dir = os.path.dirname(output_csv)
     print " Calculate neuron distances:"
     for i in range(df_input.image_file_name.size):
              print "swc file :" + str(i)
@@ -335,7 +336,7 @@ def cal_neuron_dist(input_csv_file,output_csv,overwrite_existing = 1,GEN_QSUB = 
              log_file = df_input.iloc[i].swc_file + ".r.log"
              #if not swc_f in list(df_already_have['swc_file'])
              if overwrite_existing   or   not os.path.isfile(log_file) :
-                   bn.run_neuron_dist(swc_f, df_input.iloc[i].gold_swc_file,log_file, GEN_QSUB, "nd")
+                   bn.run_neuron_dist(swc_f, df_input.iloc[i].gold_swc_file,log_file, GEN_QSUB, output_dir+"/nd")
 
     #collect results from log files
     df_neuron_distance = pd.DataFrame(columns=('image_file_name','swc_file', 'gold_swc_file', 'algorithm', 'neuron_distance','neuron_distance_diff','neuron_distance_perc'))
@@ -429,8 +430,8 @@ def recon_table_gen(data_root, lookup_image_id_table_file=None, output_csv_file=
 
                     if "app1" in algorithm:   # for patterns like *x245_y234_z234_app1.swc
                           algorithm = "app1"
-                    if (algorithm != "app2_autothre") and ("app2" in algorithm):
-                          algorithm = "app2"
+                    #if (algorithm != "app2_autothre") and ("app2" in algorithm):
+                    #      algorithm = "app2"
 
                     if  "fastmarching_spanningtree" in algorithm: # fastmarching_spanningtree is too long
                           algorithm = "spanningtree"
