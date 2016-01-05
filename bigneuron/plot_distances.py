@@ -8,8 +8,10 @@ import numpy as np
 import pandas as pd
 
 
+data_DIR =  "/data/mat/xiaoxiaol/data/reconstructions_2016_0104"
 
-algorithm_plugin_match_csv ="/data/mat/xiaoxiaol/data/reconstructions_2015_1214/ported_neuron_tracing_spreadsheet.csv"
+algorithm_plugin_match_csv = data_DIR + "/ported_neuron_tracing_spreadsheet.csv"
+
 df_check_table = pd.read_csv(algorithm_plugin_match_csv)
 keys = df_check_table['algorithm']
 values = df_check_table['better_algorithm_name']
@@ -112,7 +114,7 @@ def plot_similarities(neuron_distance_csv, outputDir,algorithms,metric='neuron_d
     plt.ylabel('algorithm (n = # recons)')
     plt.xlabel(value_label)
     plt.subplots_adjust(left=0.4)
-    plt.savefig(outputDir + '/all_algorithm_'+metric+'_similarity.png', format='png')
+    plt.savefig(outputDir + '/similarity_'+metric+'.png', format='png')
     #plt.show()
     plt.close()
 
@@ -130,7 +132,7 @@ def plot_two_algorithms(neuron_distance_csv, alg1,alg2):
     plt.plot(range(df_merge.image_file_name.size),df_merge['neuron_distance_x'],'r*-')
     plt.plot(range(df_merge.image_file_name.size),df_merge['neuron_distance_y'],"b*-")
     plt.legend()
-    plt.show()
+    #plt.show()
     plt.close()
 
 
@@ -187,8 +189,8 @@ def plot_neuron_distance(neuron_distance_csv, outputDir,algorithms,CASE_BY_CASE_
     #plt.xticks(rotation="90")
     plt.xlabel('Average Neuron Distance (s1)')
     plt.subplots_adjust(left=0.4)
-    plt.savefig(outputDir + '/all_algorithm_average_neuron_distance_s1.png', format='png')
-    plt.show()
+    plt.savefig(outputDir + '/average_neuron_distance_s1.png', format='png')
+    #plt.show()
     plt.close()
 
     #plot the differences
@@ -201,7 +203,7 @@ def plot_neuron_distance(neuron_distance_csv, outputDir,algorithms,CASE_BY_CASE_
     #plt.xticks(rotation="90")
     plt.xlabel('Neuron Difference Score (s2*s3)')
     plt.subplots_adjust(left=0.4)
-    plt.savefig(outputDir + '/all_algorithm_neuron_difference_score_s2s3.png', format='png')
+    plt.savefig(outputDir + '/neuron_difference_score_s2s3.png', format='png')
     #plt.show()
     plt.close()
     return
@@ -258,7 +260,7 @@ def plot_blasneuron_distance(bn_csv,outputDir,algorithms,CASE_BY_CASE_PLOT=0):
     plt.xlabel('Global Morph Feature Score Distance')
     plt.subplots_adjust(left=0.4)
 
-    plt.savefig(outputDir + '/all_algorithm_glogbal_morph_feature_ssd.png', format='png')
+    plt.savefig(outputDir + '/global_morph_feature_ssd.png', format='png')
     #plt.show()
     plt.close()
 
@@ -271,19 +273,25 @@ def plot_sample_size(bn_csv,outputDir,algorithms):
 
     plt.figure()
 
-    sample_size=[]
-    print "there are "+str(algorithms.size)+" algorithms"
+    dfg = df_nd.groupby('algorithm')
+
+    sample_size_per_algorithm=[]
     for alg in algorithms:
-            df_alg = df_nd[df_nd.algorithm == alg]
-            sample_size.append(df_alg.image_file_name.size)
-    sb.barplot(y=range(algorithms.size),x=np.array(sample_size),orient="h")
+        if alg in np.unique(df_nd['algorithm']):
+            sample_size_per_algorithm.append(dfg.get_group(alg).shape[0])
+        else:
+            print alg
+            sample_size_per_algorithm.append(0)
+
+
+    sb.barplot(y=range(algorithms.size),x=np.array(sample_size_per_algorithm),orient="h")
     #sb.set_context("paper", font_scale=1.0)
 
     algorithm_names = [algorithm_name_mapping[x] for x in algorithms]
     plt.yticks(range(algorithms.size), algorithm_names)
     plt.subplots_adjust(left=0.4,right=0.9)
     plt.xlabel('Number of reconstructions')
-    plt.savefig(outputDir + '/all_algorithm_valid_reconstruction_number.png', format='png')
+    plt.savefig(outputDir + '/valid_reconstruction_number.png', format='png')
     #plt.show()
     plt.close()
     return
@@ -316,7 +324,7 @@ def plot_running_time(time_csv, outputDir, algorithms):
     a.set_yticklabels(['%s ($n$=%d )'%(algorithm_names[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
     plt.subplots_adjust(left=0.4,right=0.9)
     plt.xlabel('Running Time (seconds)')
-    plt.savefig(outputDir + '/runningtime_goldset.png', format='png')
+    plt.savefig(outputDir + '/runningtime_goldset_n=logfiles.png', format='png')
     #plt.show()
     plt.close()
 
@@ -338,14 +346,14 @@ def plot_running_time_validation(time_csv,neuron_distance_csv, outputDir, algori
 
     df_time = pd.read_csv(time_csv)
 
-    df_time['running_time'] =  df_time['running_time'] /1000.0
+    df_time['running_time'] = df_time['running_time'] /1000.0
 
 
     dfg = df_time.groupby('image_file_name')
     all_images = np.unique(df_time['image_file_name'])
 
     df_out = pd.DataFrame()
-    #sample_size_per_algorithm=[]
+    sample_size_per_algorithm=[]
     for image in all_images:
         df_image = dfg.get_group(image)
         #valid results
@@ -359,7 +367,7 @@ def plot_running_time_validation(time_csv,neuron_distance_csv, outputDir, algori
 
         for i in range(df_image.shape[0]):
 
-             alg =   df_image.iloc[i]['algorithm']
+             alg =  df_image.iloc[i]['algorithm']
 
              if alg in np.unique(df_nd_image['algorithm']):
                  id = df_time_filled_template[df_time_filled_template.algorithm == alg].index[0]
@@ -369,18 +377,25 @@ def plot_running_time_validation(time_csv,neuron_distance_csv, outputDir, algori
 
     a=sb.barplot(y='algorithm', x='running_time', data=df_out, order=algorithms, orient="h")
 
-    algorithm_names = [algorithm_name_mapping[x] for x in algorithms]
+    dfgt = df_nd.groupby('algorithm')
+    sample_size_per_algorithm=[]
+    m_algorithms = np.unique(df_time.algorithm)
+    for alg in algorithms:
+        #print alg
+        if alg in m_algorithms:
+            sample_size_per_algorithm.append(dfgt.get_group(alg).shape[0])
+        else:
+            sample_size_per_algorithm.append(0)
 
-    a.set_yticklabels(algorithm_names)
+    algorithm_names = [algorithm_name_mapping[x] for x in algorithms]
+    a.set_yticklabels(['%s ($n$=%d )'%(algorithm_names[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
+
+    #a.set_yticklabels(algorithm_names)
     plt.subplots_adjust(left=0.4,right=0.9)
     plt.xlabel('Running Time (seconds): all 163 images, 1 hour wall time is used for N/A entries')
     plt.savefig(outputDir + '/runningtime_goldset_1hourForNA.png', format='png')
     #plt.show()
     plt.close()
-
-
-
-
     return
 
 

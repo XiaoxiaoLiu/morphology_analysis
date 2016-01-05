@@ -108,8 +108,9 @@ def generateALLFeatureCSV_gold166(feature_file, feature_csv_file):
         algorithm = tmp.split('.')[0]
         if "app1" in algorithm:   # for patterns like *x245_y234_z234_app1.swc
               algorithm = "app1"
-        #if (algorithm != "app2_autothre") and ("app2" in algorithm):
-        #      algorithm = "app2"
+
+        if (algorithm.endswith("app2")):
+                algorithm = "app2"
 
         if  "fastmarching_spanningtree" in algorithm: # fastmarching_spanningtree is too long
               algorithm = "spanningtree"
@@ -279,7 +280,7 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
                  print result[selected_cols]
                  print  "gold: "
                  print gold_df[selected_cols]
-                 exit()
+
 
                  df_final = df_final.append({'image_file_name': df_normalized.iloc[rowIdx]['image_file_name'],
                                              'algorithm': df_normalized.iloc[rowIdx]['algorithm'],
@@ -430,8 +431,9 @@ def recon_table_gen(data_root, lookup_image_id_table_file=None, output_csv_file=
 
                     if "app1" in algorithm:   # for patterns like *x245_y234_z234_app1.swc
                           algorithm = "app1"
-                    #if (algorithm != "app2_autothre") and ("app2" in algorithm):
-                    #      algorithm = "app2"
+
+                    if (algorithm.endswith("app2")):
+                          algorithm = "app2"
 
                     if  "fastmarching_spanningtree" in algorithm: # fastmarching_spanningtree is too long
                           algorithm = "spanningtree"

@@ -73,7 +73,7 @@ def gen_qsub_script(cmd, job_name, script_fn):
 
     FILE = open(script_fn, 'w')
     FILE.write("#PBS -q mindscope\n")
-    FILE.write("#PBS -l vmem=2g\n")
+    FILE.write("#PBS -l vmem=16g\n")
     FILE.write("#PBS -l walltime=00:30:00\n")
     FILE.write("#PBS -l ncpus=1\n")
     FILE.write("#PBS -N %s\n" % job_name)
