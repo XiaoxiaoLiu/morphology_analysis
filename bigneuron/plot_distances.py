@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 
 
-data_DIR =  "/data/mat/xiaoxiaol/data/reconstructions_2016_0104"
+data_DIR =  "/data/mat/xiaoxiaol/data/big_neuron/silver"
 
 algorithm_plugin_match_csv = data_DIR + "/ported_neuron_tracing_spreadsheet.csv"
 

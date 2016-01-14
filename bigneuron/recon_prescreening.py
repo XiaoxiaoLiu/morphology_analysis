@@ -22,6 +22,32 @@ import numpy as np
 
 import os.path as path
 ######################################################
+LOOKUP_TABLE_FILE = "/data/mat/xiaoxiaol/data/big_neuron/silver/ported_neuron_tracing_spreadsheet.csv"
+##################################
+
+
+
+
+
+def  matchFileToAlgorithmName(file_name,LOOKUP_TABLE_FILE):
+     if file_name.find("v3dpbd") >-1:
+             tmp = file_name.split('v3dpbd_')[-1]
+     else:
+             tmp = file_name.split('v3draw_')[-1]
+     al_string = tmp.split('.swc')[0]
+
+     df_lookup = pd.read_csv(LOOKUP_TABLE_FILE)
+     keys = df_lookup['swc_file_label']
+     values = df_lookup['algorithm']
+     name_mapping = dict(zip(keys, values))
+
+     alg=None
+     unique_keys = np.unique(keys)
+     for key in unique_keys:
+        if key in al_string:
+               alg= name_mapping[key]
+     return  alg
+
 
 
 
@@ -86,6 +112,9 @@ def generateALLFeatureCSV(feature_file, feature_csv_file):
 
 
 
+
+
+
 def generateALLFeatureCSV_gold166(feature_file, feature_csv_file):
 
     swc_file_nameList, glFeatures, gmiFeatures = readDBFeatures(feature_file)
@@ -101,24 +130,8 @@ def generateALLFeatureCSV_gold166(feature_file, feature_csv_file):
     imageList = []
     for swc_file in swc_file_nameList:
         fn = swc_file.split('/')[-1]
-        if fn.find("v3dpbd") >-1:
-             tmp = fn.split('v3dpbd_')[-1]
-        else:
-             tmp = fn.split('v3draw_')[-1]
-        algorithm = tmp.split('.')[0]
-        if "app1" in algorithm:   # for patterns like *x245_y234_z234_app1.swc
-              algorithm = "app1"
 
-        if (algorithm.endswith("app2")):
-                algorithm = "app2"
-
-        if  "fastmarching_spanningtree" in algorithm: # fastmarching_spanningtree is too long
-              algorithm = "spanningtree"
-
-        if "tubularity_model_S" in algorithm:
-              algorithm = "RegMST"
-
-
+        algorithm = matchFileToAlgorithmName(fn)
 
         if fn.find("v3dpbd") >-1:
              tmp = fn.split('.v3dpbd')[0] +".v3dpbd"
@@ -423,23 +436,7 @@ def recon_table_gen(data_root, lookup_image_id_table_file=None, output_csv_file=
                     swc_file = swc_file[:-1] # get rid of \r or \n
                     fn = swc_file.split('/')[-1]
 
-                    if fn.find("v3dpbd") >-1:
-                        tmp = fn.split('v3dpbd_')[-1]
-                    else:
-                        tmp = fn.split('v3draw_')[-1]
-                    algorithm = tmp.split('.')[0]
-
-                    if "app1" in algorithm:   # for patterns like *x245_y234_z234_app1.swc
-                          algorithm = "app1"
-
-                    if (algorithm.endswith("app2")):
-                          algorithm = "app2"
-
-                    if  "fastmarching_spanningtree" in algorithm: # fastmarching_spanningtree is too long
-                          algorithm = "spanningtree"
-
-                    if "tubularity_model_S" in algorithm:
-                         algorithm = "RegMST"
+                    algorithm = matchFileToAlgorithmName(fn,LOOKUP_TABLE_FILE)
 
 
                     if fn.find("v3dpbd") >-1:

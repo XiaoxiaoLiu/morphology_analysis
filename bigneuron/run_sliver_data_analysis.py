@@ -28,33 +28,16 @@ gold_feature_csv= "/data/mat/xiaoxiaol/data/gold166/features_with_tags.csv"
 ##rp.resample_and_sort(gold_dir+"/original",gold_dir+"/resampled",gold_dir+"/sorted")
 #rp.gen_gold_feature_csv(gold_dir+"/original",output_gold_csv_file= GOLD_CSV,output_gold_feature_csv=gold_feature_csv)
 
-
+algorithm_plugin_match_csv = "/data/mat/xiaoxiaol/data/big_neuron/silver/ported_neuron_tracing_spreadsheet.csv"
 
 ###########################  preprocessing and organize data ##################################
-data_DIR ="/data/mat/xiaoxiaol/data/reconstructions_2015_1214"
+data_DIR ="/data/mat/xiaoxiaol/data/big_neuron/silver/20160112_merged"
 original_dir = data_DIR +"/auto_recons"
 resampled_dir = data_DIR+ "/resampled"
 sorted_dir = data_DIR +"/sorted"
-lookup_image_id_table_file = data_DIR +"/image_name_lookup_table.csv"
+lookup_image_id_table_file = data_DIR +"/../image_name_lookup_table.csv"
+time_csv = data_DIR + "/auto_recons/running_time_merged.csv"
 
-
-########################  increamenatal data ##########################
-updated_data_DIR = "/data/mat/xiaoxiaol/data/reconstructions_2016_0104"
-new_data_Dir = "/data/mat/xiaoxiaol/data/reconstructions_2016_0104"
-
-# copy old data to new folder ( to avoid errors while reorganizing)
-#os.system( 'cp -r  '+data_DIR + "  "+ new_data_Dir+'/auto_recons')
-
-#replace and add swc files and log files
-#shell scripts update_data.sh
-
-#running_time
-#vim edit merge running_time.csv into one
-
-data_DIR = new_data_Dir
-original_dir = data_DIR +"/auto_recons"
-resampled_dir = data_DIR+ "/resampled"
-sorted_dir = data_DIR +"/sorted"
 
 
 ######  resample  #?and sort
@@ -63,12 +46,12 @@ sorted_dir = data_DIR +"/sorted"
 
 ######  sliver data table
 SILVER_CSV = data_DIR+'/recon_table.csv'
-#rp.recon_table_gen(original_dir,lookup_image_id_table_file,SILVER_CSV)
+rp.recon_table_gen(original_dir,lookup_image_id_table_file,SILVER_CSV)
 
 
 #####  merge to get the common set between gold and silver
-merged_csv_file = data_DIR+'/shared_with_gold_set.csv'
-#rp.merge_gold_silver(GOLD_CSV,SILVER_CSV,merged_csv_file)
+merged_csv_file = data_DIR+'/recon_shared_with_gold_set.csv'
+rp.merge_gold_silver(GOLD_CSV,SILVER_CSV,merged_csv_file)
 
 
 #####  report which gold dataset did not have any recons?
@@ -160,9 +143,9 @@ plt_dist.plot_neuron_distance(neuron_distance_csv, data_DIR,algorithms_ordered,C
 
 ########################################  for all generated reconstructions ############################
 #plot runnign time
-time_csv = data_DIR + "/auto_recons/running_time.csv"
+
 output_time_csv = data_DIR + "/running_time_algorithm.csv"
-algorithm_plugin_match_csv = data_DIR + "/ported_neuron_tracing_spreadsheet.csv"
+
 rp.summerize_running_time(time_csv, algorithm_plugin_match_csv,lookup_image_id_table_file,output_time_csv)
 
 
