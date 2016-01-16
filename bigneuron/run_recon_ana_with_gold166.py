@@ -31,79 +31,81 @@ gold_feature_csv= "/data/mat/xiaoxiaol/data/gold166/features_with_tags.csv"
 algorithm_plugin_match_csv = "/data/mat/xiaoxiaol/data/big_neuron/silver/ported_neuron_tracing_spreadsheet.csv"
 
 ###########################  preprocessing and organize data ##################################
-data_DIR ="/data/mat/xiaoxiaol/data/big_neuron/silver/20160112_merged"
+data_DIR ="/data/mat/xiaoxiaol/data/big_neuron/silver/20160113_merged_gold_gt"
 original_dir = data_DIR +"/auto_recons"
-resampled_dir = data_DIR+ "/resampled"
-sorted_dir = data_DIR +"/sorted"
+#resampled_dir = data_DIR+ "/resampled"
+#sorted_dir = data_DIR +"/sorted"
 lookup_image_id_table_file = data_DIR +"/../image_name_lookup_table.csv"
 time_csv = data_DIR + "/auto_recons/running_time_merged.csv"
 
 
-
-######  resample  #?and sort
-#rp.resample_and_sort(original_dir,resampled_dir,sorted_dir,GEN_QSUB=0,overwrite_sorted=0)
+neuron_distance_csv = data_DIR +'/neuron_distances_with_gold.csv'
 
 
-######  sliver data table
-SILVER_CSV = data_DIR+'/recon_table.csv'
-rp.recon_table_gen(original_dir,lookup_image_id_table_file,SILVER_CSV)
-
-
-#####  merge to get the common set between gold and silver
-merged_csv_file = data_DIR+'/recon_shared_with_gold_set.csv'
-rp.merge_gold_silver(GOLD_CSV,SILVER_CSV,merged_csv_file)
-
-
-#####  report which gold dataset did not have any recons?
-df_merge = pd.read_csv(merged_csv_file)
-df_gold = pd.read_csv(GOLD_CSV)
-m = pd.unique(df_merge.image_file_name)
-g = pd.unique(df_gold.image_file_name)
-
-print "\n\nGold dataset contains " +str(g.size) +" image dataset"
-print "There are " + str(df_merge.shape[0])+" reconstructions are generated from " + str(pd.unique(df_merge.algorithm).size) +" algorithms."
-for i in g:
-   if i not in m:
-      print "No reconstructions for image: " + i
-###########################   distance calculation  ########################################
-
-
-ND = 1
+ND = 0
 BD = 0
-#### compute neuron distances
-neuron_distance_csv = data_DIR+'/neuron_distances_with_gold.csv'
-if ND :
-    ##rp.cal_neuron_dist(merged_csv_file,neuron_distance_csv,overwrite_existing = 0, old_output_csv= data_DIR+'/nd_old.csv') # build on top of previous results
-    rp.cal_neuron_dist(merged_csv_file,neuron_distance_csv,overwrite_existing = 0,GEN_QSUB = 1) # build on top of previous results
+COMPUTE = 0
+
+################################################################################
+if COMPUTE:
+        ######  resample  #?and sort
+        #rp.resample_and_sort(original_dir,resampled_dir,sorted_dir,GEN_QSUB=0,overwrite_sorted=0)
+
+
+        ######  sliver data table
+        SILVER_CSV = data_DIR+'/recon_table.csv'
+        rp.recon_table_gen(original_dir,lookup_image_id_table_file,SILVER_CSV)
+
+        #####  merge to get the common set between gold and silver
+        merged_csv_file = data_DIR+'/recon_shared_with_gold_set.csv'
+        rp.merge_gold_silver(GOLD_CSV,SILVER_CSV,merged_csv_file)
+
+
+        #####  report which gold dataset did not have any recons?
+        df_merge = pd.read_csv(merged_csv_file)
+        df_gold = pd.read_csv(GOLD_CSV)
+        m = pd.unique(df_merge.image_file_name)
+        g = pd.unique(df_gold.image_file_name)
+
+        print "\n\nGold dataset contains " +str(g.size) +" image dataset"
+        print "There are " + str(df_merge.shape[0])+" reconstructions are generated from " + str(pd.unique(df_merge.algorithm).size) +" algorithms."
+        for i in g:
+           if i not in m:
+              print "No reconstructions for image: " + i
+        ###########################   distance calculation  ########################################
+
+
+        #### compute neuron distances
+
+        if ND :
+            ##rp.cal_neuron_dist(merged_csv_file,neuron_distance_csv,overwrite_existing = 0, old_output_csv= data_DIR+'/nd_old.csv') # build on top of previous results
+            rp.cal_neuron_dist(merged_csv_file,neuron_distance_csv,overwrite_existing = 0,GEN_QSUB = 1) # build on top of previous results
+
+
+        ## post processing remove invalid
+        df_nd = pd.read_csv(neuron_distance_csv)
+        df_nd1 = df_nd[df_nd['neuron_distance'] != -1]  # empty node swc will have nd reported as "-1", remove those invalid recons
+        df_nd2= df_nd1.dropna(axis=0)
+        df_nd2.to_csv(neuron_distance_csv, index=False)
 
 
 
 
+        ###### compute blastneuron features
+        if BD > 0:
+            tmp_feature_csv = original_dir +'/tmp_features_with_tags.csv'
 
-## post processing remove invalid
-df_nd = pd.read_csv(neuron_distance_csv)
-df_nd1 = df_nd[df_nd['neuron_distance'] != -1]  # empty node swc will have nd reported as "-1", remove those invalid recons
-df_nd2= df_nd1.dropna(axis=0)
-df_nd2.to_csv(data_DIR +'/neuron_distances_with_gold_filtered.csv', index=False)
-neuron_distance_csv = data_DIR +'/neuron_distances_with_gold_filtered.csv'
+            rp.cal_bn_features(original_dir,tmp_feature_csv)
+            output_feature_csv = data_DIR +'/features_with_tags.csv'
+            rp.map_image_name(tmp_feature_csv,lookup_image_id_table_file, output_feature_csv)
 
-
-
-###### compute blastneuron features
-if BD:
-    tmp_feature_csv = original_dir +'/tmp_features_with_tags.csv'
-
-    rp.cal_bn_features(original_dir,tmp_feature_csv)
-    output_feature_csv = data_DIR +'/features_with_tags.csv'
-    rp.map_image_name(tmp_feature_csv,lookup_image_id_table_file, output_feature_csv)
-
-    df_m = pd.read_csv(output_feature_csv)
-    df_m1 = df_m[df_m['num_nodes'] != 0]
-    df_m1.to_csv(output_feature_csv, index=False)
+            df_m = pd.read_csv(output_feature_csv)
+            df_m1 = df_m[df_m['num_nodes'] != 0]
+            df_m1.to_csv(output_feature_csv, index=False)
 
 
-    bn_csv = data_DIR+"/blastneuron_lm_ssd.csv"
-    rp.cal_blastneuron_distance(output_feature_csv,gold_feature_csv,merged_csv_file,output_csv=bn_csv, LMEASURE_ONLY = 1)
+            bn_csv = data_DIR+"/blastneuron_lm_ssd.csv"
+            rp.cal_blastneuron_distance(output_feature_csv,gold_feature_csv,merged_csv_file,output_csv=bn_csv, LMEASURE_ONLY = 1)
 
 
 
@@ -124,7 +126,7 @@ algorithms_ordered = algorithms[order[::-1]]
 
 
 # plot
-if BD:
+if BD >0:
    plt_dist.plot_blasneuron_distance(bn_csv,data_DIR,algorithms_ordered,CASE_BY_CASE_PLOT=1)
    plt_dist.plot_similarities(bn_csv, data_DIR,algorithms_ordered,metric='SSD',CASE_BY_CASE_PLOT = 0,value_label='Similarity (0~1) on Global Morph Feature Score')
 
@@ -137,7 +139,6 @@ plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metr
 
 
 
-plt_dist.plot_sample_size(neuron_distance_csv,data_DIR,algorithms_ordered)
 plt_dist.plot_neuron_distance(neuron_distance_csv, data_DIR,algorithms_ordered,CASE_BY_CASE_PLOT = 0)
 
 

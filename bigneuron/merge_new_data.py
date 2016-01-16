@@ -22,15 +22,16 @@ import glob
 ## merge data for plotting
 
 
-new_data_DIR ="/data/mat/xiaoxiaol/data/big_neuron/silver/20160112_rhea_reconstructions_6updated_silver"
+new_data_DIR ="/data/mat/xiaoxiaol/data/big_neuron/silver/reconstructions_20160114_LCMBoost_v2"
 
 #destination folder
-data_DIR ="/data/mat/xiaoxiaol/data/big_neuron/silver/20160112_merged"
+data_DIR ="/data/mat/xiaoxiaol/data/big_neuron/silver/20160113_merged_silver_gt"
 
 
 lookup_image_id_table_file = "/data/mat/xiaoxiaol/data/big_neuron/silver/image_name_lookup_table.csv"
 
-postfix = "_updated"
+#postfix = "_updated"
+postfix=""
 #rename the files so that it won't overwrite the previous results
 
 
@@ -43,7 +44,8 @@ for m_file in swcfiles:
     fn = m_file.split('/')[-1]
     new_file = data_DIR +'/auto_recons/'+ m_file.split('/')[-2]+'/'+fn.split('.swc')[0]+postfix +".swc"
     #print new_file
-    #os.system("cp "+ m_file + " "+ new_file)
+    os.system("cp "+ m_file + " "+ new_file)
+
 
 
 
@@ -76,13 +78,13 @@ df_rt.to_csv(new_data_DIR+'/running_time_reorg.csv', index=False)
 
 ################
 #merge time spreasheets
+
+
+os.system('mv '+ data_DIR+'/auto_recons/running_time_merged.csv ' + data_DIR+'/auto_recons/running_time.csv')
+
 df_old_rt = pd.read_csv(data_DIR +"/auto_recons/running_time.csv")
 df_new_rt = pd.concat([df_old_rt,df_rt])
 df_new_rt.to_csv(data_DIR+'/auto_recons/running_time_merged.csv', index=False)
-
-
-
-
 
 
 
