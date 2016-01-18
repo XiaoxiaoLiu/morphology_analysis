@@ -45,8 +45,14 @@ neuron_distance_csv = data_DIR +'/neuron_distances_with_gold.csv'
 ND = 0
 BD = 0
 COMPUTE = 0
-
+MEDIAN = 1
 ################################################################################
+
+
+
+
+
+
 if COMPUTE:
         ######  resample  #?and sort
         #rp.resample_and_sort(original_dir,resampled_dir,sorted_dir,GEN_QSUB=0,overwrite_sorted=0)
@@ -87,6 +93,8 @@ if COMPUTE:
         df_nd1 = df_nd[df_nd['neuron_distance'] != -1]  # empty node swc will have nd reported as "-1", remove those invalid recons
         df_nd2= df_nd1.dropna(axis=0)
         df_nd2.to_csv(neuron_distance_csv, index=False)
+
+
 
 
 
@@ -132,10 +140,10 @@ if BD >0:
 
 
 
-plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance',CASE_BY_CASE_PLOT = 0,value_label='Similarity (0~1) on Average Neuron Distance(s1)')
-plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_difference',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Neuron Difference Score (s2*s3)')
-plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance_diff',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Average Neuron Distance on Different Structures (s2)')
-plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance_perc',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Neuron Different Structure Percentage (s3)')
+plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance',CASE_BY_CASE_PLOT = 0,value_label='Similarity (0~1) based on Average Neuron Distance (D1)')
+plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_difference',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) based on Neuron Difference Score (D2*D3)')
+plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance_diff',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) based on Average Neuron Distance on Different Structures (D2)')
+plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance_perc',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) based on Neuron Different Structure Percentage (D3)')
 
 
 

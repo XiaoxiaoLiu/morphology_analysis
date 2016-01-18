@@ -132,10 +132,10 @@ if BD:
 
 
 
-plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance',CASE_BY_CASE_PLOT = 0,value_label='Similarity (0~1) on Average Neuron Distance(s1)')
-plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_difference',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Neuron Difference Score (s2*s3)')
-plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance_diff',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Average Neuron Distance on Different Structures (s2)')
-plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance_perc',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Neuron Different Structure Percentage (s3)')
+plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance',CASE_BY_CASE_PLOT = 0,value_label='Similarity (0~1) on Average Neuron Distance (D1)')
+plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_difference',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Neuron Difference Score (D2*D3)')
+plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance_diff',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Average Neuron Distance on Different Structures (D2)')
+plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance_perc',CASE_BY_CASE_PLOT = 0, value_label='Similarity (0~1) on Neuron Different Structure Percentage (D3)')
 
 
 

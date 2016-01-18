@@ -140,14 +140,14 @@ def consensus(input_ano_path, output_eswc_path, method=1, GEN_QSUB = 0, qsub_scr
     return
 
 
-def median_swc(input_ano_path, output_swc_path, GEN_QSUB = 0, qsub_script_dir= "."):
-    output_dir = os.path.dirname(output_swc_path)
-    logfile = output_swc_path+'.log'
-    if not os.path.exists(output_dir):
-        os.system("mkdir -p  " + output_dir)
-        print "create output dir: ", output_dir
+def median_swc(input_ano_path, GEN_QSUB = 0, qsub_script_dir= "."):
 
-    arguments = " -x consensus_swc -f median_swc -i " + input_ano_path + " -o " + output_swc_path + " >"+logfile
+    logfile = input_ano_path+'.median.log'
+    if not os.path.exists(qsub_script_dir):
+        os.system("mkdir -p  " + qsub_script_dir)
+        print "create output dir: ", qsub_script_dir
+
+    arguments = " -x consensus_swc -f median_swc -i " + input_ano_path  + " >"+logfile
 
     if GEN_QSUB :
         cmd = QMasterV3D + arguments
@@ -232,6 +232,20 @@ def run_neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSU
     return
 
 
+
+def read_median_swc_log(logfile):
+    # read log file
+    fh = open(logfile, 'r')
+
+    for line in fh:
+        pass
+    last = line
+
+    #"" Median swc is""
+    idx=last.spit(' ')[-1]
+    if idx <0:
+        print "error"
+    return idx
 
 
 

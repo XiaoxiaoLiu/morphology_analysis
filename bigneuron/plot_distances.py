@@ -41,6 +41,7 @@ def calculate_similarities(neuron_distance_csv,metric='neuron_distance', output_
         # similarity == nan:  metric reports nan
         # similarity = 0 : missing entry ( missing recons)
         df_image['similarity'] = np.exp(-(df_image[metric] - df_nd[metric].min())/(df_nd[metric].max()-df_nd[metric].min()+0.000000001))
+        #df_image['similarity'] = np.exp(-df_image[metric]/df_nd[metric].max())
 
 
         # construct a complete table, and fill the valid results
@@ -118,7 +119,7 @@ def plot_similarities(neuron_distance_csv, outputDir,algorithms,metric='neuron_d
     plt.ylabel('algorithm (n = # recons)')
     plt.xlabel(value_label)
     plt.subplots_adjust(left=0.4,right=0.9, bottom=0.1, top=0.9)
-    plt.savefig(outputDir + '/similarity_'+metric+'.png', format='png')
+    plt.savefig(outputDir + '/'+value_label+'.png', format='png')
     #plt.show()
     plt.close()
 
@@ -161,8 +162,8 @@ def plot_neuron_distance(neuron_distance_csv, outputDir,algorithms,CASE_BY_CASE_
                 algorithm_names = [algorithm_name_mapping[x] for x in df_image_cur['algorithm']]
                 plt.yticks(range(df_image_cur['algorithm'].size), np.array(algorithm_names))
 
-                plt.xlabel('Average Neuron Distance (s1)')
-                plt.subplots_adjust(left=0.4, bottom=0.1, top=0.7)
+                plt.xlabel('Average Neuron Distance (D1)')
+                plt.subplots_adjust(left=0.4, bottom=0.1, top=0.9)
                 plt.savefig(outputDir + '/sorted/figs/' + image.split('/')[-1] + '_nd.png', format='png')
 
                 plt.close()
@@ -191,9 +192,9 @@ def plot_neuron_distance(neuron_distance_csv, outputDir,algorithms,CASE_BY_CASE_
     a.set_yticklabels(['%s ($n$=%d )'%(algorithm_names[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
     #sb.set_context("talk", font_scale=3.0)
     #plt.xticks(rotation="90")
-    plt.xlabel('Average Neuron Distance (s1)')
-    plt.subplots_adjust(left=0.4, bottom=0.1, top=0.7)
-    plt.savefig(outputDir + '/average_neuron_distance_s1.png', format='png')
+    plt.xlabel('Average Neuron Distance (D1)')
+    plt.subplots_adjust(left=0.4, bottom=0.1, top=0.9)
+    plt.savefig(outputDir + '/average_neuron_distance_D1.png', format='png')
     #plt.show()
     plt.close()
 
@@ -206,9 +207,9 @@ def plot_neuron_distance(neuron_distance_csv, outputDir,algorithms,CASE_BY_CASE_
     a.set_yticklabels(['%s ($n$=%d )'%(algorithm_names[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
     #sb.set_context("talk", font_scale=3.0)
     #plt.xticks(rotation="90")
-    plt.xlabel('Neuron Difference Score (s2*s3)')
+    plt.xlabel('Neuron Difference Score (D2*D3)')
     plt.subplots_adjust(left=0.4,right=0.9, bottom=0.1, top=0.9)
-    plt.savefig(outputDir + '/neuron_difference_score_s2s3.png', format='png')
+    plt.savefig(outputDir + '/neuron_difference_score_D2D3.png', format='png')
     #plt.show()
     plt.close()
     return
@@ -329,7 +330,7 @@ def plot_running_time(time_csv, outputDir, algorithms):
     plt.subplots_adjust(left=0.4,right=0.9, bottom=0.1, top=0.9)
 
     plt.xlabel('Running Time (seconds)')
-    plt.savefig(outputDir + '/runningtime_goldset_n=logfiles.png', format='png')
+    plt.savefig(outputDir + '/runningtime_n=logfiles.png', format='png')
     #plt.show()
     plt.close()
 
@@ -391,7 +392,7 @@ def plot_running_time_validation(time_csv,neuron_distance_csv, outputDir, algori
     #a.set_yticklabels(algorithm_names)
     plt.subplots_adjust(left=0.4,right=0.9, bottom=0.1, top=0.9)
     plt.xlabel('Running Time (seconds): 1 hour wall time is used for missing/invalid reconstructions')
-    plt.savefig(outputDir + '/runningtime_goldset_1hourForNA.png', format='png')
+    plt.savefig(outputDir + '/runningtime_1hourForNA.png', format='png')
     #plt.show()
     plt.close()
     return
