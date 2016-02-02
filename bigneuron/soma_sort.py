@@ -18,7 +18,7 @@ import blast_neuron.blast_neuron_comp as bn
 
 data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/silver"
 
-output_dir = "/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all"
+output_dir = "/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all_somasorted"
 os.system("mkdir "+output_dir)
 
 neuron_distance_csv = "/data/mat/xiaoxiaol/data/big_neuron/silver/20160113_merged_gold_gt/neuron_distances_with_gold.csv"
@@ -47,11 +47,11 @@ images = np.unique(df_nd['image_file_name'])
 
 dfg = df_nd.groupby('image_file_name')
 
-df_feature_79=pd.DataFrame()
+#df_feature_79=pd.DataFrame()
 for im in images:
 
      df_image = dfg.get_group(im)
-     df_feature_79=df_feature_79.append(df_image,ignore_index=True)
+#     df_feature_79=df_feature_79.append(df_image,ignore_index=True)
 
      #print df_image['swc_file']
      #sort by distance
@@ -69,6 +69,8 @@ for im in images:
 
 
      out_dir = output_dir  + '/' + im_id.split('.')[0]
+
+
      if  not os.path.exists(out_dir):
         os.mkdir(out_dir)
 
@@ -79,6 +81,7 @@ for im in images:
      #print image_file
 
      output_swc = out_dir+'/00_'+gold_swc.split('/')[-1]
+
      os.system("cp "+gold_swc + " "+ output_swc)
 
      output_image = out_dir +'/'+im
@@ -86,14 +89,22 @@ for im in images:
      #os.system("cp "+image_file + " "+ output_image)
 
      i=1
+     os.system('mkdir '+ out_dir+'/auto_recons')
+     os.system('mkdir '+ out_dir+'/processed')
      for swc_file in df_image['swc_file']:
           string=str(i)
           if i < 10:
                 string = '0'+str(i)
-          out_swc = out_dir +'/' + string +'_'+ swc_file.split('/')[-1]
+          out_swc = out_dir +'/auto_recons/' + string +'_'+ swc_file.split('/')[-1]
           os.system("cp "+ swc_file + " "+ out_swc)
+          soma_sorted_swc = out_dir +'/processed/'+ string +'_'+ swc_file.split('/')[-1]
+          if  (not os.path.exists(soma_sorted_swc) ) and  os.path.getsize(out_swc) < 1000000:
+              bn.soma_sorting(gold_swc, inputswc_path = out_swc, outputswc_path = soma_sorted_swc, step_size = 3 )
           i=i+1
-     bn.genLinkerFile( out_dir, out_dir+"/"+im_id+'.ano')
+     bn.genLinkerFile( out_dir+'/auto_recons', out_dir+"/auto_recons/"+im_id+'.ano')
+     bn.genLinkerFile( out_dir+'/processed', out_dir+"/processed/"+im_id+'.ano')
+
+     bn.consensus(input_ano_path= out_dir+"/processed/"+im_id+'.ano', output_eswc_path=out_dir+"/processed/consensus_p2.eswc", method=2, GEN_QSUB = 0, qsub_script_dir= ".")
 
 
 #df_feature_79.to_csv(data_DIR+"/gold_trainning_subset/neuron_distances.csv")

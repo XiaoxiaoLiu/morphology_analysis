@@ -117,14 +117,14 @@ def sort_swc(inputswc_path, outputswc_path, GEN_QSUB = 0, qsub_script_dir= "."):
 
     return
 
-def consensus(input_ano_path, output_eswc_path, method=1, GEN_QSUB = 0, qsub_script_dir= "."):
+def consensus(input_ano_path, output_eswc_path, method=2, GEN_QSUB = 0, qsub_script_dir= "."):
     output_dir = os.path.dirname(output_eswc_path)
     logfile = output_eswc_path+'.log'
     if not os.path.exists(output_dir):
         os.system("mkdir -p  " + output_dir)
         print "create output dir: ", output_dir
 
-    arguments = " -x consensus_swc -f consensus_swc -i " + input_ano_path + " -o " + output_eswc_path + " -p "+ str(method)+" >"+logfile
+    arguments = " -x consensus_swc -f consensus_swc -i " + input_ano_path + " -o " + output_eswc_path + " -p "+ str(method)+" 10 >"+logfile
 
     if GEN_QSUB :
         cmd = QMasterV3D + arguments
@@ -136,7 +136,7 @@ def consensus(input_ano_path, output_eswc_path, method=1, GEN_QSUB = 0, qsub_scr
         cmd = V3D + arguments
         print cmd
         command = Command(cmd)
-        command.run(timeout=60*5)
+        command.run(timeout=60*10)
     return
 
 
@@ -232,20 +232,58 @@ def run_neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSU
     return
 
 
+def soma_sorting(goldstandard_swc, inputswc_path, outputswc_path, step_size =3 , logfile='./test.log', GEN_QSUB = 0, qsub_script_dir= "."):
+    arguments = " -x soma_sorting_swc  -f soma_sorting  -i " + goldstandard_swc + " " + inputswc_path + " -o " + outputswc_path +  " -p " + str(step_size) +" >"+logfile
 
-def read_median_swc_log(logfile):
+    if GEN_QSUB :
+        cmd = QMasterV3D + arguments
+        print cmd
+        script_fn = qsub_script_dir +'/'+str(random.randint(1000000,9999999))+'.qsub'
+        jobname = qsub_script_dir+inputswc_path.split('/')[-1]
+        gen_qsub_script(cmd, jobname, script_fn)
+    else:
+        cmd = V3D + arguments
+        #print cmd
+        command = Command(cmd)
+        command.run(timeout=60*5)
+    return
+
+# TODO:
+# def consensus_swc(input_ano_file, inputswc_path, outputswc_path, step_size =3 , logfile='./test.log', GEN_QSUB = 0, qsub_script_dir= "."):
+#     arguments = " -x soma_sorting_swc  -f soma_sorting  -i " + goldstandard_swc + " " + inputswc_path + " -o " + outputswc_path +  " -p " + str(step_size) +" >"+logfile
+#
+#     if GEN_QSUB :
+#         cmd = QMasterV3D + arguments
+#         print cmd
+#         script_fn = qsub_script_dir +'/'+str(random.randint(1000000,9999999))+'.qsub'
+#         jobname = qsub_script_dir+inputswc_path.split('/')[-1]
+#         gen_qsub_script(cmd, jobname, script_fn)
+#     else:
+#         cmd = V3D + arguments
+#         #print cmd
+#         command = Command(cmd)
+#         command.run(timeout=60*10)
+#     return
+
+def read_median_swc_log(ano_file, logfile):
     # read log file
     fh = open(logfile, 'r')
-
+    idx = -1
     for line in fh:
-        pass
-    last = line
+        if "Median swc is" in line:
+            idx=line.split(' ')[-1]
+            idx=idx[:-1]
 
-    #"" Median swc is""
-    idx=last.spit(' ')[-1]
-    if idx <0:
-        print "error"
-    return idx
+
+    f_ano = open(ano_file,'r')
+    i = 0
+    for line in f_ano:
+        if (str(i) == idx):
+            return line.split('SWCFILE=')[-1]
+        i = i+1
+
+
+    return -1
 
 
 

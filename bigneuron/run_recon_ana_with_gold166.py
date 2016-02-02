@@ -42,15 +42,11 @@ time_csv = data_DIR + "/auto_recons/running_time_merged.csv"
 neuron_distance_csv = data_DIR +'/neuron_distances_with_gold.csv'
 
 
-ND = 0
+ND = 1
 BD = 0
-COMPUTE = 0
-MEDIAN = 1
+COMPUTE = 1
+MEDIAN = 0
 ################################################################################
-
-
-
-
 
 
 if COMPUTE:
@@ -93,8 +89,6 @@ if COMPUTE:
         df_nd1 = df_nd[df_nd['neuron_distance'] != -1]  # empty node swc will have nd reported as "-1", remove those invalid recons
         df_nd2= df_nd1.dropna(axis=0)
         df_nd2.to_csv(neuron_distance_csv, index=False)
-
-
 
 
 

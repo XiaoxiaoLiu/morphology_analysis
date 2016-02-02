@@ -44,6 +44,11 @@ ano_dir = data_DIR +"/auto_recons/ano"
 
 anofiles = glob.glob(os.path.join(ano_dir, '*.ano'))
 for ano_file in anofiles:
-      bn.median_swc(ano_file, GEN_QSUB = 1, qsub_script_dir= data_DIR + "/median_qsub")
-      # ano_file.median.log
-exit()
+      logfile = ano_file+".median.log"
+      #if not os.path.exists(logfile):
+      #       bn.median_swc(ano_file, GEN_QSUB = 0, qsub_script_dir= data_DIR + "/median_qsub")
+      print logfile
+
+      swc_fn = bn.read_median_swc_log(ano_file, logfile)
+
+      print swc_fn
