@@ -39,6 +39,17 @@ class Command(object):
             thread.join()
         #print self.process.returncode
 
+def gen_txt_job_script(cmd, job_fn):
+    output_dir = os.path.dirname(job_fn)
+    if not os.path.exists(output_dir):
+        os.system("mkdir -p  " + output_dir)
+        print "create output dir: ", output_dir
+
+    FILE = open(job_fn, 'w')
+
+    FILE.write("%s\n" % cmd)
+
+    FILE.close()
 
 
 
@@ -232,38 +243,31 @@ def run_neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSU
     return
 
 
-def soma_sorting(goldstandard_swc, inputswc_path, outputswc_path, step_size =3 , logfile='./test.log', GEN_QSUB = 0, qsub_script_dir= "."):
+def soma_sorting(goldstandard_swc, inputswc_path, outputswc_path, step_size =3 , logfile='./test.log', GEN_QSUB = 0, qsub_script_dir= ".", id=None):
     arguments = " -x soma_sorting_swc  -f soma_sorting  -i " + goldstandard_swc + " " + inputswc_path + " -o " + outputswc_path +  " -p " + str(step_size) +" >"+logfile
 
-    if GEN_QSUB :
+    if GEN_QSUB  == 2 :
+        cmd = "./start_vaa3d.sh " + arguments
+        print cmd
+        job_fn = qsub_script_dir +'/'+str(id)+".txt"
+        gen_txt_job_script(cmd, job_fn)
+        return
+
+    if GEN_QSUB  == 1 :
         cmd = QMasterV3D + arguments
         print cmd
         script_fn = qsub_script_dir +'/'+str(random.randint(1000000,9999999))+'.qsub'
         jobname = qsub_script_dir+inputswc_path.split('/')[-1]
         gen_qsub_script(cmd, jobname, script_fn)
-    else:
+        return
+
+    if GEN_QSUB == 0:
         cmd = V3D + arguments
         #print cmd
         command = Command(cmd)
         command.run(timeout=60*5)
-    return
+        return
 
-# TODO:
-# def consensus_swc(input_ano_file, inputswc_path, outputswc_path, step_size =3 , logfile='./test.log', GEN_QSUB = 0, qsub_script_dir= "."):
-#     arguments = " -x soma_sorting_swc  -f soma_sorting  -i " + goldstandard_swc + " " + inputswc_path + " -o " + outputswc_path +  " -p " + str(step_size) +" >"+logfile
-#
-#     if GEN_QSUB :
-#         cmd = QMasterV3D + arguments
-#         print cmd
-#         script_fn = qsub_script_dir +'/'+str(random.randint(1000000,9999999))+'.qsub'
-#         jobname = qsub_script_dir+inputswc_path.split('/')[-1]
-#         gen_qsub_script(cmd, jobname, script_fn)
-#     else:
-#         cmd = V3D + arguments
-#         #print cmd
-#         command = Command(cmd)
-#         command.run(timeout=60*10)
-#     return
 
 def read_median_swc_log(ano_file, logfile):
     # read log file
