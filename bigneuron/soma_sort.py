@@ -18,7 +18,7 @@ import blast_neuron.blast_neuron_comp as bn
 
 data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/silver"
 
-output_dir = "/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all_somasorted"
+output_dir = "/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all_somasorted_mean_threshold"
 os.system("mkdir "+output_dir)
 
 neuron_distance_csv = "/data/mat/xiaoxiaol/data/big_neuron/silver/20160113_merged_gold_gt/neuron_distances_with_gold.csv"
@@ -28,10 +28,10 @@ neuron_distance_csv = "/data/mat/xiaoxiaol/data/big_neuron/silver/20160113_merge
 
 
 
-df_image_location =  pd.read_csv('/data/mat/xiaoxiaol/data/Hanchuan_curated/image_file_location_checkup.csv')
-keys = df_image_location['image_file_name']
-values = df_image_location['file_path']
-image_checkup = dict(zip(keys, values))
+# df_image_location =  pd.read_csv('/data/mat/xiaoxiaol/data/Hanchuan_curated/image_file_location_checkup.csv')
+# keys = df_image_location['image_file_name']
+# values = df_image_location['file_path']
+# image_checkup = dict(zip(keys, values))
 
 
 df_nd = pd.read_csv(neuron_distance_csv)
@@ -55,7 +55,8 @@ for im in images:
 
      #print df_image['swc_file']
      #sort by distance
-     df_image.sort_values(['neuron_distance'], ascending=[1], inplace=True)
+     #df_image.sort_values(['neuron_distance'], ascending=[1], inplace=True)
+     df_image=df_image.sort(['neuron_distance'])
      #print df_image['swc_file']
 
      tmp = df_image.iloc[0]['swc_file']
@@ -77,7 +78,7 @@ for im in images:
      gold_swc =  df_image.iloc[0]['gold_swc_file']
 
 
-     image_file =  image_checkup[im]
+     #image_file =  image_checkup[im]
      #print image_file
 
      output_swc = out_dir+'/00_'+gold_swc.split('/')[-1]
@@ -101,8 +102,11 @@ for im in images:
           if  (not os.path.exists(soma_sorted_swc) ) and  os.path.getsize(out_swc) < 1000000:
               bn.soma_sorting(gold_swc, inputswc_path = out_swc, outputswc_path = soma_sorted_swc, step_size = 3 )
           i=i+1
-     bn.genLinkerFile( out_dir+'/auto_recons', out_dir+"/auto_recons/"+im_id+'.ano')
-     bn.genLinkerFile( out_dir+'/processed', out_dir+"/processed/"+im_id+'.ano')
+     if  (not os.path.exists( out_dir+"/auto_recons/"+im_id+'.ano') ) :
+           bn.genLinkerFile( out_dir+'/auto_recons', out_dir+"/auto_recons/"+im_id+'.ano')
+
+     if  (not os.path.exists( out_dir+"/processed/"+im_id+'.ano') ) :
+          bn.genLinkerFile( out_dir+'/processed', out_dir+"/processed/"+im_id+'.ano')
 
      bn.consensus(input_ano_path= out_dir+"/processed/"+im_id+'.ano', output_eswc_path=out_dir+"/processed/consensus_p2.eswc", method=2, GEN_QSUB = 0, qsub_script_dir= ".")
 

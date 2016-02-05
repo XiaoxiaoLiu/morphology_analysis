@@ -330,6 +330,46 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
     return
 
 
+
+
+def collect_consensus_distance(input_distance_log_file_list, output_distance_csv,lookup_image_id_table_file):
+    df_input = pd.read_csv(input_distance_log_file_list)
+
+    df_lookup_table = pd.read_csv(lookup_image_id_table_file)
+
+    df_neuron_distance = pd.DataFrame(columns=('image_file_name','consensus_swc_file', 'gold_swc_file',
+                                               'weighted_neuron_distance_12','weighted_neuron_distance_21',
+                                               'weighted_neuron_distance_ave','neuron_distance_diff',
+                                               'neuron_distance_perc', 'max_distance'))
+    for i in range(df_input.image_file_name.size):
+            logfile_path =  df_input.iloc[i].weighted_distance_log_path
+
+            image_id = int(logfile_path.split("/")[-3])
+
+            if image_id > df_lookup_table.image_file_name.size:
+                  print "error in looking image ids"
+            image_file_name = df_lookup_table.image_file_name[image_id-1]
+
+
+            if path.isfile(logfile_path):
+                nd = bn.read_weighted_neuron_dist_log(logfile_path)
+                algorithm ='consensus'
+                #{'w_dis_12': wd12, 'w_dis_21': wd21, 'w_ave': w_ave, 'diff': diff, 'perc': perc, 'max_dist':max_dist}
+                df_neuron_distance.loc[i] = [image_file_name,nd['input_file1'], nd['input_file2'],
+                                             algorithm, nd['w_dis_12'],nd['w_dis_21'],nd['w_ave'],nd['diff'],
+                                             nd['perc'],nd['max_dist'] ]
+            else:
+                print "Warning: no neuron distance log output for "+image_file_name +" :output NAs."
+                df_neuron_distance.loc[i]= [image_file_name ,np.nan,np.nan, 'consensus', np.nan, np.nan, np.nan]
+
+
+    df_neuron_distance['neuron_difference'] = df_neuron_distance['neuron_distance_diff'] *df_neuron_distance['neuron_distance_perc']
+
+    df_neuron_distance.to_csv(output_distance_csv,index=False)
+    print "output:"+output_distance_csv
+    return
+
+
 def cal_neuron_dist(input_csv_file,output_csv,overwrite_existing = 1,GEN_QSUB = 0 ):
 
     df_input = pd.read_csv(input_csv_file)

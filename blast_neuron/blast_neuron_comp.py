@@ -137,18 +137,27 @@ def consensus(input_ano_path, output_eswc_path, method=2, GEN_QSUB = 0, qsub_scr
 
     arguments = " -x consensus_swc -f consensus_swc -i " + input_ano_path + " -o " + output_eswc_path + " -p "+ str(method)+" 10 >"+logfile
 
-    if GEN_QSUB :
+
+    if GEN_QSUB  == 2 :
+        cmd = "./start_vaa3d.sh " + arguments
+        print cmd
+        job_fn = qsub_script_dir +'/'+str(id)+".txt"
+        gen_txt_job_script(cmd, job_fn)
+        return
+
+    if GEN_QSUB == 1  :
         cmd = QMasterV3D + arguments
         #print cmd
         script_fn = qsub_script_dir +'/'+input_ano_path.split('/')[-1]+'.qsub'
         jobname = qsub_script_dir+input_ano_path.split('/')[-1]
         gen_qsub_script(cmd, jobname, script_fn)
-    else:
+        return
+    if GEN_QSUB == 0:
         cmd = V3D + arguments
         print cmd
         command = Command(cmd)
         command.run(timeout=60*10)
-    return
+        return
 
 
 def median_swc(input_ano_path, GEN_QSUB = 0, qsub_script_dir= "."):
@@ -291,7 +300,7 @@ def read_median_swc_log(ano_file, logfile):
 
 
 
-def read_neuron_dist_log(logfile):
+def read_neuron_dist_log_deprecated(logfile):
     # read log file
     f = open(logfile, 'r')
     line = f.readline()
@@ -300,6 +309,75 @@ def read_neuron_dist_log(logfile):
     diff = float(line.split()[3])  #differen-structure-average
     perc = float(line.split()[4])  #percent of different-structure
     return {'ave': ave, 'diff': diff, 'perc': perc}
+
+
+def read_neuron_dist_log(logfile):
+# input1 = consensus_p2.eswc
+# intput2 = ../00_sorted_Series021.v3dpbd_stamp_2015_06_15_17_52.swc
+# entire-structure-average (from neuron 1 to 2) = 100.717
+# entire-structure-average (from neuron 2 to 1) = 2.15856
+# average of bi-directional entire-structure-averages = 51.4376
+# differen-structure-average = 56.6913
+# percent of different-structure = 0.617058
+
+
+    # read log file
+    f = open(logfile, 'r')
+
+    line = f.readline().strip()
+    input_file1 = line.split('=')[-1]
+
+    line = f.readline().strip()
+    input_file2 = line.split('=')[-1]
+
+    line = f.readline()
+    d_12 = float(line.split(' ')[-1])
+    line = f.readline()
+    d_21 = float(line.split(' ')[-1])
+    line = f.readline()
+    ave = float(line.split(' ')[-1])  # entire-structure-average
+    line = f.readline()
+    diff = float(line.split(' ')[-1])  #differen-structure-average
+    line = f.readline()
+    perc = float(line.split(' ')[-1])  #percent of different-structure
+    return {'input_file1':input_file1, 'input_file2':input_file2,'dist_12':d_12,'dist_21':d_21, 'ave': ave, 'diff': diff, 'perc': perc}
+
+
+def read_weighted_neuron_dist_log(logfile):
+# input1 = consensus_p2.eswc
+# intput2 = ../00_sorted_Series021.v3dpbd_stamp_2015_06_15_17_52.swc
+# weighted entire-structure-average (from neuron 1 to 2) = 94.1764
+# weighted entire-structure-average (from neuron 2 to 1) = 2.08338
+# weighted average of bi-directional entire-structure-averages = 48.1299
+# weighted differen-structure-average = 55.12
+# percent of different-structure = 0.617058
+# maximum distance = 13.6464
+
+
+    # read log file
+    f = open(logfile, 'r')
+
+    line = f.readline().strip()
+    input_file1 = line.split('=')[-1]
+
+    line = f.readline().strip()
+    input_file2 = line.split('=')[-1]
+
+    line = f.readline()
+    wd12 = float(line.split(' ')[-1])
+    line = f.readline()
+    wd21 = float(line.split(' ')[-1])
+    line = f.readline()
+    w_ave = float(line.split(' ')[-1])
+    line = f.readline()
+    diff = float(line.split(' ')[-1])
+    line = f.readline()
+    perc = float(line.split(' ')[-1])
+    line = f.readline()
+    max_dist = float(line.split(' ')[-1])
+    return {'input_file1':input_file1, 'input_file2':input_file2,'w_dis_12': wd12, 'w_dis_21': wd21, 'w_ave': w_ave, 'diff': diff, 'perc': perc, 'max_dist':max_dist}
+
+
 
 def neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log'):
     #Distance between neuron 1 /home/xiaoxiaol/work/data/test_frog2-2.swc and neuron 2 /home/xiaoxiaol/work/data/test_frog2-2.swc is:
