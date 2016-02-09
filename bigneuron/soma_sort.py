@@ -109,7 +109,8 @@ for im in images:
           bn.genLinkerFile( out_dir+'/processed', out_dir+"/processed/"+im_id+'.ano')
 
      bn.consensus(input_ano_path= out_dir+"/processed/"+im_id+'.ano', output_eswc_path=out_dir+"/processed/consensus_p2.eswc", method=2, GEN_QSUB = 0, qsub_script_dir= ".")
-
+     bn.neuron_dist(out_dir+"/processed/consensus_p2.eswc", gold_swc,out_dir+"/processed/consensus_p2.eswc.dist.log")
+     bn.neuron_weighted_dist(out_dir+"/processed/consensus_p2.eswc", gold_swc,out_dir+"/processed/consensus_p2.eswc.weighted.dist.log")
 
 #df_feature_79.to_csv(data_DIR+"/gold_trainning_subset/neuron_distances.csv")
 #print df_feature_79.algorithm

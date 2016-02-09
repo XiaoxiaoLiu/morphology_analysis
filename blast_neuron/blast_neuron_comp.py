@@ -389,11 +389,20 @@ def neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log'):
     # file1 file2   8.20009e-07  0 0
 
     cmd = V3D + " -x neuron_distance -f neuron_distance -i " + inputswc_path1 + " " + inputswc_path2 + " -o " + logfile
-    os.system(cmd)
-    print cmd
+    command = Command(cmd)
+    command.run(timeout=60*5)
 
-    dist = read_neuron_dist_log(logfile)
-    return dist
+    return
+
+
+
+def neuron_weighted_dist(inputeswc_path1, inputswc_path2, logfile='./test.log'):
+
+    cmd = V3D + " -x neuron_weighted_distance -f neuron_weighted_distance -i " + inputeswc_path1 + " " + inputswc_path2 + " -o " + logfile
+    command = Command(cmd)
+    command.run(timeout=60*5)
+    return
+
 
 
 
