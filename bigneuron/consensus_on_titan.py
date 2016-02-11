@@ -35,7 +35,7 @@ def gen_txt_job_script(cmd, job_fn):
     FILE.close()
 
 
-data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/gold_163_all_soma_sort"
+data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/gold_163_all_soma_sort_s1"
 output_dir = data_DIR
 
 
@@ -76,7 +76,7 @@ for im in images:
 
 
 
-     #line1 = "./start_vaa3d.sh -x linker_file_generator -f linker -i "+ out_dir+'/processed -o '+ linker_fn +' -p 1 '
+     line1 = "./start_vaa3d.sh -x linker_file_generator -f linker -i "+ out_dir+'/processed -o '+ linker_fn +' -p 1 '
 
      logfile = output_eswc_path+".log"
      line2 = "./start_vaa3d.sh -x consensus_swc -f consensus_swc -i " + linker_fn + " -o " + output_eswc_path + " -p 2  10 > "+logfile
@@ -90,7 +90,7 @@ for im in images:
 
      job_fn = './txt_jobs/'+str(count)+'.txt'
      FILE = open(job_fn, 'w')
-     #FILE.write("%s;" % line1)
+     FILE.write("%s;" % line1)
      FILE.write("%s;" % line2)
      FILE.write("%s;" % line3)
      FILE.write("%s\n" % line4)
@@ -99,3 +99,4 @@ for im in images:
      count = count +1
 
 
+os.system('tar -zcvf ./txt_jobs.tar.gz ./txt_jobs/')

@@ -16,46 +16,90 @@ import  bigneuron.recon_prescreening as rp
 import  bigneuron.plot_distances as plt_dist
 import pandas as pd
 import numpy as np
-
-#
-# data_DIR ="/data/mat/xiaoxiaol/data/big_neuron/silver/20160113_merged_gold_gt"
-# original_dir = data_DIR +"/auto_recons"
-# lookup_image_id_table_file = data_DIR +"/../image_name_lookup_table.csv"
-# time_csv = data_DIR + "/auto_recons/running_time_merged.csv"
-# neuron_distance_csv = data_DIR +'/neuron_distances_with_gold.csv'
+import glob
 
 
+data_DIR ="/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all_soma_sort_s1_0210"
 
-# compare valid consensus results with each individual algorithms
+lookup_image_id_table_file = data_DIR +"/../image_name_lookup_table.csv"
 
-# input_log_path_csv=
-# output_csv= data_DIR + "consensus.dist.csv"
-# lookuptable=
-# collect_consensus_distance(input_log_path_csv,output_csv, lookuptable )
+neuron_distance_csv = data_DIR +'/../20160113_merged_gold_gt/neuron_distances_with_gold.csv'
 
 
 
+#compare valid consensus results with each individual algorithms
+input_log_path_csv=data_DIR + "/consensus_weighted_dist_log.csv"
+output_csv= data_DIR + "/consensus_weighted_dist.csv"
+
+
+# read all weighted_neuron_distance logs for consensus results
+rp.collect_consensus_distance(input_log_path_csv,output_csv, lookup_image_id_table_file)
 
 
 #read nd distance csv
+df_nd = pd.read_csv(neuron_distance_csv)
+before = df_nd.shape[0]
+df_nd = df_nd[df_nd['neuron_distance'] != 0]  # neuron distance bug, one node swc will have nd=0
+after = df_nd.shape[0]
+if after < before:
+    print "warning: removing 0 nd entries:", after-before
+
+df_nd_g=df_nd.groupby('image_file_name')
 
 
-# merge by image file name
-#
-#
-#
-# # plot
-# # ## sort by sample size
-# df_nd = pd.read_csv(neuron_distance_csv)
-# algorithms = np.unique(df_nd.algorithm)
-#
-# dfg = df_nd.groupby('algorithm')
-# sample_size_per_algorithm = np.zeros(algorithms.size)
-# for i in range( algorithms.size):
-#     sample_size_per_algorithm[i] = (dfg.get_group(algorithms[i]).shape[0])
-#
-# order = sample_size_per_algorithm.argsort()
-# algorithms_ordered = algorithms[order[::-1]]
-#
-#
-# plt_dist.plot_similarities(neuron_distance_csv, data_DIR,algorithms_ordered,metric='neuron_distance',CASE_BY_CASE_PLOT = 0,value_label='Similarity (0~1) based on Average Neuron Distance (D1)')
+# not all images have generated consensus results
+df_consensus_wd= pd.read_csv(output_csv)
+images_have_consensus_results = np.unique(df_consensus_wd['image_file_name'])
+print len(images_have_consensus_results)," images that have consensus results"
+
+#print out images that do not have consensus results
+topdirs = glob.glob(os.path.join(data_DIR, '*'))
+    # print topdirs
+print "the following images have no consensus results:"
+for subdir in topdirs:
+        #print subdir
+        if os.path.isdir(subdir) and  ( not os.path.exists(subdir+"/processed/consensus_p2.eswc")):
+            print subdir
+
+exit()
+
+
+# compose a spreadsheet for comparison
+df_merge = pd.DataFrame(columns=['image_file_name', 'algorithm', 'weighted_ave_neuron_distance'])
+i=0
+for image in images_have_consensus_results:
+     #print image
+     df_nd_image = df_nd_g.get_group(image)
+     num_rows = df_nd_image.shape[0]
+     #print num_rows
+     for j in range(num_rows):
+         df_merge.loc[i] = [image, df_nd_image.iloc[j]['algorithm'], df_nd_image.iloc[j]['neuron_distance'] ]
+         i= i+1
+     df_con_matching = df_consensus_wd[df_consensus_wd['image_file_name']==image]
+     consensus_wd_t = df_con_matching.iloc[0]['weighted_neuron_distance_ave']
+     #print consensus_wd_t
+     df_merge.loc[i] = [image,'consensus',consensus_wd_t]
+     i= i+1
+
+
+
+df_merge.to_csv(data_DIR+'/consensus_compare_wnd.csv', index=False)
+
+# plot
+# ## sort by sample size
+
+algorithms = np.unique(df_merge.algorithm)
+
+dfg = df_merge.groupby('algorithm')
+sample_size_per_algorithm = np.zeros(algorithms.size)
+for i in range( algorithms.size):
+    sample_size_per_algorithm[i] = (dfg.get_group(algorithms[i]).shape[0])
+
+order = sample_size_per_algorithm.argsort()
+algorithms_ordered = algorithms[order[::-1]]
+
+
+plt_dist.plot_compare_consensus_distance(data_DIR+'/consensus_compare_wnd.csv', data_DIR,algorithms_ordered,metric='weighted_ave_neuron_distance',CASE_BY_CASE_PLOT = 0,
+#                                         value_label='Consensus Weighted Average Neuron Distance')
+#plt_dist.plot_similarities(data_DIR+'/consensus_compare_wnd.csv', data_DIR,algorithms_ordered,metric='weighted_ave_neuron_distance',CASE_BY_CASE_PLOT = 0,
+                                        value_label='Similarities on  Weighted Average Neuron Distance')

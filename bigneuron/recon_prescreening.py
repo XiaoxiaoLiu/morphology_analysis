@@ -338,10 +338,11 @@ def collect_consensus_distance(input_distance_log_file_list, output_distance_csv
     df_lookup_table = pd.read_csv(lookup_image_id_table_file)
 
     df_neuron_distance = pd.DataFrame(columns=('image_file_name','consensus_swc_file', 'gold_swc_file',
+                                               'algorithm',
                                                'weighted_neuron_distance_12','weighted_neuron_distance_21',
                                                'weighted_neuron_distance_ave','neuron_distance_diff',
                                                'neuron_distance_perc', 'max_distance'))
-    for i in range(df_input.image_file_name.size):
+    for i in range(df_input.weighted_distance_log_path.size):
             logfile_path =  df_input.iloc[i].weighted_distance_log_path
 
             image_id = int(logfile_path.split("/")[-3])
@@ -353,6 +354,7 @@ def collect_consensus_distance(input_distance_log_file_list, output_distance_csv
 
             if path.isfile(logfile_path):
                 nd = bn.read_weighted_neuron_dist_log(logfile_path)
+
                 algorithm ='consensus'
                 #{'w_dis_12': wd12, 'w_dis_21': wd21, 'w_ave': w_ave, 'diff': diff, 'perc': perc, 'max_dist':max_dist}
                 df_neuron_distance.loc[i] = [image_file_name,nd['input_file1'], nd['input_file2'],

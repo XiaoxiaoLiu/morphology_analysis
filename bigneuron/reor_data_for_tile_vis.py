@@ -18,7 +18,7 @@ import blast_neuron.blast_neuron_comp as bn
 
 data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/silver"
 
-output_dir = "/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all"
+output_dir = "/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all_soma_sort_0209"
 os.system("mkdir "+output_dir)
 
 neuron_distance_csv = "/data/mat/xiaoxiaol/data/big_neuron/silver/20160113_merged_gold_gt/neuron_distances_with_gold.csv"
@@ -27,8 +27,9 @@ neuron_distance_csv = "/data/mat/xiaoxiaol/data/big_neuron/silver/20160113_merge
 
 
 
+#df_image_location =  pd.read_csv('/data/mat/xiaoxiaol/data/Hanchuan_curated/image_file_location_checkup.csv')
+df_image_location =  pd.read_csv('/home/xiaoxiaol/work/data/Hanchuan_curated/image_file_location_checkup.csv')
 
-df_image_location =  pd.read_csv('/data/mat/xiaoxiaol/data/Hanchuan_curated/image_file_location_checkup.csv')
 keys = df_image_location['image_file_name']
 values = df_image_location['file_path']
 image_checkup = dict(zip(keys, values))
@@ -55,7 +56,7 @@ for im in images:
 
      #print df_image['swc_file']
      #sort by distance
-     df_image.sort_values(['neuron_distance'], ascending=[1], inplace=True)
+     #df_image.sort_values(['neuron_distance'], ascending=[1], inplace=True)
      #print df_image['swc_file']
 
      tmp = df_image.iloc[0]['swc_file']
@@ -69,8 +70,8 @@ for im in images:
 
 
      out_dir = output_dir  + '/' + im_id.split('.')[0]
-     if  not os.path.exists(out_dir):
-        os.mkdir(out_dir)
+     #if  not os.path.exists(out_dir):
+     #   os.mkdir(out_dir)
 
      gold_swc =  df_image.iloc[0]['gold_swc_file']
 
@@ -79,11 +80,12 @@ for im in images:
      #print image_file
 
      output_swc = out_dir+'/00_'+gold_swc.split('/')[-1]
-     os.system("cp "+gold_swc + " "+ output_swc)
+     #os.system("cp "+gold_swc + " "+ output_swc)
 
      output_image = out_dir +'/'+im
      #copy image
-     #os.system("cp "+image_file + " "+ output_image)
+     os.system("ln -s  "+image_file + " "+ output_image)
+     os.system("ln -s  "+out_dir+"/processed/consensus_p2.eswc  "+out_dir+"/consensus_p2.eswc")
 
      i=1
      for swc_file in df_image['swc_file']:
@@ -91,9 +93,9 @@ for im in images:
           if i < 10:
                 string = '0'+str(i)
           out_swc = out_dir +'/' + string +'_'+ swc_file.split('/')[-1]
-          os.system("cp "+ swc_file + " "+ out_swc)
+          #os.system("cp "+ swc_file + " "+ out_swc)
           i=i+1
-     bn.genLinkerFile( out_dir, out_dir+"/"+im_id+'.ano')
+     #bn.genLinkerFile( out_dir, out_dir+"/"+im_id+'.ano')
 
 
 #df_feature_79.to_csv(data_DIR+"/gold_trainning_subset/neuron_distances.csv")
