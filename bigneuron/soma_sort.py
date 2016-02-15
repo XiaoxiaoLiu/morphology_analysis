@@ -83,35 +83,36 @@ for im in images:
 
      output_swc = out_dir+'/00_'+gold_swc.split('/')[-1]
 
-     os.system("cp "+gold_swc + " "+ output_swc)
+     #os.system("cp "+gold_swc + " "+ output_swc)
 
      output_image = out_dir +'/'+im
      #copy image
      #os.system("cp "+image_file + " "+ output_image)
-     os.system("ln -s  "+image_file + " "+ output_image)
+     #os.system("ln -s  "+image_file + " "+ output_image)
 
      i=1
-     os.system('mkdir '+ out_dir+'/auto_recons')
-     os.system('mkdir '+ out_dir+'/processed')
+     #os.system('mkdir '+ out_dir+'/auto_recons')
+     #os.system('mkdir '+ out_dir+'/processed')
      for swc_file in df_image['swc_file']:
           string=str(i)
           if i < 10:
                 string = '0'+str(i)
           out_swc = out_dir +'/auto_recons/' + string +'_'+ swc_file.split('/')[-1]
-          os.system("cp "+ swc_file + " "+ out_swc)
+          #os.system("cp "+ swc_file + " "+ out_swc)
           soma_sorted_swc = out_dir +'/processed/'+ string +'_'+ swc_file.split('/')[-1]
           # if  (not os.path.exists(soma_sorted_swc) ) and  os.path.getsize(out_swc) < 1000000:
           #     bn.soma_sorting(gold_swc, inputswc_path = out_swc, outputswc_path = soma_sorted_swc, step_size = 1,GEN_QSUB = 1, qsub_script_dir= ".")
           i=i+1
-     if  (not os.path.exists( out_dir+"/auto_recons/"+im_id+'.ano') ) :
-           bn.genLinkerFile( out_dir+'/auto_recons', out_dir+"/auto_recons/"+im_id+'.ano')
+     #bn.genLinkerFile( out_dir+'/auto_recons', out_dir+"/auto_recons/"+im_id+'.ano')
+     #bn.genLinkerFile( out_dir+'/processed', out_dir+"/processed/"+im_id+'.ano')
 
-     if  (not os.path.exists( out_dir+"/processed/"+im_id+'.ano') ) :
-          bn.genLinkerFile( out_dir+'/processed', out_dir+"/processed/"+im_id+'.ano')
+     #bn.consensus(input_ano_path= out_dir+"/processed/"+im_id+'.ano', output_eswc_path=out_dir+"/consensus_p2_large_nodes.eswc", method=2, GEN_QSUB = 1, qsub_script_dir= ".")
 
-     bn.consensus(input_ano_path= out_dir+"/processed/"+im_id+'.ano', output_eswc_path=out_dir+"/consensus_p2.eswc", method=2, GEN_QSUB = 0, qsub_script_dir= ".")
-     bn.neuron_dist(out_dir+"/processed/consensus_p2.eswc", gold_swc,out_dir+"/processed/consensus_p2.eswc.dist.log")
-     bn.neuron_weighted_dist(out_dir+"/processed/consensus_p2.eswc", gold_swc,out_dir+"/processed/consensus_p2.eswc.weighted.dist.log",GEN_QSUB =0, qsub_script_dir= ".")
+     bn.dark_pruning(out_dir+"/consensus_p2_large_nodes.eswc", output_image, out_dir+"/consensus_p2_dark_pruned.eswc", 40, GEN_QSUB = 0, qsub_script_dir= ".")
+     bn.neuron_weighted_dist(out_dir+"/consensus_p2_dark_pruned.eswc", gold_swc,out_dir+"/processed/consensus_p2_dark_pruned.eswc.weighted.dist.log")
+     #bn.neuron_dist(out_dir+"/processed/consensus_p2.eswc", gold_swc,out_dir+"/processed/consensus_p2.eswc.dist.log")
+     #bn.neuron_weighted_dist(out_dir+"/consensus_p2.eswc", gold_swc, out_dir+"/processed/consensus_p2.eswc.weighted.dist.log")
+     #bn.neuron_weighted_dist(out_dir+"/consensus_p2_mean_thre.eswc", gold_swc,out_dir+"/processed/consensus_p2_mean_thre.eswc.weighted.dist.log")
 
 #df_feature_79.to_csv(data_DIR+"/gold_trainning_subset/neuron_distances.csv")
 #print df_feature_79.algorithm

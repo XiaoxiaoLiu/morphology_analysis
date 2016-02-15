@@ -128,6 +128,40 @@ def sort_swc(inputswc_path, outputswc_path, GEN_QSUB = 0, qsub_script_dir= "."):
 
     return
 
+
+def dark_pruning(input_eswc_path, input_image, output_eswc_path, visible_thre=40, GEN_QSUB = 0, qsub_script_dir= "."):
+    output_dir = os.path.dirname(output_eswc_path)
+    logfile = output_eswc_path+'.log'
+    if not os.path.exists(output_dir):
+        os.system("mkdir -p  " + output_dir)
+        print "create output dir: ", output_dir
+
+    arguments = " -x consensus_swc -f dark_pruning  -i " + input_eswc_path + " "+ input_image + " -o " + output_eswc_path + " -p "+ str(visible_thre)+"  >"+logfile
+
+
+    if GEN_QSUB  == 2 :
+        cmd = "./start_vaa3d.sh " + arguments
+        print cmd
+        job_fn = qsub_script_dir +'/'+str(id)+".txt"
+        gen_txt_job_script(cmd, job_fn)
+        return
+
+    if GEN_QSUB == 1  :
+        cmd = QMasterV3D + arguments
+        #print cmd
+        script_fn = qsub_script_dir +'/'+input_eswc_path.split('/')[-1]+'.qsub'
+        jobname = qsub_script_dir+input_eswc_path.split('/')[-1]
+        gen_qsub_script(cmd, jobname, script_fn)
+        return
+    if GEN_QSUB == 0:
+        cmd = V3D + arguments
+        print cmd
+        command = Command(cmd)
+        command.run(timeout=60*10)
+        return
+
+
+
 def consensus(input_ano_path, output_eswc_path, method=2, GEN_QSUB = 0, qsub_script_dir= "."):
     output_dir = os.path.dirname(output_eswc_path)
     logfile = output_eswc_path+'.log'
@@ -379,7 +413,7 @@ def read_weighted_neuron_dist_log(logfile):
 
 
 
-def neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log'):
+def neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSUB = 0, qsub_script_dir='.'):
     #Distance between neuron 1 /home/xiaoxiaol/work/data/test_frog2-2.swc and neuron 2 /home/xiaoxiaol/work/data/test_frog2-2.swc is:
     #entire-structure-average = 8.20009e-07
     #differen-structure-average = 0
@@ -388,20 +422,46 @@ def neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log'):
     # log file format
     # file1 file2   8.20009e-07  0 0
 
-    cmd = V3D + " -x neuron_distance -f neuron_distance -i " + inputswc_path1 + " " + inputswc_path2 + " -o " + logfile
-    command = Command(cmd)
-    command.run(timeout=60*5)
+    arguments = V3D + " -x neuron_distance -f neuron_distance -i " + inputswc_path1 + " " + inputswc_path2 + " -o " + logfile
+
+    if GEN_QSUB  == 1 :
+        cmd = QMasterV3D + arguments
+        print cmd
+        script_fn = qsub_script_dir +'/'+str(random.randint(1000000,9999999))+'.qsub'
+        jobname = qsub_script_dir+inputswc_path.split('/')[-1]
+        gen_qsub_script(cmd, jobname, script_fn)
+        return
+
+    if GEN_QSUB == 0:
+        cmd = V3D + arguments
+        #print cmd
+        command = Command(cmd)
+        command.run(timeout=60*5)
+        return
+
 
     return
 
 
+def neuron_weighted_dist(inputeswc_path1, inputswc_path2, logfile='./test.log', GEN_QSUB = 0, qsub_script_dir='.'):
 
-def neuron_weighted_dist(inputeswc_path1, inputswc_path2, logfile='./test.log'):
+    arguments = " -x neuron_weighted_distance -f neuron_weighted_distance -i " + inputeswc_path1 + " " + inputswc_path2 + " -o " + logfile
 
-    cmd = V3D + " -x neuron_weighted_distance -f neuron_weighted_distance -i " + inputeswc_path1 + " " + inputswc_path2 + " -o " + logfile
-    command = Command(cmd)
-    command.run(timeout=60*5)
-    return
+    if GEN_QSUB  == 1 :
+        cmd = QMasterV3D + arguments
+        print cmd
+        script_fn = qsub_script_dir +'/'+str(random.randint(1000000,9999999))+'.qsub'
+        jobname = qsub_script_dir+inputswc_path.split('/')[-1]
+        gen_qsub_script(cmd, jobname, script_fn)
+        return
+
+    if GEN_QSUB == 0:
+        cmd = V3D + arguments
+        print cmd
+        command = Command(cmd)
+        command.run(timeout=60*5)
+        return
+
 
 
 

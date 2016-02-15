@@ -333,7 +333,7 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
 
 
 def collect_consensus_distance(input_distance_log_file_list, output_distance_csv,lookup_image_id_table_file):
-    df_input = pd.read_csv(input_distance_log_file_list)
+    df_input = pd.read_csv(input_distance_log_file_list, header=None) # txt file contains the list of log files
 
     df_lookup_table = pd.read_csv(lookup_image_id_table_file)
 
@@ -342,8 +342,8 @@ def collect_consensus_distance(input_distance_log_file_list, output_distance_csv
                                                'weighted_neuron_distance_12','weighted_neuron_distance_21',
                                                'weighted_neuron_distance_ave','neuron_distance_diff',
                                                'neuron_distance_perc', 'max_distance'))
-    for i in range(df_input.weighted_distance_log_path.size):
-            logfile_path =  df_input.iloc[i].weighted_distance_log_path
+    for i in range(df_input.size):
+            logfile_path =  df_input.iloc[i][0]
 
             image_id = int(logfile_path.split("/")[-3])
 

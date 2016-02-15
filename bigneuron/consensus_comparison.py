@@ -19,7 +19,7 @@ import numpy as np
 import glob
 
 
-data_DIR ="/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all_soma_sort_s1_0210"
+data_DIR ="/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_soma_sort_0210"
 
 lookup_image_id_table_file = data_DIR +"/../image_name_lookup_table.csv"
 
@@ -28,12 +28,16 @@ neuron_distance_csv = data_DIR +'/../20160113_merged_gold_gt/neuron_distances_wi
 
 
 #compare valid consensus results with each individual algorithms
-input_log_path_csv=data_DIR + "/consensus_weighted_dist_log.csv"
-output_csv= data_DIR + "/consensus_weighted_dist.csv"
+
+
+log_file_list= data_DIR + "/consensus_weighted_dist_log_list.txt"
+os.system('ls '+data_DIR+'/*/processed/consensus_p2.eswc.weighted.dist.log>'+log_file_list)
+
 
 
 # read all weighted_neuron_distance logs for consensus results
-rp.collect_consensus_distance(input_log_path_csv,output_csv, lookup_image_id_table_file)
+output_csv =data_DIR + "/consensus_weighted_dist.csv"
+rp.collect_consensus_distance(log_file_list, output_csv, lookup_image_id_table_file)
 
 
 #read nd distance csv
@@ -58,10 +62,10 @@ topdirs = glob.glob(os.path.join(data_DIR, '*'))
 print "the following images have no consensus results:"
 for subdir in topdirs:
         #print subdir
-        if os.path.isdir(subdir) and  ( not os.path.exists(subdir+"/processed/consensus_p2.eswc")):
+        if os.path.isdir(subdir) and  ( not os.path.exists(subdir+"/consensus_p2.eswc")):
             print subdir
 
-exit()
+
 
 
 # compose a spreadsheet for comparison
@@ -100,6 +104,6 @@ algorithms_ordered = algorithms[order[::-1]]
 
 
 plt_dist.plot_compare_consensus_distance(data_DIR+'/consensus_compare_wnd.csv', data_DIR,algorithms_ordered,metric='weighted_ave_neuron_distance',CASE_BY_CASE_PLOT = 0,
-#                                         value_label='Consensus Weighted Average Neuron Distance')
-#plt_dist.plot_similarities(data_DIR+'/consensus_compare_wnd.csv', data_DIR,algorithms_ordered,metric='weighted_ave_neuron_distance',CASE_BY_CASE_PLOT = 0,
+                                         value_label='Consensus Weighted Average Neuron Distance')
+plt_dist.plot_similarities(data_DIR+'/consensus_compare_wnd.csv', data_DIR,algorithms_ordered,metric='weighted_ave_neuron_distance',CASE_BY_CASE_PLOT = 0,
                                         value_label='Similarities on  Weighted Average Neuron Distance')
