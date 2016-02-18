@@ -1,3 +1,4 @@
+__author__ = 'xiaoxiaol'
 import pandas as pd
 import os
 import sys
@@ -99,20 +100,12 @@ for im in images:
                 string = '0'+str(i)
           out_swc = out_dir +'/auto_recons/' + string +'_'+ swc_file.split('/')[-1]
           #os.system("cp "+ swc_file + " "+ out_swc)
-          soma_sorted_swc = out_dir +'/processed/'+ string +'_'+ swc_file.split('/')[-1]
-          #if  (not os.path.exists( soma_sorted_swc+'.dist.log') ) and  os.path.getsize(out_swc) < 3*1024*1024:
-           #    bn.soma_sorting(gold_swc, inputswc_path = out_swc, outputswc_path = soma_sorted_swc, step_size = 1,GEN_QSUB = 1, qsub_script_dir= ".")
-           #     bn.neuron_dist(soma_sorted_swc, gold_swc,logfile= soma_sorted_swc+'.dist.log',GEN_QSUB=0,qsub_script_dir='.')
+          #if  (not os.path.exists( out_swc+'.dist.log') ) :
+          bn.neuron_dist(out_swc, gold_swc,logfile= out_swc+'.dist.log',GEN_QSUB=1,qsub_script_dir='./qsubs/')
           i=i+1
      #bn.genLinkerFile( out_dir+'/auto_recons', out_dir+"/auto_recons/"+im_id+'.ano')
      #bn.genLinkerFile( out_dir+'/processed', out_dir+"/processed/"+im_id+'.ano')
 
-     consensus_swc_file = out_dir+"/consensus_p2_large_nodes.eswc"
-     #if (not os.path.exists(consensus_swc_file) and os.path.getsize(output_image)< 1*1024*1024*1024):
-     if (1):
-           #bn.consensus(input_ano_path= out_dir+"/processed/"+im_id+'.ano', output_eswc_path=consensus_swc_file, method=2, GEN_QSUB = 0, qsub_script_dir= ".")
-           bn.dark_pruning(consensus_swc_file, output_image, out_dir+"/consensus_p2_dark_pruned_2.eswc", 40, GEN_QSUB = 0, qsub_script_dir= ".")
-           bn.neuron_weighted_dist(out_dir+"/consensus_p2_dark_pruned_2.eswc", gold_swc,out_dir+"/processed/consensus_p2_dark_pruned_2.eswc.weighted.dist.log")
 
 
 

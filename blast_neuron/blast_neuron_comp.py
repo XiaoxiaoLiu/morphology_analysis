@@ -73,7 +73,8 @@ def gen_qsub_script(cmd, job_name, script_fn):
 # #
 # #
 # export DISPLAY=:13918
-# Xvfb :13918 -auth /dev/null &
+# Xvfb :13918 -auth /dev/null &pwd
+
 # export LD_LIBRARY_PATH=/data/mat/xiaoxiaol/work/bin/bin_vaa3d_for_clusters
 # /data/mat/xiaoxiaol/work/bin/bin_vaa3d_for_clusters/vaa3d -x neuron_distance -f neuron_distance -i /data/mat/xiaoxiaol/data/gold166/gold166_results_combined/sorted/checked6_human_culturedcell_Cambridge_in_vitro_confocal_GFP/Series009/Series009.v3dpbd_x216_y266_z36_app2.swc  /data/mat/xiaoxiaol/data/gold166/gold166_results_combined/sorted/checked6_human_culturedcell_Cambridge_in_vitro_confocal_GFP/Series009/Series009.v3dpbd_x216_y266_z36_app2.swc -o /data/mat/xiaoxiaol/work/testqmaster.log
 # kill %1
@@ -83,7 +84,7 @@ def gen_qsub_script(cmd, job_name, script_fn):
         print "create output dir: ", output_dir
 
     FILE = open(script_fn, 'w')
-    FILE.write("#PBS -q mindscope\n")
+    FILE.write("#PBS -q dque\n")
     FILE.write("#PBS -l vmem=16g\n")
     FILE.write("#PBS -l walltime=00:30:00\n")
     FILE.write("#PBS -l ncpus=1\n")
@@ -422,13 +423,13 @@ def neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSUB = 
     # log file format
     # file1 file2   8.20009e-07  0 0
 
-    arguments = V3D + " -x neuron_distance -f neuron_distance -i " + inputswc_path1 + " " + inputswc_path2 + " -o " + logfile
+    arguments = " -x neuron_distance -f neuron_distance -i " + inputswc_path1 + " " + inputswc_path2 + " -o " + logfile
 
     if GEN_QSUB  == 1 :
         cmd = QMasterV3D + arguments
         print cmd
         script_fn = qsub_script_dir +'/'+str(random.randint(1000000,9999999))+'.qsub'
-        jobname = qsub_script_dir+inputswc_path.split('/')[-1]
+        jobname = qsub_script_dir+inputswc_path1.split('/')[-1]
         gen_qsub_script(cmd, jobname, script_fn)
         return
 
