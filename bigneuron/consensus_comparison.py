@@ -30,7 +30,7 @@ log_file_list= data_DIR + "/consensus_weighted_dist_log_list.txt"
 os.system('ls '+data_DIR+'/*/processed/consensus_p2_dark_pruned_2.eswc.weighted.dist.log >'+log_file_list)
 # read all weighted_neuron_distance logs for consensus results
 output_csv = data_DIR + "/consensus_weighted_dist.csv"
-rp.collect_consensus_distance(log_file_list, output_csv, lookup_image_id_table_file)
+#rp.collect_consensus_distance(log_file_list, output_csv, lookup_image_id_table_file)
 
 
 
@@ -38,13 +38,14 @@ rp.collect_consensus_distance(log_file_list, output_csv, lookup_image_id_table_f
 log_file_list= data_DIR + "/soma_sorted_dist_log_list.txt"
 os.system('ls '+data_DIR+'/*/auto_recons/*.swc.dist.log >'+log_file_list)
 neuron_distance_csv = data_DIR + "/soma_sorted_neuron_dist.csv"
-rp.collect_neuron_distance(log_file_list, neuron_distance_csv, lookup_image_id_table_file)
+#rp.collect_neuron_distance(log_file_list, neuron_distance_csv, lookup_image_id_table_file)
 
 
 #read nd distance csv
 df_nd = pd.read_csv(neuron_distance_csv)
 before = df_nd.shape[0]
 df_nd = df_nd[df_nd['neuron_distance_12'] != 0]  # neuron distance bug, one node swc will have nd=0
+df_nd = df_nd[df_nd['neuron_distance_12'] != -1]  # neuron distance bug, one node swc will have nd=0
 after = df_nd.shape[0]
 if after < before:
     print "\n\nwarning: removing 0 nd entries:", after-before
@@ -55,6 +56,7 @@ df_nd_g = df_nd.groupby('image_file_name')
 # not all images have generated consensus results
 df_consensus_wd = pd.read_csv(output_csv)
 images_have_consensus_results = np.unique(df_consensus_wd['image_file_name'])
+images = np.unique(df_nd['image_file_name'])
 print len(images_have_consensus_results)," images that have consensus results"
 
 #print out images that do not have consensus results
@@ -70,7 +72,7 @@ for subdir in topdirs:
 # compose a spreadsheet for comparison
 df_merge = pd.DataFrame(columns=['image_file_name', 'algorithm', 'weighted_ave_neuron_distance'])
 i=0
-for image in images_have_consensus_results:
+for image in images:#images_have_consensus_results:
      #print image
      df_nd_image = df_nd_g.get_group(image)
      num_rows = df_nd_image.shape[0]
@@ -80,11 +82,12 @@ for image in images_have_consensus_results:
          # df_merge.loc[i] = [image, df_nd_image.iloc[j]['algorithm'], df_nd_image.iloc[j]['neuron_distance'] ]
          i= i+1
      df_con_matching = df_consensus_wd[df_consensus_wd['image_file_name']==image]
-     #consensus_wd_t = df_con_matching.iloc[0]['weighted_neuron_distance_ave']
-     consensus_wd_t = df_con_matching.iloc[0]['weighted_neuron_distance_12']
-     #print consensus_wd_t
-     df_merge.loc[i] = [image,'consensus',consensus_wd_t]
-     i= i+1
+     if df_con_matching.shape[0] >0 :
+	     #consensus_wd_t = df_con_matching.iloc[0]['weighted_neuron_distance_ave']
+	     consensus_wd_t = df_con_matching.iloc[0]['weighted_neuron_distance_12']
+	     #print consensus_wd_t
+	     df_merge.loc[i] = [image,'consensus',consensus_wd_t]
+	     i= i+1
 
 
 
@@ -93,8 +96,8 @@ df_merge.to_csv(merged_csv, index=False)
 
 # plot
 # ## sort by sample size
-algorithms = np.unique(df_merge.algorithm)
 
+algorithms = np.unique(df_nd.algorithm)
 dfg = df_merge.groupby('algorithm')
 sample_size_per_algorithm = np.zeros(algorithms.size)
 for i in range( algorithms.size):
@@ -102,6 +105,7 @@ for i in range( algorithms.size):
 
 order = sample_size_per_algorithm.argsort()
 algorithms_ordered = algorithms[order[::-1]]
+algorithms_ordered= np.append('consensus',algorithms_ordered)
 
 
 
