@@ -40,6 +40,55 @@ df_algorithms = pd.read_csv(LOOKUP_TABLE_FILE)
 all_algorithms = pd.unique(df_algorithms.algorithm)
 
 
+def calculate_average(df_in, hasConsensus=True):
+    #df_in is the output csv from median_swc plugin
+    #it contains unique pair-wise distances
+    #consensus is usually the last input the median_swc() inputs, so it won't show up in the "swc_file_name1" column
+    #output the average distances array
+
+    #remove invalid results
+    df_in = df_in[df_in[' average_distance'] >0]
+
+
+
+    df_out = pd.DataFrame(columns = ['swc_file_name','average_distance','average_structure_difference','average_max_distance'])
+    dfg1 = df_in.groupby('swc_file_name1')
+    dfg2 = df_in.groupby('swc_file_name2')
+
+    swc_names = pd.unique(df_in['swc_file_name1'])
+    swc_names_2 = pd.unique(df_in['swc_file_name2'])
+    consensus_file_name = df_in['swc_file_name2'].tail(1).values[0]
+    print consensus_file_name
+
+
+    row = 0
+    for swc_name in swc_names:
+        a = dfg1.get_group(swc_name)
+        a = a[a['swc_file_name2']!=consensus_file_name]
+
+        b = pd.DataFrame(columns = ['swc_file_name1','swc_file_name2',' average_distance','structure_difference','max_distance']) #empty
+        if swc_name in swc_names_2:
+            b = dfg2.get_group(swc_name)
+
+
+        num_of_swcs = len(a) +len(b)
+        df_out.loc[row,'swc_file_name']= swc_name
+        df_out.loc[row,'average_distance'] = (a[' average_distance'].sum() + b[' average_distance'].sum())/ num_of_swcs
+        df_out.loc[row,'average_structure_difference'] = a['structure_difference'].sum() + b['structure_difference'].sum()/num_of_swcs
+        df_out.loc[row,'average_max_distance'] = a['max_distance'].sum() + b['max_distance'].sum()/num_of_swcs
+        row = row +1
+
+
+    df_out.loc[row,'swc_file_name']= consensus_file_name
+    consensus_group = dfg2.get_group(consensus_file_name)
+    df_out.loc[row,'average_distance'] = consensus_group[' average_distance'].sum() / (num_of_swcs+1)
+    df_out.loc[row,'average_structure_difference'] = consensus_group['structure_difference'].sum() / (num_of_swcs+1)
+    df_out.loc[row,'average_max_distance'] = consensus_group['max_distance'].sum() / (num_of_swcs+1)
+
+    return df_out
+
+
+
 
 COLLECT=1
 if COLLECT:
@@ -61,10 +110,11 @@ if COLLECT:
         csv_file = data_DIR + '/'+image_id+'_median_distances.csv'
         if os.path.exists(csv_file):
            df_f = pd.read_csv(csv_file)
+           df_ff = calculate_average_all_pair_distance(df_f, hasConsensus = True)
 
            for i in range(df_f.shape[0]):
                 if type(df_f.iloc[i].swc_file_name ) == str:
-                    alg = rp.matchFileToAlgorithmName((df_f.iloc[i].swc_file_name).split('/')[-1])
+                    alg = rp.matchFileToAlgorithmName((df_ff.iloc[i].swc_file_name).split('/')[-1])
                 else:
                     print "nan input swc_file_name"
                     print df_f.iloc[i].swc_file_name
@@ -73,10 +123,10 @@ if COLLECT:
                 if df_a.shape[0] >0:
                   id = df_a.index[0]
 
-                  df_image_filled_template.loc[id,'swc_file_name'] =df_f.iloc[i]['swc_file_name']
-                  df_image_filled_template.loc[id,'total_average_distance'] =df_f.iloc[i]['total_average_distance']
-                  df_image_filled_template.loc[id,'total_structure_difference'] = df_f.iloc[i]['total_structure_difference']
-                  df_image_filled_template.loc[id,'total_max_distance'] = df_f.iloc[i]['total_max_distance']
+                  df_image_filled_template.loc[id,'swc_file_name'] =df_ff.iloc[i]['swc_file_name']
+                  df_image_filled_template.loc[id,'average_distance'] =df_ff.iloc[i]['average_distance']
+                  df_image_filled_template.loc[id,'average_structure_difference'] = df_ff.iloc[i]['average_structure_difference']
+                  df_image_filled_template.loc[id,'average_max_distance'] = df_ff.iloc[i]['average_max_distance']
                 else:
                     print alg
                     print "no match!"
