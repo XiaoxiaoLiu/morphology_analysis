@@ -20,7 +20,7 @@ import os
 import blast_neuron.blast_neuron_comp as bn
 
 
-data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/gold_163_all_soma_sort"
+data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/gold_163_all_soma_sort_s1"
 output_dir = data_DIR
 
 
@@ -38,7 +38,7 @@ for im in images:
 
      df_image = dfg.get_group(im)
 
-     df_image.sort_values(['neuron_distance'], ascending=[1], inplace=True)
+     df_image=df_image.sort(['neuron_distance'])
 
 
      tmp = df_image.iloc[0]['swc_file']
@@ -64,7 +64,8 @@ for im in images:
 
           soma_sorted_swc = out_dir +'/processed/'+ string +'_'+ swc_file.split('/')[-1]
 
-          bn.soma_sorting(output_gold_swc, inputswc_path = out_swc, outputswc_path = soma_sorted_swc, step_size = 3 ,
-                               logfile=out_swc+'.log', GEN_QSUB = 2, qsub_script_dir= "./txt_jobs", id= count)
+          bn.soma_sorting(output_gold_swc, inputswc_path = out_swc, outputswc_path = soma_sorted_swc, step_size = 1 ,
+                               logfile=soma_sorted_swc+'.log', GEN_QSUB = 2, qsub_script_dir= "./txt_jobs", id= count)
+
           i=i+1
           count= count+1

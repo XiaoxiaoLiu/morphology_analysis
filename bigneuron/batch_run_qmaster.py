@@ -11,7 +11,7 @@ for file_qsub in f:
         if c == 500:
              print j
              print "sleep for half and hour"
-             time.sleep(60*30)
+             time.sleep(60*15)
              c=0
         #print "qsub "+file_qsub
         os.system("qsub "+file_qsub)

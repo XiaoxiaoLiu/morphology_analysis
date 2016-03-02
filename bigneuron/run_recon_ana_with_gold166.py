@@ -87,7 +87,14 @@ if COMPUTE:
         ## post processing remove invalid
         df_nd = pd.read_csv(neuron_distance_csv)
         df_nd1 = df_nd[df_nd['neuron_distance'] != -1]  # empty node swc will have nd reported as "-1", remove those invalid recons
-        df_nd2= df_nd1.dropna(axis=0)
+
+        before = df_nd1.shape[0]
+        df_nd1 = df_nd1[df_nd1['neuron_distance'] != 0]  # neuron distance bug, one node swc will have nd=0
+        after = df_nd1.shape[0]
+        if after < before:
+            print "warning: removing 0 nd entries:", after-before
+
+        df_nd2 = df_nd1.dropna(axis=0)
         df_nd2.to_csv(neuron_distance_csv, index=False)
 
 

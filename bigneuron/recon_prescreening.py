@@ -28,15 +28,31 @@ LOOKUP_TABLE_FILE = "/data/mat/xiaoxiaol/data/big_neuron/silver/ported_neuron_tr
 
 
 
+def map_better_algorithm_name(alg,algorithm_plugin_match_csv=LOOKUP_TABLE_FILE):
 
-def  matchFileToAlgorithmName(file_name,LOOKUP_TABLE_FILE):
+    df_check_table = pd.read_csv(algorithm_plugin_match_csv)
+    keys = df_check_table['algorithm']
+    values = df_check_table['better_algorithm_name']
+    algorithm_name_mapping = dict(zip(keys, values))
+    return algorithm_name_mapping[alg]
+
+
+def  matchFileToAlgorithmName(file_name,lookup_table_file=LOOKUP_TABLE_FILE):
+     if file_name.find("consensus") >-1:
+         return 'consensus'
+
      if file_name.find("v3dpbd") >-1:
              tmp = file_name.split('v3dpbd_')[-1]
      else:
              tmp = file_name.split('v3draw_')[-1]
      al_string = tmp.split('.swc')[0]
 
-     df_lookup = pd.read_csv(LOOKUP_TABLE_FILE)
+
+     if al_string.startswith('anisodiff.raw_'):
+         al_string = al_string.split('anisodiff.raw_')[-1]
+
+
+     df_lookup = pd.read_csv(lookup_table_file)
      keys = df_lookup['swc_file_label']
      values = df_lookup['algorithm']
      name_mapping = dict(zip(keys, values))
@@ -330,7 +346,143 @@ def cal_blastneuron_distance(results_feature_csv,gold_feature_csv, merged_csv, o
     return
 
 
+def collect_neuron_distance(input_distance_log_file_list, output_distance_csv,lookup_image_id_table_file):
+    df_input = pd.read_csv(input_distance_log_file_list, header=None) # txt file contains the list of log files
+
+    df_lookup_table = pd.read_csv(lookup_image_id_table_file)
+
+    df_neuron_distance = pd.DataFrame(columns=('image_file_name','swc_file', 'gold_swc_file',
+                                               'algorithm',
+                                               'neuron_distance_12','neuron_distance_21',
+                                               'neuron_distance_ave','neuron_distance_diff',
+                                               'neuron_distance_perc'))
+    for i in range(df_input.size):
+            logfile_path =  df_input.iloc[i][0]
+
+            image_id = int(logfile_path.split("/")[-3])
+
+            if image_id > df_lookup_table.image_file_name.size:
+                  print "error in looking image ids"
+            image_file_name = df_lookup_table.image_file_name[image_id-1]
+
+
+            if path.isfile(logfile_path):
+                nd = bn.read_neuron_dist_log(logfile_path)
+
+                algorithm = matchFileToAlgorithmName( logfile_path.split('/')[-1])
+
+                ##return {'input_file1':input_file1, 'input_file2':input_file2,'dist_12':d_12,'dist_21':d_21, 'ave': ave, 'diff': diff, 'perc': perc}
+                df_neuron_distance.loc[i] = [image_file_name,nd['input_file1'], nd['input_file2'],
+                                             algorithm, nd['dist_12'],nd['dist_21'],nd['ave'],nd['diff'],
+                                             nd['perc'] ]
+            else:
+                print "Warning: no neuron distance log output for "+image_file_name +" :output NAs."
+                df_neuron_distance.loc[i]= [image_file_name ,np.nan,np.nan, np.nan, np.nan,np.nan,np.nan, np.nan, np.nan]
+
+
+    df_neuron_distance['neuron_difference'] = df_neuron_distance['neuron_distance_diff'] *df_neuron_distance['neuron_distance_perc']
+
+    df_neuron_distance.to_csv(output_distance_csv,index=False)
+    print "output:"+output_distance_csv
+    return
+
+
+
+def collect_consensus_distance(input_distance_log_file_list, output_distance_csv,lookup_image_id_table_file):
+    df_input = pd.read_csv(input_distance_log_file_list, header=None) # txt file contains the list of log files
+
+    df_lookup_table = pd.read_csv(lookup_image_id_table_file)
+
+    df_neuron_distance = pd.DataFrame(columns=('image_file_name','consensus_swc_file', 'gold_swc_file',
+                                               'algorithm',
+                                               'weighted_neuron_distance_12','weighted_neuron_distance_21',
+                                               'weighted_neuron_distance_ave','neuron_distance_diff',
+                                               'neuron_distance_perc', 'max_distance'))
+    for i in range(df_input.size):
+            logfile_path =  df_input.iloc[i][0]
+
+            image_id = int(logfile_path.split("/")[-3])
+
+            if image_id > df_lookup_table.image_file_name.size:
+                  print "error in looking image ids"
+            image_file_name = df_lookup_table.image_file_name[image_id-1]
+
+
+            if path.isfile(logfile_path):
+                nd = bn.read_weighted_neuron_dist_log(logfile_path)
+
+                algorithm ='consensus'
+                #{'w_dis_12': wd12, 'w_dis_21': wd21, 'w_ave': w_ave, 'diff': diff, 'perc': perc, 'max_dist':max_dist}
+                df_neuron_distance.loc[i] = [image_file_name,nd['input_file1'], nd['input_file2'],
+                                             algorithm, nd['w_dis_12'],nd['w_dis_21'],nd['w_ave'],nd['diff'],
+                                             nd['perc'],nd['max_dist'] ]
+            else:
+                print "Warning: no neuron distance log output for "+image_file_name +" :output NAs."
+                df_neuron_distance.loc[i]= [image_file_name ,np.nan,np.nan, 'consensus', np.nan, np.nan, np.nan]
+
+
+    df_neuron_distance['neuron_difference'] = df_neuron_distance['neuron_distance_diff'] *df_neuron_distance['neuron_distance_perc']
+
+    df_neuron_distance.to_csv(output_distance_csv,index=False)
+    print "output:"+output_distance_csv
+    return
+
+
+
 def cal_neuron_dist(input_csv_file,output_csv,overwrite_existing = 1,GEN_QSUB = 0 ):
+
+    df_input = pd.read_csv(input_csv_file)
+    df_already_have = pd.DataFrame(columns = df_input.columns)
+
+    # if (not overwrite_existing):
+    #     if os.path.isfile(old_output_csv):
+    #         # only run new data
+    #         df_old = pd.read_csv(old_output_csv)
+    #         df_already_have = pd.merge(df_input, df_old, on='swc_file')
+    #         print "there are already "+ str(df_already_have['swc_file'].size) +"  swcs calculated"
+
+    output_dir = os.path.dirname(output_csv)
+    print " Calculate neuron distances:"
+    for i in range(df_input.image_file_name.size):
+             print "swc file :" + str(i)
+             swc_f = df_input.iloc[i].swc_file
+             log_file = df_input.iloc[i].swc_file + ".r.log"
+             #if not swc_f in list(df_already_have['swc_file'])
+             if overwrite_existing   or   not os.path.isfile(log_file) :
+                   bn.run_neuron_dist(swc_f, df_input.iloc[i].gold_swc_file,log_file, GEN_QSUB, output_dir+"/nd")
+
+    #collect results from log files
+    df_neuron_distance = pd.DataFrame(columns=('image_file_name','swc_file', 'gold_swc_file',
+                                               'algorithm',
+                                               'neuron_distance_12','neuron_distance_21',
+                                               'neuron_distance_ave','neuron_distance_diff',
+                                               'neuron_distance_perc'))
+
+
+    for i in range(df_input.image_file_name.size):
+            tmp = df_input.iloc[i].swc_file
+            logfile = tmp + ".r.log"
+            if path.isfile(logfile):
+                nd = bn.read_neuron_dist_log(logfile)
+                df_neuron_distance.loc[i] = [df_input.iloc[i].image_file_name,df_input.iloc[i].swc_file, df_input.iloc[i].gold_swc_file, df_input.iloc[i].algorithm, nd['dist_12'],nd['dist_21'],nd['ave'],nd['diff'],
+                                             nd['perc']]
+            else:
+                print "Warning: no neuron distance log output for "+tmp +" :output NAs."
+                df_neuron_distance.loc[i]= [df_input.iloc[i].image_file_name,df_input.iloc[i].swc_file, df_input.iloc[i].gold_swc_file, df_input.iloc[i].algorithm, np.nan, np.nan, np.nan, np.nan, np.nan]
+
+
+    df_neuron_distance['neuron_difference'] = df_neuron_distance['neuron_distance_diff'] *df_neuron_distance['neuron_distance_perc']
+
+    df_neuron_distance.to_csv(output_csv,index=False)
+    print "output:"+output_csv
+    return
+
+
+
+
+
+
+def cal_neuron_dist_deprecated(input_csv_file,output_csv,overwrite_existing = 1,GEN_QSUB = 0 ):
 
     df_input = pd.read_csv(input_csv_file)
     df_already_have = pd.DataFrame(columns = df_input.columns)
