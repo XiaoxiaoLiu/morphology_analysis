@@ -1,10 +1,3 @@
-__author__ = 'xiaoxiaol'
-__author__ = 'xiaoxiaol'
-__author__ = 'xiaoxiaol'
-__author__ = 'xiaoxiaoliu'
-
-
-
 import pandas as pd
 import os
 import sys
@@ -16,6 +9,8 @@ else:
     WORK_PATH = "/Users/xiaoxiaoliu/work"
 
 
+p =  WORK_PATH + '/src/morphology_analysis'
+sys.path.append(p)
 import pandas as pd
 import numpy as np
 import os
@@ -36,21 +31,21 @@ def gen_txt_job_script(cmd, job_fn):
     FILE.close()
 
 
-# data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/reconstructions_for_img_nopreproprcessing"
-# output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/consensus_0301"
-#
-# fn_list = '~/work/data/jen1_image_file_name_list.csv'
-# image_DIR="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/img_nopreproprcessing"
+data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/reconstructions_for_img_nopreproprcessing"
+output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/consensus_0301"
+
+fn_list = '~/work/data/jen1_image_file_name_list.csv'
+image_DIR="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/img_nopreproprcessing"
 
 
 
 
 
-data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set2_accepted_single/reconstructions_for_img_anisosmooth"
-output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set2_accepted_single/consensus_0301_anisosmooth"
+#data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set2_accepted_single/reconstructions_for_img_anisosmooth"
+#output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set2_accepted_single/consensus_0301_anisosmooth"
 
-fn_list = '~/work/data/jen2_image_file_name_list.csv'
-image_DIR="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set2_accepted_single/img_nopreproprcessing"
+#fn_list = '~/work/data/jen2_image_file_name_list.csv'
+#image_DIR="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set2_accepted_single/img_nopreproprcessing"
 
 
 
