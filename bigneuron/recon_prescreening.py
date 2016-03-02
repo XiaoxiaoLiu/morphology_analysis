@@ -28,13 +28,29 @@ LOOKUP_TABLE_FILE = "/data/mat/xiaoxiaol/data/big_neuron/silver/ported_neuron_tr
 
 
 
+def map_better_algorithm_name(alg,algorithm_plugin_match_csv=LOOKUP_TABLE_FILE):
+
+    df_check_table = pd.read_csv(algorithm_plugin_match_csv)
+    keys = df_check_table['algorithm']
+    values = df_check_table['better_algorithm_name']
+    algorithm_name_mapping = dict(zip(keys, values))
+    return algorithm_name_mapping[alg]
+
 
 def  matchFileToAlgorithmName(file_name,lookup_table_file=LOOKUP_TABLE_FILE):
+     if file_name.find("consensus") >-1:
+         return 'consensus'
+
      if file_name.find("v3dpbd") >-1:
              tmp = file_name.split('v3dpbd_')[-1]
      else:
              tmp = file_name.split('v3draw_')[-1]
      al_string = tmp.split('.swc')[0]
+
+
+     if al_string.startswith('anisodiff.raw_'):
+         al_string = al_string.split('anisodiff.raw_')[-1]
+
 
      df_lookup = pd.read_csv(lookup_table_file)
      keys = df_lookup['swc_file_label']

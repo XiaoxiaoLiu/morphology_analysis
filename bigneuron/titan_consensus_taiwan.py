@@ -35,14 +35,16 @@ def gen_txt_job_script(cmd, job_fn):
     FILE.close()
 
 
-data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/reconstructions_for_img_nopreproprcessing"
-output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/consensus_0225"
+data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/reconstructions_for_img_anisosmooth"
+output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/consensus_0225_anisosmooth"
+#data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/reconstructions_for_img_nopreproprcessing"
+#output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/consensus_0225"
+#fn_list = '~/work/data/image_file_name_list.csv'
+#image_DIR="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/img_nopreproprcessing"
 
-image_DIR="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/img_nopreproprcessing"
 
+fn_list = '~/work/data/taiwan_image_file_name_list.csv'
 
-
-fn_list = '~/work/data/image_file_name_list.csv'
 df_nd = pd.read_csv(fn_list)
 images = np.unique(df_nd['image_file_name'])
 
@@ -54,10 +56,12 @@ os.system('mkdir ./txt_jobs')
 count = 0
 
 for im in images:
-     im_id = im.split('.')[0]  # 2.v3dpbd
+
 
      out_dir = output_dir
-     input_dir ="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/reconstructions_for_img_nopreproprcessing/"+im
+     input_dir =data_DIR+'/'+im
+
+     im_id = im.split('.')[0] # just the id to avoid long names
 
      output_eswc_path = out_dir+'/'+im_id+'_consensus.eswc'
      logfile = output_eswc_path+".log"

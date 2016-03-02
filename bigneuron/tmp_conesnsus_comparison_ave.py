@@ -67,7 +67,7 @@ for subdir in topdirs:
 # compose a spreadsheet for comparison
 df_merge = pd.DataFrame(columns=['image_file_name', 'algorithm', 'weighted_ave_neuron_distance'])
 i=0
-for image in images_have_consensus_results:
+for image in all_images:#images_have_consensus_results:
      #print image
      df_nd_image = df_nd_g.get_group(image)
 
@@ -89,7 +89,7 @@ df_merge.to_csv(merged_csv, index=False)
 
 # plot
 # ## sort by sample size
-algorithms = np.unique(df_merge.algorithm)
+algorithms = np.unique(df_nd.algorithm)
 
 dfg = df_merge.groupby('algorithm')
 sample_size_per_algorithm = np.zeros(algorithms.size)
@@ -98,6 +98,7 @@ for i in range( algorithms.size):
 
 order = sample_size_per_algorithm.argsort()
 algorithms_ordered = algorithms[order[::-1]]
+algorithms_ordered= np.append('consensus',algorithms_ordered)
 
 
 
