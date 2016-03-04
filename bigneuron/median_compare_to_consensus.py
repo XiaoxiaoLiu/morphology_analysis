@@ -1,5 +1,3 @@
-__author__ = 'xiaoxiaol'
-__author__ = 'xiaoxiaol'
 import sys
 import os
 import platform
@@ -21,10 +19,11 @@ import numpy as np
 
 
 
-data_DIR="/home/xiaoxiaol/work/data/taiwan/consensus_0225"
+data_DIR="/home/xiaoxiaol/work/data/taiwan"
+subfolder="consensus_0225"
 
 #taiwan dataset
-#00001 ~16266
+#00001 ~16226
 
 imageIDs=[]
 for n in range(1,16227):
@@ -55,7 +54,8 @@ def calculate_average_all_pair_distance(df_in, hasConsensus=True):
     swc_names = pd.unique(df_in['swc_file_name1'])
     swc_names_2 = pd.unique(df_in['swc_file_name2'])
     consensus_file_name = df_in['swc_file_name2'].tail(1).values[0]
-    print consensus_file_name
+    if 'consensus' not in consensus_file_name:
+        print  "missing consensus"
 
 
     row = 0
@@ -87,10 +87,13 @@ def calculate_average_all_pair_distance(df_in, hasConsensus=True):
 
 
 
-COLLECT=1
+
+
+
+COLLECT=0
 if COLLECT:
 
-    df_all = pd.DataFrame(columns=['image_id', 'algorithm','swc_file_name','total_average_distance','total_structure_difference','total_max_distance'])
+    df_all = pd.DataFrame(columns=['image_id', 'algorithm','swc_file_name','average_distance','average_structure_difference','average_max_distance'])
 
     for image_id in imageIDs:
 
@@ -98,45 +101,48 @@ if COLLECT:
         df_image_filled_template['algorithm'] = all_algorithms
         df_image_filled_template['image_id'] = image_id
 
-        df_image_filled_template['swc_file_name'] = np.nan
-        df_image_filled_template['average_distance'] = np.nan
-        df_image_filled_template['average_structure_difference'] = np.nan
-        df_image_filled_template['average_max_distance'] = np.nan
+        #df_image_filled_template['swc_file_name'] = np.nan
+        #df_image_filled_template['average_distance'] = np.nan
+        #df_image_filled_template['average_structure_difference'] = np.nan
+        #df_image_filled_template['average_max_distance'] = np.nan
 
 
-        csv_file = data_DIR + '/consensus_results/'+image_id+'_median_distances.csv'
+        csv_file = data_DIR + '/'+subfolder+'/'+image_id+'_median_distances.csv'
         if os.path.exists(csv_file):
            df_f = pd.read_csv(csv_file)
+           if df_f.empty:
+               continue
            df_ff = calculate_average_all_pair_distance(df_f, hasConsensus = True)
 
-           for i in range(df_f.shape[0]):
-                if type(df_f.iloc[i].swc_file_name ) == str:
+           for i in range(df_ff.shape[0]):
+                if type(df_ff.iloc[i].swc_file_name ) == str:
                     alg = rp.matchFileToAlgorithmName((df_ff.iloc[i].swc_file_name).split('/')[-1])
                 else:
                     print "nan input swc_file_name"
-                    print df_f.iloc[i].swc_file_name
+                    print df_ff.iloc[i].swc_file_name
                     continue
                 df_a=df_image_filled_template[df_image_filled_template.algorithm == alg]
                 if df_a.shape[0] >0:
                   id = df_a.index[0]
 
-                  df_image_filled_template.loc[id,'swc_file_name'] =df_ff.iloc[i]['swc_file_name']
-                  df_image_filled_template.loc[id,'average_distance'] =df_ff.iloc[i]['average_distance']
-                  df_image_filled_template.loc[id,'average_structure_difference'] = df_ff.iloc[i]['average_structure_difference']
-                  df_image_filled_template.loc[id,'average_max_distance'] = df_ff.iloc[i]['average_max_distance']
+                  df_image_filled_template.iloc[id]['swc_file_name'] =df_ff.iloc[i]['swc_file_name']
+                  df_image_filled_template.iloc[id]['average_distance'] =df_ff.iloc[i]['average_distance']
+                  df_image_filled_template.iloc[id]['average_structure_difference'] = df_ff.iloc[i]['average_structure_difference']
+                  df_image_filled_template.iloc[id]['average_max_distance'] = df_ff.iloc[i]['average_max_distance']
                 else:
                     print alg
                     print "no match!"
-                    print df_f.iloc[i].swc_file_name
+                    print df_ff.iloc[i].swc_file_name
 
 
         df_all = df_all.append(df_image_filled_template,ignore_index=True)
 
-    df_all.to_csv(data_DIR+'/consensus_0225_all_median_distances.csv', index=False)
+    df_all.to_csv(data_DIR+'/'+subfolder+'_all_median_distances.csv', index=False)
 
-PLOT=1
+PLOT = 0
+metric = 'average_distance'
 if PLOT:
-    df_all = pd.read_csv(data_DIR+'/consensus_0225_all_median_distances.csv')
+    df_all = pd.read_csv(data_DIR+'/'+subfolder+'_all_median_distances.csv')
     plt.figure()
     sb.set_context("talk", font_scale=0.7)
 
@@ -147,8 +153,7 @@ if PLOT:
     jj = 0
     for alg in all_algorithms:
         df_a = dfg.get_group(alg)
-        df_a = df_a[df_a['total_average_distance']>=0]
-        print df_a.shape
+        df_a = df_a[df_a[metric]>=0]
         sample_size_per_algorithm[jj] = df_a.shape[0]
         jj = jj+1
 
@@ -157,7 +162,7 @@ if PLOT:
     sample_size_per_algorithm =sample_size_per_algorithm[order[::-1]]
 
 
-    a = sb.barplot(y='algorithm', x='total_average_distance', data=df_all, order = algorithms_ordered)
+    a = sb.barplot(y='algorithm', x=metric, data=df_all, order = algorithms_ordered)
     #a = sb.tsplot(data=df_all, time='image_id', value='total_average_distance')
 
 
@@ -165,7 +170,73 @@ if PLOT:
     a.set_yticklabels(['%s ($n$=%d )'%(algorithm_names[i], sample_size_per_algorithm[i]) for i in range(algorithms_ordered.size) ])
 
     plt.subplots_adjust(left=0.4, bottom=0.1, top=0.9)
-    plt.savefig(data_DIR + '/compare_distance_plot.png', format='png')
+    plt.savefig(data_DIR + '/'+subfolder+'compare_distance_plot.png', format='png')
     plt.show()
     plt.close()
+
+
+
+PLOT = 1
+metric = 'average_distance'
+if PLOT:
+    df_all = pd.read_csv(data_DIR+'/'+subfolder+'_all_median_distances.csv')
+    print df_all.shape
+    dfg = df_all.groupby('image_id')
+    df_median_and_consensus = pd.DataFrame(columns=['image_id', 'algorithm','swc_file_name','average_distance','average_structure_difference','average_max_distance'])
+    imageIDs = pd.unique(df_all['image_id'])
+    count = 0
+    for image_id in imageIDs[0:100]:
+        print "image_id: "+ str( image_id)
+
+        df_image = dfg.get_group(image_id)
+        #drop nans
+        df_image.dropna(axis=0, how="any", inplace =True)
+        if len(df_image) <1:
+            continue
+
+        i = 0
+        for fn in df_image['swc_file_name']:
+
+            if 'consensus' in fn:
+                break
+            i= i+1
+        if i>= len(df_image):
+            continue
+        df_median_and_consensus.loc[count] =[image_id, 'consensus',df_image.iloc[i]['swc_file_name'],df_image.iloc[i]['average_distance'],
+                                             df_image.iloc[i]['average_structure_difference'],df_image.iloc[i]['average_max_distance']]
+        count = count +1
+
+
+        df_image.drop(df_image.index[[i]], axis=0, inplace =True)
+
+        df_image.sort(columns=['average_distance', 'average_structure_difference','average_max_distance'])
+        df_median_and_consensus.loc[count] =[image_id, 'median',df_image.iloc[0]['swc_file_name'],df_image.iloc[0]['average_distance'],
+                                             df_image.iloc[0]['average_structure_difference'],df_image.iloc[0]['average_max_distance']]
+
+        count = count +1
+
+
+
+    df_median_and_consensus.to_csv('test.csv')
+
+
+
+    plt.figure()
+    sb.set_context("talk", font_scale=0.7)
+
+    dfg = df_median_and_consensus.groupby('algorithm')
+    df_consensus = dfg.get_group('consensus')
+    df_median = dfg.get_group('median')
+    #a = sb.tsplot(data=df_median_and_consensus, condition = 'algorithm',time='image_id', value='average_distance')
+
+    plt.plot(df_consensus['image_id'],df_consensus['average_distance'],'r')
+    plt.plot(df_median['image_id'],df_median['average_distance'],'g')
+
+
+    #plt.subplots_adjust(left=0.4, bottom=0.1, top=0.9)
+   # plt.savefig(data_DIR + '/'+subfolder+'compare_median_with_consensus_average_distance_plot.png', format='png')
+    plt.show()
+    plt.close()
+
+
 
