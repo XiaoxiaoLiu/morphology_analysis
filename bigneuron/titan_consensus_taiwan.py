@@ -15,6 +15,8 @@ else:
     WORK_PATH = "/Users/xiaoxiaoliu/work"
 
 
+p =  WORK_PATH + '/src/morphology_analysis'
+sys.path.append(p)
 import pandas as pd
 import numpy as np
 import os
@@ -36,11 +38,11 @@ def gen_txt_job_script(cmd, job_fn):
 
 
 data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/reconstructions_for_img_anisosmooth"
-output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/consensus_0225_anisosmooth"
+output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/consensus_0306_anisosmooth"
 #data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/reconstructions_for_img_nopreproprcessing"
-#output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/consensus_0225"
+#output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/consensus_0306"
 #fn_list = '~/work/data/image_file_name_list.csv'
-#image_DIR="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/img_nopreproprcessing"
+image_DIR="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/img_nopreproprcessing"
 
 
 fn_list = '~/work/data/taiwan_image_file_name_list.csv'
@@ -65,14 +67,21 @@ for im in images:
 
      output_eswc_path = out_dir+'/'+im_id+'_consensus.eswc'
      logfile = output_eswc_path+".log"
-     line1 = "./start_vaa3d.sh -x consensus_swc -f consensus_swc -i " +  input_dir +"/*.swc   -o " + output_eswc_path + " -p 3  10 > "+logfile
+     line1 = "./start_vaa3d.sh -x consensus_swc -f consensus_swc -i " +  input_dir +"/*.swc   -o " + output_eswc_path + " -p 2 10 > "+logfile
 
-     line2 = "./start_vaa3d.sh -x consensus_swc -f median_swc -i "+ input_dir +"/*.swc  "+ output_eswc_path +" -o "+  out_dir+"/"+im_id+"_median_distances.csv"
+     #image_file = image_DIR+ '/'+ im[:-7]+'/'+im
+     image_file = image_DIR+'/'+im+'/'+im
+     output_eswc_path2 =  out_dir+'/'+im_id+'_consensus_pruned.eswc'
+     logfile2 = output_eswc_path2+".log"
+     line2 = "./start_vaa3d.sh -x consensus_swc -f dark_pruning -i " + output_eswc_path + " "+ image_file + " -o " + output_eswc_path2 + " -p  40 > "+logfile2
+
+     line3 = "./start_vaa3d.sh -x consensus_swc -f median_swc -i "+ input_dir +"/*.swc  "+ output_eswc_path2 +" -o "+  out_dir+"/"+im_id+"_median_distances.csv"
 
      job_fn = './txt_jobs/'+str(count)+'.txt'
      FILE = open(job_fn, 'w')
      FILE.write("%s;" % line1)
-     FILE.write("%s\n" % line2)
+     FILE.write("%s;" % line2)
+     FILE.write("%s\n" % line3)
      FILE.close()
 
      count = count +1

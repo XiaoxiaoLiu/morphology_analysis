@@ -29,20 +29,27 @@ def gen_txt_job_script(cmd, job_fn):
     FILE.write("%s\n" % cmd)
 
     FILE.close()
+set1=0
+set2=1
+if set1:
+  #data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/reconstructions_for_img_nopreproprcessing"
+  #output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/consensus_0306"
 
+  data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/reconstructions_for_img_anisosmooth"
+  output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/consensus_0306_anisosmooth"
 
-#data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/reconstructions_for_img_anisosmooth"
-#output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/consensus_0301_anisosmooth"
+  fn_list = '~/work/data/jen1_image_file_name_list.csv'
+  image_DIR="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/img_nopreproprcessing"
 
-#fn_list = '~/work/data/jen1_image_file_name_list.csv'
-#image_DIR="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/img_nopreproprcessing"
+if set2:
+  #data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set2_accepted_single/reconstructions_for_img_nopreproprcessing"
+  #output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set2_accepted_single/consensus_0306"
 
+  data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set2_accepted_single/reconstructions_for_img_anisosmooth"
+  output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set2_accepted_single/consensus_0306_anisosmooth"
+  fn_list = '~/work/data/jen2_image_file_name_list.csv'
 
-data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set2_accepted_single/reconstructions_for_img_nopreproprcessing"
-output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set2_accepted_single/consensus_0301"
-
-fn_list = '~/work/data/jen2_image_file_name_list.csv'
-image_DIR="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set2_accepted_single/img_nopreproprcessing"
+  image_DIR="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set2_accepted_single/img_nopreproprcessing"
 
 
 
@@ -62,7 +69,7 @@ for im in images:
 
      output_eswc_path = out_dir+'/'+im+'_consensus.eswc'
      logfile = output_eswc_path+".log"
-     line1 = "./start_vaa3d.sh -x consensus_swc -f consensus_swc -i " +  input_dir +"/*.swc   -o " + output_eswc_path + " -p 3  10 > "+logfile
+     line1 = "./start_vaa3d.sh -x consensus_swc -f consensus_swc -i " +  input_dir +"/*.swc   -o " + output_eswc_path + " -p 2  10 > "+logfile
 
 
      image_file = image_DIR+ '/'+ im[:-7]+'/'+im

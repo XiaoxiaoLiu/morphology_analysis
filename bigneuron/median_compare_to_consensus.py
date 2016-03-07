@@ -1,3 +1,4 @@
+__author__ = 'xiaoxiaol'
 import sys
 import os
 import platform
@@ -13,29 +14,48 @@ p = WORK_PATH + '/src/morphology_analysis'
 sys.path.append(p)
 
 import  bigneuron.recon_prescreening as rp
-import  bigneuron.plot_distances as plt_dist
 import pandas as pd
 import numpy as np
 
 
+TAIWAN = 1
+JANELIA = 0
 
-data_DIR="/home/xiaoxiaol/work/data/taiwan"
-subfolder="consensus_0225"
 
+##############################################
 #taiwan dataset
+if TAIWAN:
 #00001 ~16226
+    data_DIR="/home/xiaoxiaol/work/data/taiwan"
+    subfolder="consensus_0225_anisosmooth"
+    fn_list = '~/work/data/taiwan_image_file_name_list.csv'
+    df_i = pd.read_csv(fn_list)
+    imageIDs = df_i['image_file_name']
+    print "!fix me"
+    for i in range(len(imageIDs)):
+          imageIDs.loc[i] = imageIDs[i].split('.')[0]
+#################################################
+#janelia
+if JANELIA:
+    data_DIR="/home/xiaoxiaol/work/data/janelia/set2"
+    subfolder="consensus_0301"
 
-imageIDs=[]
-for n in range(1,16227):
-    imageIDs.append(str(n).rjust(5,'0'))
+    fn_list = '~/work/data/jen2_image_file_name_list.csv'
+    df_i = pd.read_csv(fn_list)
+    imageIDs = df_i['image_file_name']
 
+################################################
+print data_DIR
 
 LOOKUP_TABLE_FILE = "/data/mat/xiaoxiaol/data/big_neuron/silver/ported_neuron_tracing_spreadsheet.csv"
 df_algorithms = pd.read_csv(LOOKUP_TABLE_FILE)
-
 all_algorithms = pd.unique(df_algorithms.algorithm)
 
 
+
+#remove empty files
+os.system('find '+data_DIR+'/'+subfolder +' -size 0 -delete')
+############################################
 def calculate_average_all_pair_distance(df_in, hasConsensus=True):
     #df_in is the output csv from median_swc plugin
     #it contains unique pair-wise distances
@@ -88,11 +108,10 @@ def calculate_average_all_pair_distance(df_in, hasConsensus=True):
 
 
 
+######################################
 
-
-COLLECT=0
-if COLLECT:
-
+COLLECT_FROM_DISTANCE_MATRIX=0
+if COLLECT_FROM_DISTANCE_MATRIX:
     df_all = pd.DataFrame(columns=['image_id', 'algorithm','swc_file_name','average_distance','average_structure_difference','average_max_distance'])
 
     for image_id in imageIDs:
@@ -139,9 +158,11 @@ if COLLECT:
 
     df_all.to_csv(data_DIR+'/'+subfolder+'_all_median_distances.csv', index=False)
 
-PLOT = 0
+
+#####################################################################
+PLOT_algorithm_consensus = 0
 metric = 'average_distance'
-if PLOT:
+if PLOT_algorithm_consensus:
     df_all = pd.read_csv(data_DIR+'/'+subfolder+'_all_median_distances.csv')
     plt.figure()
     sb.set_context("talk", font_scale=0.7)
@@ -171,22 +192,45 @@ if PLOT:
 
     plt.subplots_adjust(left=0.4, bottom=0.1, top=0.9)
     plt.savefig(data_DIR + '/'+subfolder+'compare_distance_plot.png', format='png')
-    plt.show()
+    #plt.show()
     plt.close()
 
+#####################################################
+
+def plot_compare_median_consensus(df_order, metric, type = 'ts'):
+    plt.figure()
 
 
-PLOT = 1
+    if type =='ts':
+        sb.tsplot(data=df_order, value=metric,time='order',unit="algorithm",condition="algorithm",err_style="unit_traces",interpolate=False)
+        plt.xlabel('images sorted by the average neuron distance of the median reconstruction')
+        plt.savefig(data_DIR + '/ts_'+subfolder+'compare_median_with_consensus_'+metric+'.png', format='png')
+    if type =='lm':
+        sb.lmplot(x="order", y=metric, hue="algorithm", data=df_order)
+        plt.xlabel('images sorted by the average neuron distance of the median reconstruction')
+        plt.savefig(data_DIR + '/lm_'+subfolder+'compare_median_with_consensus_'+metric+'.lm.png', format='png')
+
+    #plt.show()
+    plt.close()
+    #plt.plot(df_median['average_distance'],'g')
+    #plt.plot(df_consensus_reordered['average_distance'],'r')
+
+    #plt.lengend()
+
+
+
+EXTRACT_MEDIAN_CONSENSUS = 1
 metric = 'average_distance'
-if PLOT:
+if EXTRACT_MEDIAN_CONSENSUS:
     df_all = pd.read_csv(data_DIR+'/'+subfolder+'_all_median_distances.csv')
+
     print df_all.shape
     dfg = df_all.groupby('image_id')
     df_median_and_consensus = pd.DataFrame(columns=['image_id', 'algorithm','swc_file_name','average_distance','average_structure_difference','average_max_distance'])
-    imageIDs = pd.unique(df_all['image_id'])
+    PLOT_imageIDs = pd.unique(df_all['image_id'])
     count = 0
-    for image_id in imageIDs[0:100]:
-        print "image_id: "+ str( image_id)
+    for image_id in PLOT_imageIDs:
+        #print "image_id: "+ str( image_id)
 
         df_image = dfg.get_group(image_id)
         #drop nans
@@ -209,7 +253,7 @@ if PLOT:
 
         df_image.drop(df_image.index[[i]], axis=0, inplace =True)
 
-        df_image.sort(columns=['average_distance', 'average_structure_difference','average_max_distance'])
+        df_image.sort(columns=['average_distance', 'average_structure_difference','average_max_distance'], ascending = True,inplace=True)
         df_median_and_consensus.loc[count] =[image_id, 'median',df_image.iloc[0]['swc_file_name'],df_image.iloc[0]['average_distance'],
                                              df_image.iloc[0]['average_structure_difference'],df_image.iloc[0]['average_max_distance']]
 
@@ -217,26 +261,72 @@ if PLOT:
 
 
 
-    df_median_and_consensus.to_csv('test.csv')
+    df_median_and_consensus.to_csv(data_DIR +'/'+ subfolder+'_extracted_median_consensus.csv')
+    print "output median and consensus distances for each image:"+data_DIR +'/'+ subfolder+'_extracted_median_consensus.csv'
 
-
-
-    plt.figure()
-    sb.set_context("talk", font_scale=0.7)
-
+PLOT_MEDIAN_CONSENSUS = 1
+if PLOT_MEDIAN_CONSENSUS:
+      # reorer by distance
+    df_median_and_consensus = pd.read_csv(data_DIR +'/'+ subfolder+'_extracted_median_consensus.csv')
     dfg = df_median_and_consensus.groupby('algorithm')
     df_consensus = dfg.get_group('consensus')
     df_median = dfg.get_group('median')
-    #a = sb.tsplot(data=df_median_and_consensus, condition = 'algorithm',time='image_id', value='average_distance')
 
-    plt.plot(df_consensus['image_id'],df_consensus['average_distance'],'r')
-    plt.plot(df_median['image_id'],df_median['average_distance'],'g')
+    df_median.reset_index(inplace=True)
+    df_consensus.reset_index(inplace=True)
 
 
-    #plt.subplots_adjust(left=0.4, bottom=0.1, top=0.9)
-   # plt.savefig(data_DIR + '/'+subfolder+'compare_median_with_consensus_average_distance_plot.png', format='png')
-    plt.show()
-    plt.close()
+    #sort by average distance
+    df_median.sort(columns=['average_distance'], inplace=True)
+    df_median['order'] = range(0,len(df_median))
+
+    df_consensus = df_consensus.iloc[df_median.index]
+    df_consensus['order'] = range(0,len(df_median))
+
+
+
+    df_median.to_csv(data_DIR + '/'+subfolder+'_test_median.csv', index= False)
+    df_consensus.to_csv(data_DIR + '/'+subfolder+'_test_consensus.csv', index= False)
+
+    df_diff = df_median['average_distance'] -df_consensus['average_distance']
+
+
+    df_ff = df_diff
+    print "median - consensus:"
+
+    max_idx = np.nanargmin(np.abs(df_ff-df_ff.max()))
+    print "max value: %f, image : %s"  % (df_ff.max(), df_median.iloc[max_idx]['image_id'])
+
+    min_idx = np.nanargmin(np.abs(df_ff-df_ff.min()))
+    print "min value: %f, image: %s"  % (df_ff.min(),df_median.iloc[min_idx]['image_id'])
+
+    median_idx = np.nanargmin(np.abs(df_ff-df_ff.median()))
+    print "median value: %f, image : %s"  % (df_ff.median(),df_median.iloc[median_idx]['image_id'])
+
+
+    df_ff = df_diff[df_diff>0]
+    print "consensus is closer to each reconstructions than the median reconstructions in %.2f percent of the %d total images"  %( 100*float(len(df_ff))/len(df_diff), len(df_diff))
+
+    #make sure the image_ids are matching
+    for i in range(0,len(df_median)):
+        if df_consensus.iloc[i]['image_id'] != df_median.iloc[i]['image_id']:
+            print "error matching"
+            print df_consensus.iloc[i]['image_id']
+            print  df_median.iloc[i]['image_id']
+            print exit()
+
+
+
+    frames=[df_consensus,df_median]
+    df_order = pd.concat(frames)
+    for type in ['ts']:
+        plot_compare_median_consensus(df_order, 'average_distance',type)
+        plot_compare_median_consensus(df_order, 'average_max_distance',type)
+        plot_compare_median_consensus(df_order, 'average_structure_difference',type)
+
+
+
+
 
 
 
