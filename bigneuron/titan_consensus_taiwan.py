@@ -76,12 +76,13 @@ for im in images:
      line2 = "./start_vaa3d.sh -x consensus_swc -f dark_pruning -i " + output_eswc_path + " "+ image_file + " -o " + output_eswc_path2 + " -p  40 > "+logfile2
 
      line3 = "./start_vaa3d.sh -x consensus_swc -f median_swc -i "+ input_dir +"/*.swc  "+ output_eswc_path2 +" -o "+  out_dir+"/"+im_id+"_median_distances.csv"
+     line4 = "./start_vaa3d.sh -x consensus_swc -f median_swc -i "+ input_dir +"/*.swc  "+ output_eswc_path +" -o "+  out_dir+"/"+im_id+"_nonprune_median_distances.csv"
 
      job_fn = './txt_jobs/'+str(count)+'.txt'
      FILE = open(job_fn, 'w')
-     FILE.write("%s;" % line1)
-     FILE.write("%s;" % line2)
-     FILE.write("%s\n" % line3)
+     #FILE.write("%s;" % line1)
+     #FILE.write("%s;" % line2)
+     FILE.write("%s\n" % line4)
      FILE.close()
 
      count = count +1

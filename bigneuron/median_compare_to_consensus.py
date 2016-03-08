@@ -35,7 +35,7 @@ def calculate_average_all_pair_distance(csv_file, hasConsensus=True):
     df_f = pd.read_csv(csv_file)
     if df_f.empty:
         return df_out
-    df_in = df_f[df_f[' average_distance'] >0]
+    df_in = df_f[df_f['average_distance'] >0]
 
 
 
@@ -56,14 +56,14 @@ def calculate_average_all_pair_distance(csv_file, hasConsensus=True):
         a = dfg1.get_group(swc_name)
         a = a[a['swc_file_name2']!=consensus_file_name]
 
-        b = pd.DataFrame(columns = ['swc_file_name1','swc_file_name2',' average_distance','structure_difference','max_distance']) #empty
+        b = pd.DataFrame(columns = ['swc_file_name1','swc_file_name2','average_distance','structure_difference','max_distance']) #empty
         if swc_name in swc_names_2:
             b = dfg2.get_group(swc_name)
 
 
         num_of_swcs = len(a) +len(b)
         df_out.loc[row,'swc_file_name']= swc_name.split('/')[-1]
-        df_out.loc[row,'average_distance'] = (a[' average_distance'].sum() + b[' average_distance'].sum())/ num_of_swcs
+        df_out.loc[row,'average_distance'] = (a['average_distance'].sum() + b['average_distance'].sum())/ num_of_swcs
         df_out.loc[row,'average_structure_difference'] = a['structure_difference'].sum() + b['structure_difference'].sum()/num_of_swcs
         df_out.loc[row,'average_max_distance'] = a['max_distance'].sum() + b['max_distance'].sum()/num_of_swcs
         row = row +1
@@ -71,14 +71,14 @@ def calculate_average_all_pair_distance(csv_file, hasConsensus=True):
 
     df_out.loc[row,'swc_file_name']= consensus_file_name.split('/')[-1]
     consensus_group = dfg2.get_group(consensus_file_name)
-    df_out.loc[row,'average_distance'] = consensus_group[' average_distance'].sum() / (num_of_swcs+1)
+    df_out.loc[row,'average_distance'] = consensus_group['average_distance'].sum() / (num_of_swcs+1)
     df_out.loc[row,'average_structure_difference'] = consensus_group['structure_difference'].sum() / (num_of_swcs+1)
     df_out.loc[row,'average_max_distance'] = consensus_group['max_distance'].sum() / (num_of_swcs+1)
 
     return df_out
 
 
-def gen_average_distances_filled_csv(imageIDs,data_DIR, subfolder,all_algorithms):
+def NOT_USED_gen_average_distances_filled_csv(imageIDs,data_DIR, subfolder,all_algorithms):
     df_all = pd.DataFrame(columns=['image_id', 'algorithm','swc_file_name','average_distance','average_structure_difference','average_max_distance'])
 
     for image_id in imageIDs:
@@ -141,7 +141,7 @@ def plot_compare_median_consensus(df_order, metric, type = 'ts'):
 
 
 
-def pipe(data_DIR, subfolder, imageIDs):
+def pipe(data_DIR, subfolder, imageIDs, distance_file_postfix='median_distances.csv'):
 
     #remove empty files
     os.system('find '+data_DIR+'/'+subfolder +' -size 0 -delete')
@@ -161,7 +161,7 @@ def pipe(data_DIR, subfolder, imageIDs):
 
             df_image_filled_template['image_id'] = image_id
 
-            csv_file = data_DIR + '/'+subfolder+'/'+image_id+'_median_distances.csv'
+            csv_file = data_DIR + '/'+subfolder+'/'+image_id+'_'+distance_file_postfix
 
             df_ff = calculate_average_all_pair_distance(csv_file, hasConsensus = True)
             if not df_ff.empty:
@@ -354,8 +354,8 @@ DATA='/data/mat/xiaoxiaol/data/big_neuron'
 
 test = 1
 TAIWAN = 1
-JANELIA_Set1 = 1
-JANELIA_Set2 =1
+JANELIA_Set1 = 0
+JANELIA_Set2 = 0
 
 #taiwan dataset
 if TAIWAN:
@@ -369,13 +369,13 @@ if TAIWAN:
     for i in range(len(imageIDs)):
           imageIDs.loc[i] = imageIDs[i].split('.')[0]
     if test:
-         imageIDs=imageIDs[0:10]
+         imageIDs=imageIDs[0:100]
 
     subfolder="consensus_0306"
-    pipe(data_DIR, subfolder, imageIDs)
+    pipe(data_DIR, subfolder, imageIDs,'nonprune_median_distances.csv')
     print "\n\n\n"
     subfolder="consensus_0306_anisosmooth"
-    pipe(data_DIR, subfolder, imageIDs)
+    pipe(data_DIR, subfolder, imageIDs,'nonprune_median_distances.csv')
     print "\n\n\n"
 
 
@@ -389,13 +389,13 @@ if JANELIA_Set1:
     df_i = pd.read_csv(fn_list)
     imageIDs = df_i['image_file_name']
     if test:
-         imageIDs=imageIDs[0:10]
+         imageIDs=imageIDs[0:100]
 
     subfolder="consensus_0306"
-    pipe(data_DIR, subfolder, imageIDs)
+    pipe(data_DIR, subfolder, imageIDs,'noprune_median_distances.csv')
 
     subfolder="consensus_0306_anisosmooth"
-    pipe(data_DIR, subfolder, imageIDs)
+    pipe(data_DIR, subfolder, imageIDs,'noprune_median_distances.csv')
 
 if JANELIA_Set2:
     data_DIR=DATA+"/janelia/set2"
@@ -406,14 +406,14 @@ if JANELIA_Set2:
     imageIDs = df_i['image_file_name']
 
     if test:
-         imageIDs=imageIDs[0:10]
+         imageIDs=imageIDs[0:100]
 
     subfolder="consensus_0306"
-    pipe(data_DIR, subfolder, imageIDs)
+    pipe(data_DIR, subfolder, imageIDs,'noprune_median_distances.csv')
     print "\n\n\n"
 
     subfolder="consensus_0306_anisosmooth"
-    pipe(data_DIR, subfolder, imageIDs)
+    pipe(data_DIR, subfolder, imageIDs,'noprune_median_distances.csv')
     print "\n\n\n"
 
 

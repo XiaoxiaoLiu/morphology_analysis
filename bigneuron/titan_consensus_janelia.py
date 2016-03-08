@@ -29,14 +29,14 @@ def gen_txt_job_script(cmd, job_fn):
     FILE.write("%s\n" % cmd)
 
     FILE.close()
-set1=0
-set2=1
+set1=1
+set2=0
 if set1:
-  #data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/reconstructions_for_img_nopreproprcessing"
-  #output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/consensus_0306"
+  data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/reconstructions_for_img_nopreproprcessing"
+  output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/consensus_0306"
 
-  data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/reconstructions_for_img_anisosmooth"
-  output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/consensus_0306_anisosmooth"
+  #data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/reconstructions_for_img_anisosmooth"
+  #output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/consensus_0306_anisosmooth"
 
   fn_list = '~/work/data/jen1_image_file_name_list.csv'
   image_DIR="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/img_nopreproprcessing"
@@ -78,12 +78,14 @@ for im in images:
      line2 = "./start_vaa3d.sh -x consensus_swc -f dark_pruning -i " + output_eswc_path + " "+ image_file + " -o " + output_eswc_path2 + " -p  40 > "+logfile2
 
      line3 = "./start_vaa3d.sh -x consensus_swc -f median_swc -i "+ input_dir +"/*.swc  "+ output_eswc_path2 +" -o "+  out_dir+"/"+im+"_median_distances.csv"
+     line4 = "./start_vaa3d.sh -x consensus_swc -f median_swc -i "+ input_dir +"/*.swc  "+ output_eswc_path +" -o "+  out_dir+"/"+im+"_noprune_median_distances.csv"
 
      job_fn = './txt_jobs/'+str(count)+'.txt'
      FILE = open(job_fn, 'w')
-     FILE.write("%s;" % line1)
-     FILE.write("%s;" % line2)
-     FILE.write("%s\n" % line3)
+     #FILE.write("%s;" % line1)
+     #FILE.write("%s;" % line2)
+     #FILE.write("%s\n" % line3)
+     FILE.write("%s\n" % line4)
      FILE.close()
 
      count = count +1
