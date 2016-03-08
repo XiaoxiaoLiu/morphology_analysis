@@ -339,7 +339,19 @@ def pipe(data_DIR, subfolder, imageIDs):
     print "All takes  %d min" %(dur)
 
 
-#############################
+###################################################################################
+###################################################################################
+###################################################################################
+###################################################################################
+###################################################################################
+###################################################################################
+###################################################################################
+###################################################################################
+
+#DATA='/home/xiaoxiaol/work/data'
+
+DATA='/data/mat/xiaoxiaol/data/big_neuron'
+
 test = 1
 TAIWAN = 1
 JANELIA_Set1 = 1
@@ -348,9 +360,9 @@ JANELIA_Set2 =1
 #taiwan dataset
 if TAIWAN:
 #00001 ~16226
-    data_DIR="/home/xiaoxiaol/work/data/taiwan"
+    data_DIR=DATA+"/taiwan"
 
-    fn_list = '~/work/data/taiwan_image_file_name_list.csv'
+    fn_list = DATA+'/taiwan_image_file_name_list.csv'
     df_i = pd.read_csv(fn_list)
     imageIDs = df_i['image_file_name']
 
@@ -365,14 +377,15 @@ if TAIWAN:
     subfolder="consensus_0306_anisosmooth"
     pipe(data_DIR, subfolder, imageIDs)
     print "\n\n\n"
-#################################################
+
 
 #janelia
+
 if JANELIA_Set1:
-    data_DIR="/home/xiaoxiaol/work/data/janelia/set1"
+    data_DIR= DATA+"/janelia/set1"
 
 
-    fn_list = '~/work/data/jen1_image_file_name_list.csv'
+    fn_list = DATA+'/jen1_image_file_name_list.csv'
     df_i = pd.read_csv(fn_list)
     imageIDs = df_i['image_file_name']
     if test:
@@ -385,10 +398,10 @@ if JANELIA_Set1:
     pipe(data_DIR, subfolder, imageIDs)
 
 if JANELIA_Set2:
-    data_DIR="/home/xiaoxiaol/work/data/janelia/set2"
+    data_DIR=DATA+"/janelia/set2"
 
 
-    fn_list = '~/work/data/jen2_image_file_name_list.csv'
+    fn_list = DATA+'/jen2_image_file_name_list.csv'
     df_i = pd.read_csv(fn_list)
     imageIDs = df_i['image_file_name']
 
