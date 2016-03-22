@@ -35,11 +35,12 @@ def calculate_average_all_pair_distance(csv_file, hasConsensus=True):
     df_f = pd.read_csv(csv_file)
     if df_f.empty:
         return df_out
-    df_in = df_f[df_f['average_distance'] >0]
+    df_in = df_f[df_f['sum_distance'] >0]
 
 
 
-    df_out = pd.DataFrame(columns = ['swc_file_name','average_distance','average_structure_difference','average_max_distance'])
+    df_out = pd.DataFrame(columns = ['swc_file_name','average_sum_distance','average_structure_difference','average_max_distance'])
+
     dfg1 = df_in.groupby('swc_file_name1')
     dfg2 = df_in.groupby('swc_file_name2')
 
@@ -56,30 +57,34 @@ def calculate_average_all_pair_distance(csv_file, hasConsensus=True):
         a = dfg1.get_group(swc_name)
         a = a[a['swc_file_name2']!=consensus_file_name]
 
-        b = pd.DataFrame(columns = ['swc_file_name1','swc_file_name2','average_distance','structure_difference','max_distance']) #empty
+
+        b = pd.DataFrame(columns = ['swc_file_name1','swc_file_name2','sum_distance','structure_difference','max_distance']) #empty
         if swc_name in swc_names_2:
             b = dfg2.get_group(swc_name)
 
 
         num_of_swcs = len(a) +len(b)
         df_out.loc[row,'swc_file_name']= swc_name.split('/')[-1]
-        df_out.loc[row,'average_distance'] = (a['average_distance'].sum() + b['average_distance'].sum())/ num_of_swcs
+
+        df_out.loc[row,'average_sum_distance'] = (a['sum_distance'].sum() + b['sum_distance'].sum())/ num_of_swcs
         df_out.loc[row,'average_structure_difference'] = a['structure_difference'].sum() + b['structure_difference'].sum()/num_of_swcs
         df_out.loc[row,'average_max_distance'] = a['max_distance'].sum() + b['max_distance'].sum()/num_of_swcs
+
         row = row +1
 
 
     df_out.loc[row,'swc_file_name']= consensus_file_name.split('/')[-1]
     consensus_group = dfg2.get_group(consensus_file_name)
-    df_out.loc[row,'average_distance'] = consensus_group['average_distance'].sum() / (num_of_swcs+1)
+    df_out.loc[row,'average_sum_distance'] = consensus_group['sum_distance'].sum() / (num_of_swcs+1)
     df_out.loc[row,'average_structure_difference'] = consensus_group['structure_difference'].sum() / (num_of_swcs+1)
     df_out.loc[row,'average_max_distance'] = consensus_group['max_distance'].sum() / (num_of_swcs+1)
+
 
     return df_out
 
 
 def NOT_USED_gen_average_distances_filled_csv(imageIDs,data_DIR, subfolder,all_algorithms):
-    df_all = pd.DataFrame(columns=['image_id', 'algorithm','swc_file_name','average_distance','average_structure_difference','average_max_distance'])
+    df_all = pd.DataFrame(columns=['image_id', 'algorithm','swc_file_name','average_sum_distance','average_structure_difference','average_max_distance'])
 
     for image_id in imageIDs:
 
@@ -102,7 +107,7 @@ def NOT_USED_gen_average_distances_filled_csv(imageIDs,data_DIR, subfolder,all_a
                   id = df_a.index[0]
 
                   df_image_filled_template.iloc[id]['swc_file_name'] =df_ff.iloc[i]['swc_file_name']
-                  df_image_filled_template.iloc[id]['average_distance'] =df_ff.iloc[i]['average_distance']
+                  df_image_filled_template.iloc[id]['average_sum_distance'] =df_ff.iloc[i]['average_sum_distance']
                   df_image_filled_template.iloc[id]['average_structure_difference'] = df_ff.iloc[i]['average_structure_difference']
                   df_image_filled_template.iloc[id]['average_max_distance'] = df_ff.iloc[i]['average_max_distance']
                 else:
@@ -153,7 +158,7 @@ def pipe(data_DIR, subfolder, imageIDs, distance_file_postfix='median_distances.
 
     COLLECT_FROM_DISTANCE_MATRIX=1
     if COLLECT_FROM_DISTANCE_MATRIX:
-        df_all = pd.DataFrame(columns=['image_id', 'algorithm','swc_file_name','average_distance','average_structure_difference','average_max_distance'])
+        df_all = pd.DataFrame(columns=['image_id', 'algorithm','swc_file_name','average_sum_distance','average_structure_difference','average_max_distance'])
         count = 0
         for image_id in imageIDs:
 
@@ -162,6 +167,9 @@ def pipe(data_DIR, subfolder, imageIDs, distance_file_postfix='median_distances.
             df_image_filled_template['image_id'] = image_id
 
             csv_file = data_DIR + '/'+subfolder+'/'+image_id+'_'+distance_file_postfix
+
+            if not os.path.exists(csv_file): # for gold 163, consensus results are stored in individual image folders
+                 csv_file = data_DIR + '/'+subfolder+'/'+image_id+'/'+distance_file_postfix
 
             df_ff = calculate_average_all_pair_distance(csv_file, hasConsensus = True)
             if not df_ff.empty:
@@ -173,7 +181,7 @@ def pipe(data_DIR, subfolder, imageIDs, distance_file_postfix='median_distances.
                         print df_ff.iloc[i].swc_file_name
                         continue
 
-                    df_image_filled_template.loc[count] = [image_id, alg,df_ff.iloc[i]['swc_file_name'],df_ff.iloc[i]['average_distance'],df_ff.iloc[i]['average_structure_difference'],
+                    df_image_filled_template.loc[count] = [image_id, alg,df_ff.iloc[i]['swc_file_name'],df_ff.iloc[i]['average_sum_distance'],df_ff.iloc[i]['average_structure_difference'],
                                                         df_ff.iloc[i]['average_max_distance']]
                     count = count +1
 
@@ -185,7 +193,7 @@ def pipe(data_DIR, subfolder, imageIDs, distance_file_postfix='median_distances.
         print "Output:" +all_average_csv
     #####################################################################
     PLOT_algorithm_consensus = 1
-    metric = 'average_distance'
+    metric = 'average_sum_distance'
     if PLOT_algorithm_consensus:
         df_all = pd.read_csv(all_average_csv)
 
@@ -226,13 +234,13 @@ def pipe(data_DIR, subfolder, imageIDs, distance_file_postfix='median_distances.
 
 
     EXTRACT_MEDIAN_CONSENSUS = 1
-    metric = 'average_distance'
+    metric = 'average_sum_distance'
     if EXTRACT_MEDIAN_CONSENSUS:
         df_all = pd.read_csv(all_average_csv)
 
         print df_all.shape
         dfg = df_all.groupby('image_id')
-        df_median_and_consensus = pd.DataFrame(columns=['image_id', 'algorithm','swc_file_name','average_distance','average_structure_difference','average_max_distance'])
+        df_median_and_consensus = pd.DataFrame(columns=['image_id', 'algorithm','swc_file_name','average_sum_distance','average_structure_difference','average_max_distance'])
         PLOT_imageIDs = pd.unique(df_all['image_id'])
         count = 0
         for image_id in PLOT_imageIDs:
@@ -252,31 +260,31 @@ def pipe(data_DIR, subfolder, imageIDs, distance_file_postfix='median_distances.
                 i= i+1
             if i>= len(df_image):
                 continue
-            df_median_and_consensus.loc[count] =[image_id, 'consensus',df_image.iloc[i]['swc_file_name'],df_image.iloc[i]['average_distance'],
+            df_median_and_consensus.loc[count] =[image_id, 'consensus',df_image.iloc[i]['swc_file_name'],df_image.iloc[i]['average_sum_distance'],
                                                  df_image.iloc[i]['average_structure_difference'],df_image.iloc[i]['average_max_distance']]
             count = count +1
 
 
             df_image.drop(df_image.index[[i]], axis=0, inplace =True)
 
-            df_image.sort(columns=['average_distance', 'average_structure_difference','average_max_distance'], ascending = True,inplace=True)
-            df_median_and_consensus.loc[count] =[image_id, 'median',df_image.iloc[0]['swc_file_name'],df_image.iloc[0]['average_distance'],
+            df_image.sort(columns=['average_sum_distance', 'average_structure_difference','average_max_distance'], ascending = True,inplace=True)
+            df_median_and_consensus.loc[count] =[image_id, 'median',df_image.iloc[0]['swc_file_name'],df_image.iloc[0]['average_sum_distance'],
                                                  df_image.iloc[0]['average_structure_difference'],df_image.iloc[0]['average_max_distance']]
 
             count = count +1
 
 
 
-        df_median_and_consensus.to_csv(data_DIR +'/'+ subfolder+'_extracted_median_consensus.csv')
+        df_median_and_consensus.to_csv(data_DIR +'/extracted_median_consensus_'+subfolder+'.csv')
         print "Done extracting median distances"
-        print "Output median and consensus distances for each image:"+data_DIR +'/'+ subfolder+'_extracted_median_consensus.csv'
+        print "Output median and consensus distances for each image:"+data_DIR +'/extracted_median_consensus_'+subfolder+'.csv'
 
 
 
     PLOT_MEDIAN_CONSENSUS = 1
     if PLOT_MEDIAN_CONSENSUS:
           # reorer by distance
-        df_median_and_consensus = pd.read_csv(data_DIR +'/'+ subfolder+'_extracted_median_consensus.csv')
+        df_median_and_consensus = pd.read_csv(data_DIR +'/extracted_median_consensus_'+subfolder+'.csv')
         dfg = df_median_and_consensus.groupby('algorithm')
         df_consensus = dfg.get_group('consensus')
         df_median = dfg.get_group('median')
@@ -286,7 +294,7 @@ def pipe(data_DIR, subfolder, imageIDs, distance_file_postfix='median_distances.
 
 
         #sort by average distance
-        df_median.sort(columns=['average_distance'], inplace=True)
+        df_median.sort(columns=['average_sum_distance'], inplace=True)
         df_median['order'] = range(0,len(df_median))
 
         df_consensus = df_consensus.iloc[df_median.index]
@@ -297,7 +305,7 @@ def pipe(data_DIR, subfolder, imageIDs, distance_file_postfix='median_distances.
         df_median.to_csv(data_DIR + '/'+subfolder+'_test_median.csv', index= False)
         df_consensus.to_csv(data_DIR + '/'+subfolder+'_test_consensus.csv', index= False)
 
-        df_diff = df_median['average_distance'] -df_consensus['average_distance']
+        df_diff = df_median['average_sum_distance'] -df_consensus['average_sum_distance']
 
 
         df_ff = df_diff
@@ -329,7 +337,7 @@ def pipe(data_DIR, subfolder, imageIDs, distance_file_postfix='median_distances.
         frames=[df_consensus,df_median]
         df_order = pd.concat(frames)
         for type in ['ts']:
-            plot_compare_median_consensus(df_order, 'average_distance',type)
+            plot_compare_median_consensus(df_order, 'average_sum_distance',type)
             plot_compare_median_consensus(df_order, 'average_max_distance',type)
             plot_compare_median_consensus(df_order, 'average_structure_difference',type)
 
@@ -349,20 +357,42 @@ def pipe(data_DIR, subfolder, imageIDs, distance_file_postfix='median_distances.
 ###################################################################################
 
 #DATA='/home/xiaoxiaol/work/data'
-
-DATA='/data/mat/xiaoxiaol/data/big_neuron'
-
+#DATA='/data/mat/xiaoxiaol/data/big_neuron'
+DATA='/mnt/BigNeuron/data'
 test = 1
-TAIWAN = 1
+TAIWAN = 0
 JANELIA_Set1 = 0
 JANELIA_Set2 = 0
+
+
+GOLD_163 = 1
+
+
+if GOLD_163:
+    data_DIR="/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all_soma_sort_0322"
+
+    df_nd = pd.read_csv('/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all_soma_sort_0322/list.txt')
+    imageIDs = np.unique( df_nd['image_id'])
+
+    if test:
+         imageIDs=['12','21','249']
+
+    subfolder="."
+    pipe(data_DIR, subfolder, imageIDs,'median_distances.csv')
+    print "\n\n\n"
+
+
+
+
+
+
 
 #taiwan dataset
 if TAIWAN:
 #00001 ~16226
-    data_DIR=DATA+"/taiwan"
+    data_DIR=DATA+"/taiwan16k"
 
-    fn_list = DATA+'/taiwan_image_file_name_list.csv'
+    fn_list = '~/work/data/taiwan_image_file_name_list.csv'
     df_i = pd.read_csv(fn_list)
     imageIDs = df_i['image_file_name']
 
@@ -371,21 +401,21 @@ if TAIWAN:
     if test:
          imageIDs=imageIDs[0:100]
 
-    subfolder="consensus_0306"
+    subfolder="consensus_0308_random500"
     pipe(data_DIR, subfolder, imageIDs,'nonprune_median_distances.csv')
     print "\n\n\n"
-    subfolder="consensus_0306_anisosmooth"
-    pipe(data_DIR, subfolder, imageIDs,'nonprune_median_distances.csv')
-    print "\n\n\n"
+    #subfolder="consensus_0306_anisosmooth"
+    #pipe(data_DIR, subfolder, imageIDs,'nonprune_median_distances.csv')
+    #print "\n\n\n"
 
 
 #janelia
 
 if JANELIA_Set1:
-    data_DIR= DATA+"/janelia/set1"
+    data_DIR= DATA+"/Janelia/set1_extract_single"
 
 
-    fn_list = DATA+'/jen1_image_file_name_list.csv'
+    fn_list = '~/work/data/jen1_image_file_name_list.csv'
     df_i = pd.read_csv(fn_list)
     imageIDs = df_i['image_file_name']
     if test:
@@ -398,10 +428,9 @@ if JANELIA_Set1:
     pipe(data_DIR, subfolder, imageIDs,'noprune_median_distances.csv')
 
 if JANELIA_Set2:
-    data_DIR=DATA+"/janelia/set2"
+    data_DIR=DATA+"/Janelia/set2_accepted_single"
 
-
-    fn_list = DATA+'/jen2_image_file_name_list.csv'
+    fn_list = '~/work/data/jen2_image_file_name_list.csv'
     df_i = pd.read_csv(fn_list)
     imageIDs = df_i['image_file_name']
 

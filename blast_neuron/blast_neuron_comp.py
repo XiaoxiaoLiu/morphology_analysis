@@ -101,7 +101,26 @@ def gen_qsub_script(cmd, job_name, script_fn):
     FILE.close()
 
 
+def run_command_lines(input_lines, GEN_QSUB=0, qsub_script_dir= ".", id=None):
 
+    if (id ==None):
+       id=random.randint(1000000,9999999)
+
+
+    if GEN_QSUB == 1  :
+        cmd = input_lines
+        #print cmd
+        script_fn = qsub_script_dir +'/'+str(id)+'.qsub'
+        jobname = qsub_script_dir+'/'+str(id)
+        gen_qsub_script(cmd, jobname, script_fn)
+        return
+
+    if GEN_QSUB == 0:
+        cmd = input_lines
+        print cmd
+        command = Command(cmd)
+        command.run(timeout=60*10)
+        return
 
 #===================================================================
 def sort_swc(inputswc_path, outputswc_path, GEN_QSUB = 0, qsub_script_dir= "."):
@@ -163,15 +182,16 @@ def dark_pruning(input_eswc_path, input_image, output_eswc_path, visible_thre=40
 
 
 
-def consensus(input_ano_path, output_eswc_path, method=2, GEN_QSUB = 0, qsub_script_dir= "."):
+def consensus(input_ano_path, output_eswc_path, vote_threshold=3, max_cluster_distance = 5, GEN_QSUB = 0, qsub_script_dir= ".", id=None):
     output_dir = os.path.dirname(output_eswc_path)
     logfile = output_eswc_path+'.log'
     if not os.path.exists(output_dir):
         os.system("mkdir -p  " + output_dir)
         print "create output dir: ", output_dir
 
-    arguments = " -x consensus_swc -f consensus_swc -i " + input_ano_path + " -o " + output_eswc_path + " -p "+ str(method)+" 10 >"+logfile
-
+    arguments = " -x consensus_swc -f consensus_swc -i " + input_ano_path + " -o " + output_eswc_path + " -p "+ str(vote_threshold)+" "+str(max_cluster_distance)+" > "+logfile
+    if (id ==None):
+       id=random.randint(1000000,9999999)
 
     if GEN_QSUB  == 2 :
         cmd = "./start_vaa3d.sh " + arguments
@@ -183,10 +203,11 @@ def consensus(input_ano_path, output_eswc_path, method=2, GEN_QSUB = 0, qsub_scr
     if GEN_QSUB == 1  :
         cmd = QMasterV3D + arguments
         #print cmd
-        script_fn = qsub_script_dir +'/'+input_ano_path.split('/')[-1]+'.qsub'
-        jobname = qsub_script_dir+input_ano_path.split('/')[-1]
+        script_fn = qsub_script_dir +'/'+str(id)+'.qsub'
+        jobname = qsub_script_dir+'/'+str(id)
         gen_qsub_script(cmd, jobname, script_fn)
         return
+
     if GEN_QSUB == 0:
         cmd = V3D + arguments
         print cmd
@@ -195,27 +216,39 @@ def consensus(input_ano_path, output_eswc_path, method=2, GEN_QSUB = 0, qsub_scr
         return
 
 
-def median_swc(input_ano_path, GEN_QSUB = 0, qsub_script_dir= "."):
+def median_swc(input_ano_path, output_csv, GEN_QSUB = 0, qsub_script_dir= ".", id=None):
 
     logfile = input_ano_path+'.median.log'
     if not os.path.exists(qsub_script_dir):
         os.system("mkdir -p  " + qsub_script_dir)
         print "create output dir: ", qsub_script_dir
 
-    arguments = " -x consensus_swc -f median_swc -i " + input_ano_path  + " >"+logfile
+    arguments = " -x consensus_swc -f median_swc -i " + input_ano_path  +  " -o " + output_csv +  " >"+logfile
 
-    if GEN_QSUB :
+    if (id ==None):
+       id=random.randint(1000000,9999999)
+
+    if GEN_QSUB  == 2 :
+        cmd = "./start_vaa3d.sh " + arguments
+        print cmd
+        job_fn = qsub_script_dir +'/'+str(id)+".txt"
+        gen_txt_job_script(cmd, job_fn)
+        return
+
+    if GEN_QSUB == 1  :
         cmd = QMasterV3D + arguments
         #print cmd
-        script_fn = qsub_script_dir +'/'+input_ano_path.split('/')[-1]+'.qsub'
-        jobname = qsub_script_dir+input_ano_path.split('/')[-1]
+        script_fn = qsub_script_dir +'/'+str(id)+'.qsub'
+        jobname = qsub_script_dir+'/'+str(id)
         gen_qsub_script(cmd, jobname, script_fn)
-    else:
+        return
+
+    if GEN_QSUB == 0:
         cmd = V3D + arguments
-        #print cmd
+        print cmd
         command = Command(cmd)
-        command.run(timeout=60*3)
-    return
+        command.run(timeout=60*10)
+        return
 
 def vote_map(input_ano_path, output_img_path, GEN_QSUB = 0, qsub_script_dir= "."):
     output_dir = os.path.dirname(output_img_path)
@@ -444,15 +477,25 @@ def neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSUB = 
     return
 
 
-def neuron_weighted_dist(inputeswc_path1, inputswc_path2, logfile='./test.log', GEN_QSUB = 0, qsub_script_dir='.'):
+def neuron_weighted_dist(inputeswc_path1, inputswc_path2, logfile='./test.log', GEN_QSUB = 0, qsub_script_dir='.', id=None):
 
     arguments = " -x neuron_weighted_distance -f neuron_weighted_distance -i " + inputeswc_path1 + " " + inputswc_path2 + " -o " + logfile
 
-    if GEN_QSUB  == 1 :
-        cmd = QMasterV3D + arguments
+    if (id ==None):
+       id=random.randint(1000000,9999999)
+
+    if GEN_QSUB  == 2 :
+        cmd = "./start_vaa3d.sh " + arguments
         print cmd
-        script_fn = qsub_script_dir +'/'+str(random.randint(1000000,9999999))+'.qsub'
-        jobname = qsub_script_dir+inputswc_path.split('/')[-1]
+        job_fn = qsub_script_dir +'/'+str(id)+".txt"
+        gen_txt_job_script(cmd, job_fn)
+        return
+
+    if GEN_QSUB == 1  :
+        cmd = QMasterV3D + arguments
+        #print cmd
+        script_fn = qsub_script_dir +'/'+str(id)+'.qsub'
+        jobname = qsub_script_dir+'/'+str(id)
         gen_qsub_script(cmd, jobname, script_fn)
         return
 
@@ -460,9 +503,8 @@ def neuron_weighted_dist(inputeswc_path1, inputswc_path2, logfile='./test.log', 
         cmd = V3D + arguments
         print cmd
         command = Command(cmd)
-        command.run(timeout=60*5)
+        command.run(timeout=60*10)
         return
-
 
 
 

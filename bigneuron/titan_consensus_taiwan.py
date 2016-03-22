@@ -23,6 +23,7 @@ import os
 import blast_neuron.blast_neuron_comp as bn
 
 
+#random 500
 
 def gen_txt_job_script(cmd, job_fn):
     output_dir = os.path.dirname(job_fn)
@@ -37,10 +38,10 @@ def gen_txt_job_script(cmd, job_fn):
     FILE.close()
 
 
-data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/reconstructions_for_img_anisosmooth"
-output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/consensus_0306_anisosmooth"
-#data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/reconstructions_for_img_nopreproprcessing"
-#output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/consensus_0306"
+#data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/reconstructions_for_img_anisosmooth"
+#output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/consensus_0306_anisosmooth"
+data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/reconstructions_for_img_nopreproprcessing"
+output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/consensus_0308_random500"
 #fn_list = '~/work/data/image_file_name_list.csv'
 image_DIR="/lustre/atlas2/nro101/proj-shared/BigNeuron/data/taiwan16k/img_nopreproprcessing"
 
@@ -56,8 +57,8 @@ os.system('rm -r ./txt_jobs')
 os.system('mkdir ./txt_jobs')
 
 count = 0
-
-for im in images:
+random_ids = np.random.randint(1,15921,500)
+for im in images[random_ids]:
 
 
      out_dir = output_dir
@@ -80,8 +81,9 @@ for im in images:
 
      job_fn = './txt_jobs/'+str(count)+'.txt'
      FILE = open(job_fn, 'w')
-     #FILE.write("%s;" % line1)
-     #FILE.write("%s;" % line2)
+     FILE.write("%s;" % line1)
+     FILE.write("%s;" % line2)
+     FILE.write("%s;" % line3)
      FILE.write("%s\n" % line4)
      FILE.close()
 
