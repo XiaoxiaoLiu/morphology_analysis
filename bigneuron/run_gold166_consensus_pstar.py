@@ -112,7 +112,7 @@ def  gen_qsub_jobs(neuron_distance_csv, input_dir, output_dir):
 
              output_eswc_path = out_dir+'/consensus.eswc'
              logfile = output_eswc_path+".log"
-             line1 = QMasterV3D+" -x consensus_swc -f consensus_swc -i " +  input_dir +"/processed/*.swc   -o " + output_eswc_path + " -p 3 5 > "+logfile
+             line1 = QMasterV3D+" -x consensus_swc -f consensus_swc -i " +  input_dir +"/processed/*.swc   -o " + output_eswc_path + " -p 6 5  > "+logfile
 
              #image_file = image_DIR+ '/'+ im[:-7]+'/'+im
              logfile= out_dir+"/median_distances.csv.log"

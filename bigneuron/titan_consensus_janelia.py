@@ -39,7 +39,7 @@ set2 = 0
 
 if set1:
   data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/reconstructions_for_img_nopreproprcessing"
-  output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/consensus_0322"
+  output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/consensus_0323"
 
   #data_DIR = "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/reconstructions_for_img_anisosmooth"
   #output_dir =  "/lustre/atlas2/nro101/proj-shared/BigNeuron/data/Janelia/set1_extract_single/consensus_0306_anisosmooth"
@@ -76,11 +76,13 @@ for im in images:
 
      output_eswc_path = out_dir+'/'+im+'_consensus.eswc'
      logfile = output_eswc_path+".log"
-     line1 = "./start_vaa3d.sh -x consensus_swc -f consensus_swc -i " +  input_dir +"/*.swc   -o " + output_eswc_path + " -p 3 5 > "+logfile
+     line1 = "./start_vaa3d.sh -x consensus_swc -f consensus_swc -i " +  input_dir +"/*.swc   -o " + output_eswc_path + " -p 6 5 > "+logfile
 
      #image_file = image_DIR+ '/'+ im[:-7]+'/'+im
+     output_csv =  out_dir+"/"+im+"_median_distances.csv"
+     logfile = output_csv+".log"
+     line2 = "./start_vaa3d.sh -x consensus_swc -f median_swc -i "+ input_dir +"/*.swc  "+ output_eswc_path +" -o "+  output_csv+" > "+logfile
 
-     line2 = "./start_vaa3d.sh -x consensus_swc -f median_swc -i "+ input_dir +"/*.swc  "+ output_eswc_path +" -o "+  out_dir+"/"+im+"_median_distances.csv"
 
 
      job_fn = './txt_jobs/'+str(count)+'.txt'

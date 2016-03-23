@@ -1,4 +1,5 @@
 __author__ = 'xiaoxiaol'
+__author__ = 'xiaoxiaol'
 import sys
 import os
 import platform
@@ -362,16 +363,18 @@ DATA='/mnt/BigNeuron/data'
 test = 0
 
 TAIWAN = 0
-JANELIA_Set1 = 1
+JANELIA_Set1 = 0
 JANELIA_Set2 = 0
-GOLD_163 = 0
+GOLD_163 = 1
 
 
 if GOLD_163:
     data_DIR="/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all_soma_sort_0322"
 
     df_nd = pd.read_csv('/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all_soma_sort_0322/list.txt')
-    imageIDs = np.unique( df_nd['image_id'])
+    imageIDs = pd.unique( df_nd.image_id.apply(str))
+    print imageIDs
+
 
     if test:
          imageIDs=['12','21','249']
