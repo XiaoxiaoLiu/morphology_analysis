@@ -516,7 +516,7 @@ def silhouette_clusternumber(linkage,df_zscores,output_dir ="."):
 
     print("Silhouettee analysis:")
     scores=[]
-    for n_clusters in range(2,30):
+    for n_clusters in range(2,50):
          assignments = hierarchy.fcluster(linkage, n_clusters, criterion="maxclust")
          silhouette_avg = silhouette_score(df_zscores, assignments)
          print("For n_clusters =", n_clusters,"The average silhouette_score is :", silhouette_avg)

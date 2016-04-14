@@ -106,7 +106,8 @@ def generateLinkerFileFromDF(df_in, output_ano_file, strip_path=False, swc_path=
     if len(swc_files) > 0:
         with open(output_ano_file, 'w') as outf:
             for afile in swc_files:
-                if os.path.exists(swc_path):
+
+                if swc_path is not None:
                     filename = swc_path + '/'+afile
                 else:
                     filename = afile
@@ -165,7 +166,21 @@ def generateLinkerFileFromDF(df_in, output_ano_file, strip_path=False, swc_path=
     return g
 
 
-def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
+def plot_confusion_matrix(cm, xlabel, ylabel, xnames, ynames,  title='Confusion matrix', cmap=pl.cm.Blues):
+    pl.grid(False)
+    pl.imshow(cm, interpolation = 'none',cmap=cmap)
+    pl.title(title)
+    pl.colorbar()
+    tick_marksx = np.arange(len(xnames))
+    tick_marksy = np.arange(len(ynames))
+    pl.xticks(tick_marksx, xnames)
+    pl.yticks(tick_marksy, ynames)
+    pl.tight_layout()
+    pl.ylabel(ylabel)
+    pl.xlabel(xlabel)
+
+
+def heatmap_plot_zscore_ivscc(df_zscore_features, df_all, output_dir, title=None):
 
     # Create a custom palette for dendrite_type colors
     dendrite_types = [np.nan, 'aspiny', 'sparsely spiny', 'spiny']
@@ -260,6 +275,76 @@ def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
         g.ax_row_dendrogram.bar(0, 0, color = dendrite_type_lut[label], label=label, linewidth=0)
         g.ax_row_dendrogram.legend(loc=location, ncol= num_cols, borderpad=0.0)
 
+
+    filename = output_dir + '/zscore_feature_heatmap.png'
+    pl.savefig(filename, dpi=300)
+    #pl.show()
+    print("save zscore matrix heatmap figure to :" + filename)
+    pl.close()
+    return linkage
+
+
+def heatmap_plot_zscore_bbp(df_zscore_features, df_all, output_dir, title=None):
+
+    print "heatmap plot"
+    metric ='m-type'
+    mtypes = np.unique(df_all[metric])
+    print mtypes
+    mtypes_pal = sns.color_palette("hls", len(mtypes))
+
+    mtypes_lut = dict(zip(mtypes, mtypes_pal))  # map creline type to color
+    mtypes_colors = df_all[metric].map(mtypes_lut)
+
+
+    layers = np.unique(df_all['layer'])
+    layer_pal = sns.light_palette("green", len(layers))
+    layers_lut = dict(zip(layers, layer_pal))
+    layer_colors = df_all['layer'].map(layers_lut)
+
+
+    # Create a custom colormap for the heatmap values
+    #cmap = sns.diverging_palette(240, 10, as_cmap=True)
+
+    linkage = hierarchy.linkage(df_zscore_features, method='ward', metric='euclidean')
+
+    data = df_zscore_features.transpose()
+    row_linkage = hierarchy.linkage(data, method='ward', metric='euclidean')
+    feature_order = hierarchy.leaves_list(row_linkage)
+
+    #print data.index
+    matchIndex = [data.index[x] for x in feature_order]
+    #print matchIndex
+    data = data.reindex(matchIndex)
+
+
+    g = sns.clustermap(data, row_cluster = False, col_linkage=linkage, method='ward', metric='euclidean',
+                       linewidths = 0.0,col_colors = [mtypes_colors,layer_colors],
+                       cmap = sns.cubehelix_palette(light=1, as_cmap=True),figsize=(40,20))
+    #g.ax_heatmap.xaxis.set_xticklabels()
+    pl.setp(g.ax_heatmap.xaxis.get_majorticklabels(), rotation=90 )
+    pl.setp(g.ax_heatmap.yaxis.get_majorticklabels(), rotation=0)
+    pl.subplots_adjust(left=0.1, bottom=0.5, right=0.9, top=0.95)  # !!!!!
+
+    #pl.tight_layout( fig, h_pad=20.0, w_pad=20.0)
+
+
+    if title:
+        pl.title(title)
+    location ="best"
+    num_cols=1
+    # Legend for row and col colors
+
+    for label in mtypes:
+         g.ax_row_dendrogram.bar(0, 0, color=mtypes_lut[label], label=label, linewidth=0.0)
+         g.ax_row_dendrogram.legend(loc=location, ncol=num_cols,borderpad=0)
+
+    for i in range(3):
+        g.ax_row_dendrogram.bar(0, 0, color = "white", label=" ", linewidth=0)
+        g.ax_row_dendrogram.legend(loc=location, ncol=num_cols, borderpad=0.0)
+
+    for label in layers:
+         g.ax_row_dendrogram.bar(0, 0, color=layers_lut[label], label=label, linewidth=0.0)
+         g.ax_row_dendrogram.legend(loc=location, ncol=num_cols,borderpad=0)
 
     filename = output_dir + '/zscore_feature_heatmap.png'
     pl.savefig(filename, dpi=300)
@@ -440,7 +525,7 @@ def get_zscore_features(df_all, feature_names, out_file, REMOVE_OUTLIER=0,
 
 
 #############################################################################################
-def output_single_cluster_results(df_cluster, output_dir, output_prefix, snapshots_dir, swc_path = None):
+def output_single_cluster_results(df_cluster, output_dir, output_prefix, snapshots_dir=None, swc_path = None):
     csv_file = output_dir + '/' + output_prefix + '.csv'
     df_cluster.to_csv(csv_file, index=False)
 
@@ -478,7 +563,7 @@ def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, s
         ids = np.nonzero(assign_ids == i)[0]  # starting from  0
         df_cluster = df_all.iloc[ids]
         print("  %d neurons in cluster %d" % (df_cluster.shape[0], i))
-        output_single_cluster_results(df_cluster, output_dir, "/cluster_" + str(i), snapshots_dir,swc_path = data_DIR +"/keith_swc_22dec")
+        output_single_cluster_results(df_cluster, output_dir, "/cluster_" + str(i), snapshots_dir)
 
         df_zscore_cluster = df_zscores.iloc[ids]
         csv_file2 = output_dir + '/cluster_zscore_' + str(i) + '.csv'
@@ -492,7 +577,7 @@ def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, s
 
 
 ####### ward  hierachichal clustering  ###########
-def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_dir= None, RemoveOutliers = 0):
+def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_dir= None, RemoveOutliers = 0, datasetType='ivscc'):
   print("\n\n\n  ***************  ward computation, max_cluster = %d  *************:" % max_cluster_num)
 
   if not os.path.exists(output_dir):
@@ -512,7 +597,11 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_d
       output_dir + '/zscore.csv', RemoveOutliers)
   if (df_outliers.shape[0] > 0 ):
     output_single_cluster_results(df_outliers, output_dir, "outliers", snapshots_dir)
-  linkage = heatmap_plot_zscore(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
+
+  if datasetType =='ivscc':
+      linkage = heatmap_plot_zscore_ivscc(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
+  if datasetType =='bbp':
+      linkage = heatmap_plot_zscore_bbp(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
 
   assignments = hierarchy.fcluster(linkage, max_cluster_num, criterion="maxclust")
   #hierarchy.dendrogram(linkage)
@@ -626,177 +715,178 @@ def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_
     return redundancy_removed_features_names
 
 
-#def main():
+def main():
 
-######################################################################################################################
-data_DIR = "/data/mat/xiaoxiaol/data/lims2/pw_aligned_1223"
-#default_all_feature_merged_file = data_DIR + '/keith_features_23dec.csv'
+    ######################################################################################################################
+    data_DIR = "/data/mat/xiaoxiaol/data/lims2/pw_aligned_1223"
+    #default_all_feature_merged_file = data_DIR + '/keith_features_23dec.csv'
 
-#drop outliers, edit dendrite_type, creline
-#df_features = pd.read_csv(data_DIR +'/0107_new_features.csv')
-#df_features = df_features[df_features['QC status'] != "Outlier"]
-# #parse creline info from specimen_name
-#df_features.dropnas()
-# crelines=[]
-# swc_file_names=[]
-# for i in range(df_features.shape[0]):
-#     sn=df_features['specimen_name'][i]
-#     fn = df_features['specimen_name'][i].split('/')[-1]
-#     cl=sn.split(';')[0]
-#     crelines.append(cl)
-#     swc_file_names.append(fn)
-# df_features['cre_line'] = pd.Series(crelines)
-# df_features['swc_file_name'] = pd.Series(swc_file_names)
-# df_features.to_csv(data_DIR+'/filtered_w_cre.csv')
-
-
-
-
-
-input_csv_file = data_DIR + '/0108/0108_features.csv'
-out_dir = data_DIR + '/0108/clustering_results/no_GMI'
-default_swc_screenshot_folder =  data_DIR + "/figures/pw_aligned_bmps"
-#######################################################################################################################
-
-swc_screenshot_folder = default_swc_screenshot_folder
-
-method = "all"
-SEL_FEATURE = "all"
-
-
-if not os.path.exists(out_dir):
-    os.mkdir(out_dir)
-
-
-########################################################
-all_feature_file = input_csv_file
-#########################################################
-meta_feature_names = np.array(['specimen_name','specimen_id','dendrite_type','cre_line','region_info','filename','swc_file_name'])
-
-
-basal_feature_names = np.array(['basal_average_bifurcation_angle_local','basal_average_bifurcation_angle_remote','basal_average_contraction','basal_average_fragmentation',
-                                'basal_max_branch_order','basal_max_euclidean_distance','basal_max_path_distance',
-                                 'basal_nodes_over_branches','basal_number_of_bifurcations',
-                                'basal_number_of_branches','basal_number_of_stems','basal_number_of_tips','basal_overall_depth','basal_overall_height',
-                                 'basal_overall_width','basal_total_length','bb_first_moment_x_basal','bb_first_moment_y_basal','bb_first_moment_z_basal',
-                                'kg_soma_depth',
-                                 'basal_moment1','basal_moment10','basal_moment11','basal_moment12','basal_moment13','basal_moment2',
-                                  'basal_moment3','basal_moment4',
-                                 'basal_moment5','basal_moment6','basal_moment7','basal_moment8','basal_moment9'])
-                                  #'basal_total_surface','basal_total_volume','basal_soma_surface','basal_number_of_nodes','basal_average_diameter',
-                                  # 'basal_moment1','basal_moment10','basal_moment11','basal_moment12','basal_moment13','basal_moment14','basal_moment2','basal_moment3','basal_moment4',
-    #'basal_moment5','basal_moment6','basal_moment7','basal_moment8','basal_moment9','basal_average_parent_daughter_ratio'
-
-
-apical_feature_names = np.array(['apical_average_bifurcation_angle_local','apical_average_bifurcation_angle_remote','apical_average_contraction',
-                                 'apical_average_fragmentation','apical_max_branch_order','apical_max_euclidean_distance',
-                                 'apical_max_path_distance',
-                                 'apical_nodes_over_branches','apical_number_of_bifurcations','apical_number_of_branches',
-                                 'apical_number_of_tips','apical_overall_depth','apical_overall_height','apical_overall_width','apical_total_length',
-                                 'kg_branch_mean_from_centroid_z_apical',
-                                       'kg_branch_stdev_from_centroid_z_apical',
-                                       'kg_centroid_over_farthest_branch_apical',
-                                       'kg_centroid_over_farthest_neurite_apical',
-                                       'kg_centroid_over_radial_dist_apical',
-                                       'kg_mean_over_centroid',
-                                       'kg_mean_over_farthest_branch_apical',
-                                       'kg_mean_over_farthest_neurite_apical',
-                                       'kg_mean_over_radial_dist_apical',
-                                       'kg_mean_over_stdev',
-                                       'kg_num_branches_over_radial_dist_apical',
-                                       'kg_num_outer_apical_branches',
-                                       'kg_outer_mean_from_center_z_apical',
-                                       'kg_outer_mean_over_stdev',
-                                       'kg_outer_stdev_from_center_z_apical',
-                                       'kg_peak_over_moment_z_apical',
-                                       'kg_radial_dist_over_moment_z_apical',
-                                       'kg_soma_depth'])
-                               #, 'apical_number_of_nodes'
-                                # ])#'apical_soma_surface', 'apical_total_surface','apical_total_volume','apical_average_diameter','apical_moment1','apical_moment10','apical_moment11','apical_moment12','apical_moment13','apical_moment14',
-                                 # 'apical_moment2','apical_moment3','apical_moment4','apical_moment5','apical_moment6','apical_moment7','apical_moment8','apical_moment9','apical_average_parent_daughter_ratio','apical_number_of_stems?? always 1',
-
-bbp_feature_names = np.array(['bb_first_moment_apical','bb_first_moment_basal','bb_first_moment_dendrite','bb_first_moment_x_apical','bb_first_moment_x_basal',
-                             'bb_first_moment_x_dendrite','bb_first_moment_y_apical','bb_first_moment_y_basal','bb_first_moment_y_dendrite','bb_first_moment_z_apical',
-                             'bb_first_moment_z_basal','bb_first_moment_z_dendrite','bb_max_branch_order_apical','bb_max_branch_order_basal','bb_max_branch_order_dendrite',
-                             'bb_max_path_length_apical','bb_max_path_length_basal','bb_max_path_length_dendrite','bb_max_radial_distance_apical','bb_max_radial_distance_basal',
-                             'bb_max_radial_distance_dendrite','bb_mean_trunk_diameter_apical','bb_mean_trunk_diameter_basal','bb_mean_trunk_diameter_dendrite',
-                             'bb_number_branches_apical','bb_number_branches_basal','bb_number_branches_dendrite','bb_number_neurites_apical','bb_number_neurites_basal',
-                             'bb_number_neurites_dendrite','bb_second_moment_apical','bb_second_moment_basal','bb_second_moment_dendrite','bb_second_moment_x_apical',
-                             'bb_second_moment_x_basal','bb_second_moment_x_dendrite','bb_second_moment_y_apical','bb_second_moment_y_basal','bb_second_moment_y_dendrite',
-                             'bb_second_moment_z_apical','bb_second_moment_z_basal','bb_second_moment_z_dendrite','bb_total_length_apical','bb_total_length_basal',
-                             'bb_total_length_dendrite'])
-                             #'bb_total_surface_area_apical','bb_total_volume_basal','bb_total_volume_apical','bb_total_volume_dendrite','bb_total_surface_area_basal','bb_total_surface_area_dendrite'
+    #drop outliers, edit dendrite_type, creline
+    #df_features = pd.read_csv(data_DIR +'/0107_new_features.csv')
+    #df_features = df_features[df_features['QC status'] != "Outlier"]
+    # #parse creline info from specimen_name
+    #df_features.dropnas()
+    # crelines=[]
+    # swc_file_names=[]
+    # for i in range(df_features.shape[0]):
+    #     sn=df_features['specimen_name'][i]
+    #     fn = df_features['specimen_name'][i].split('/')[-1]
+    #     cl=sn.split(';')[0]
+    #     crelines.append(cl)
+    #     swc_file_names.append(fn)
+    # df_features['cre_line'] = pd.Series(crelines)
+    # df_features['swc_file_name'] = pd.Series(swc_file_names)
+    # df_features.to_csv(data_DIR+'/filtered_w_cre.csv')
 
 
 
 
-#selected_features = ['max_euclidean_distance', 'num_stems', 'num_bifurcations', 'average_contraction',
-#'parent_daughter_ratio']
 
-#tmp = np.append(meta_feature_names, basal_feature_names)
-all_dendritic_feature_names =  np.append(basal_feature_names, apical_feature_names)  #bbp_feature_names
-spiny_feature_names =  apical_feature_names
-aspiny_feature_names = basal_feature_names
+    input_csv_file = data_DIR + '/0108/0108_features.csv'
+    out_dir = data_DIR + '/0108/clustering_results/no_GMI'
+    default_swc_screenshot_folder =  data_DIR + "/figures/pw_aligned_bmps"
+    #######################################################################################################################
 
-df_features = pd.read_csv(all_feature_file)
+    swc_screenshot_folder = default_swc_screenshot_folder
 
-print df_features.columns
-df_features[all_dendritic_feature_names]= df_features[all_dendritic_feature_names].astype(float)
-print "There are %d neurons in this dataset" % df_features.shape[0]
-print "Dendrite types: ", np.unique(df_features['dendrite_type'])
+    method = "all"
+    SEL_FEATURE = "all"
 
 
-# df_features_all = df_features[np.append(meta_feature_names,all_dendritic_feature_names)]
-# df_features_all.to_csv(data_DIR+'/0108/all_dendrite_features.csv')
-
-df_groups = df_features.groupby(['dendrite_type'])
-
-df_spiny = df_groups.get_group('spiny')
-# df_w_spiny = df_spiny[np.append(meta_feature_names,spiny_feature_names)]
-# df_w_spiny.to_csv(data_DIR +'/0108/spiny_features.csv', index=False)
+    if not os.path.exists(out_dir):
+        os.mkdir(out_dir)
 
 
-df_aspiny =  pd.concat([df_groups.get_group('aspiny'),df_groups.get_group('sparsely spiny')],axis=0)
-# df_w_aspiny = df_aspiny[np.append(meta_feature_names,aspiny_feature_names)]
-# df_w_aspiny.to_csv(data_DIR +'/0108/aspiny_features.csv', index=False)
-
-print "There are %d neurons are aspiny " % df_aspiny.shape[0]
-
-print "There are %d neurons are spiny\n\n" % df_spiny.shape[0]
+    ########################################################
+    all_feature_file = input_csv_file
+    #########################################################
+    meta_feature_names = np.array(['specimen_name','specimen_id','dendrite_type','cre_line','region_info','filename','swc_file_name'])
 
 
-feature_names = all_dendritic_feature_names
-method = "ward"
-
-REMOVE_OUTLIERS = 0
-postfix = "_" + SEL_FEATURE
-postfix += "_ol_clipped"
-
-#run_ward_cluster(df_features, feature_names, num_clusters,output_postfix):
-
-
-# num_clusters, dunn_index1 = affinity_propagation(df_aspiny, aspiny_feature_names,
-#                                                      out_dir + '/ap_aspiny' + postfix,
-#                                                     None, REMOVE_OUTLIERS)
-# print "spiny ap:"
-# print num_clusters
-#
-# num_clusters, dunn_index1 = affinity_propagation(df_spiny, spiny_feature_names,
-#                                                      out_dir + '/ap_spiny' + postfix,
-#                                                     None, REMOVE_OUTLIERS)
-# print "aspiny ap:"
-# print num_clusters
-# exit()
-redundancy_removed_features = run_ward_cluster(df_aspiny, aspiny_feature_names, num_clusters = 6 ,output_dir = out_dir,output_postfix= '_aspiny'+postfix)
-df_w_aspiny = df_aspiny[np.append(meta_feature_names,redundancy_removed_features)]
-df_w_aspiny.to_csv(data_DIR +'/0108/aspiny_selected_features.csv', index=False)
-# #
+    basal_feature_names = np.array(['basal_average_bifurcation_angle_local','basal_average_bifurcation_angle_remote','basal_average_contraction','basal_average_fragmentation',
+                                    'basal_max_branch_order','basal_max_euclidean_distance','basal_max_path_distance',
+                                     'basal_nodes_over_branches','basal_number_of_bifurcations',
+                                    'basal_number_of_branches','basal_number_of_stems','basal_number_of_tips','basal_overall_depth','basal_overall_height',
+                                     'basal_overall_width','basal_total_length','bb_first_moment_x_basal','bb_first_moment_y_basal','bb_first_moment_z_basal',
+                                    'kg_soma_depth',
+                                     'basal_moment1','basal_moment10','basal_moment11','basal_moment12','basal_moment13','basal_moment2',
+                                      'basal_moment3','basal_moment4',
+                                     'basal_moment5','basal_moment6','basal_moment7','basal_moment8','basal_moment9'])
+                                      #'basal_total_surface','basal_total_volume','basal_soma_surface','basal_number_of_nodes','basal_average_diameter',
+                                      # 'basal_moment1','basal_moment10','basal_moment11','basal_moment12','basal_moment13','basal_moment14','basal_moment2','basal_moment3','basal_moment4',
+        #'basal_moment5','basal_moment6','basal_moment7','basal_moment8','basal_moment9','basal_average_parent_daughter_ratio'
 
 
-# df_spiny.fillna(0,inplace=True)
-# redundancy_removed_features = run_ward_cluster(df_spiny, spiny_feature_names, num_clusters = 9 ,output_dir = out_dir, output_postfix='_spiny'+ postfix)
-# df_w_spiny = df_spiny[np.append(meta_feature_names,redundancy_removed_features)]
-# df_w_spiny.to_csv(data_DIR +'/0108/spiny_selected_features.csv', index=False)
-#
-# if __name__ == "__main__":
-#     main()
+    apical_feature_names = np.array(['apical_average_bifurcation_angle_local','apical_average_bifurcation_angle_remote','apical_average_contraction',
+                                     'apical_average_fragmentation','apical_max_branch_order','apical_max_euclidean_distance',
+                                     'apical_max_path_distance',
+                                     'apical_nodes_over_branches','apical_number_of_bifurcations','apical_number_of_branches',
+                                     'apical_number_of_tips','apical_overall_depth','apical_overall_height','apical_overall_width','apical_total_length',
+                                     'kg_branch_mean_from_centroid_z_apical',
+                                           'kg_branch_stdev_from_centroid_z_apical',
+                                           'kg_centroid_over_farthest_branch_apical',
+                                           'kg_centroid_over_farthest_neurite_apical',
+                                           'kg_centroid_over_radial_dist_apical',
+                                           'kg_mean_over_centroid',
+                                           'kg_mean_over_farthest_branch_apical',
+                                           'kg_mean_over_farthest_neurite_apical',
+                                           'kg_mean_over_radial_dist_apical',
+                                           'kg_mean_over_stdev',
+                                           'kg_num_branches_over_radial_dist_apical',
+                                           'kg_num_outer_apical_branches',
+                                           'kg_outer_mean_from_center_z_apical',
+                                           'kg_outer_mean_over_stdev',
+                                           'kg_outer_stdev_from_center_z_apical',
+                                           'kg_peak_over_moment_z_apical',
+                                           'kg_radial_dist_over_moment_z_apical',
+                                           'kg_soma_depth'])
+                                   #, 'apical_number_of_nodes'
+                                    # ])#'apical_soma_surface', 'apical_total_surface','apical_total_volume','apical_average_diameter','apical_moment1','apical_moment10','apical_moment11','apical_moment12','apical_moment13','apical_moment14',
+                                     # 'apical_moment2','apical_moment3','apical_moment4','apical_moment5','apical_moment6','apical_moment7','apical_moment8','apical_moment9','apical_average_parent_daughter_ratio','apical_number_of_stems?? always 1',
+
+    bbp_feature_names = np.array(['bb_first_moment_apical','bb_first_moment_basal','bb_first_moment_dendrite','bb_first_moment_x_apical','bb_first_moment_x_basal',
+                                 'bb_first_moment_x_dendrite','bb_first_moment_y_apical','bb_first_moment_y_basal','bb_first_moment_y_dendrite','bb_first_moment_z_apical',
+                                 'bb_first_moment_z_basal','bb_first_moment_z_dendrite','bb_max_branch_order_apical','bb_max_branch_order_basal','bb_max_branch_order_dendrite',
+                                 'bb_max_path_length_apical','bb_max_path_length_basal','bb_max_path_length_dendrite','bb_max_radial_distance_apical','bb_max_radial_distance_basal',
+                                 'bb_max_radial_distance_dendrite','bb_mean_trunk_diameter_apical','bb_mean_trunk_diameter_basal','bb_mean_trunk_diameter_dendrite',
+                                 'bb_number_branches_apical','bb_number_branches_basal','bb_number_branches_dendrite','bb_number_neurites_apical','bb_number_neurites_basal',
+                                 'bb_number_neurites_dendrite','bb_second_moment_apical','bb_second_moment_basal','bb_second_moment_dendrite','bb_second_moment_x_apical',
+                                 'bb_second_moment_x_basal','bb_second_moment_x_dendrite','bb_second_moment_y_apical','bb_second_moment_y_basal','bb_second_moment_y_dendrite',
+                                 'bb_second_moment_z_apical','bb_second_moment_z_basal','bb_second_moment_z_dendrite','bb_total_length_apical','bb_total_length_basal',
+                                 'bb_total_length_dendrite'])
+                                 #'bb_total_surface_area_apical','bb_total_volume_basal','bb_total_volume_apical','bb_total_volume_dendrite','bb_total_surface_area_basal','bb_total_surface_area_dendrite'
+
+
+
+
+    #selected_features = ['max_euclidean_distance', 'num_stems', 'num_bifurcations', 'average_contraction',
+    #'parent_daughter_ratio']
+
+    #tmp = np.append(meta_feature_names, basal_feature_names)
+    all_dendritic_feature_names =  np.append(basal_feature_names, apical_feature_names)  #bbp_feature_names
+    spiny_feature_names =  apical_feature_names
+    aspiny_feature_names = basal_feature_names
+
+    df_features = pd.read_csv(all_feature_file)
+
+    print df_features.columns
+    df_features[all_dendritic_feature_names]= df_features[all_dendritic_feature_names].astype(float)
+    print "There are %d neurons in this dataset" % df_features.shape[0]
+    print "Dendrite types: ", np.unique(df_features['dendrite_type'])
+
+
+    # df_features_all = df_features[np.append(meta_feature_names,all_dendritic_feature_names)]
+    # df_features_all.to_csv(data_DIR+'/0108/all_dendrite_features.csv')
+
+    df_groups = df_features.groupby(['dendrite_type'])
+
+    df_spiny = df_groups.get_group('spiny')
+    # df_w_spiny = df_spiny[np.append(meta_feature_names,spiny_feature_names)]
+    # df_w_spiny.to_csv(data_DIR +'/0108/spiny_features.csv', index=False)
+
+
+    df_aspiny =  pd.concat([df_groups.get_group('aspiny'),df_groups.get_group('sparsely spiny')],axis=0)
+    # df_w_aspiny = df_aspiny[np.append(meta_feature_names,aspiny_feature_names)]
+    # df_w_aspiny.to_csv(data_DIR +'/0108/aspiny_features.csv', index=False)
+
+    print "There are %d neurons are aspiny " % df_aspiny.shape[0]
+
+    print "There are %d neurons are spiny\n\n" % df_spiny.shape[0]
+
+
+    feature_names = all_dendritic_feature_names
+    method = "ward"
+
+    REMOVE_OUTLIERS = 0
+    postfix = "_" + SEL_FEATURE
+    postfix += "_ol_clipped"
+
+    #run_ward_cluster(df_features, feature_names, num_clusters,output_postfix):
+
+
+    # num_clusters, dunn_index1 = affinity_propagation(df_aspiny, aspiny_feature_names,
+    #                                                      out_dir + '/ap_aspiny' + postfix,
+    #                                                     None, REMOVE_OUTLIERS)
+    # print "spiny ap:"
+    # print num_clusters
+    #
+    # num_clusters, dunn_index1 = affinity_propagation(df_spiny, spiny_feature_names,
+    #                                                      out_dir + '/ap_spiny' + postfix,
+    #                                                     None, REMOVE_OUTLIERS)
+    # print "aspiny ap:"
+    # print num_clusters
+    # exit()
+    redundancy_removed_features = run_ward_cluster(df_aspiny, aspiny_feature_names, num_clusters = 6 ,output_dir = out_dir,output_postfix= '_aspiny'+postfix)
+    df_w_aspiny = df_aspiny[np.append(meta_feature_names,redundancy_removed_features)]
+    df_w_aspiny.to_csv(data_DIR +'/0108/aspiny_selected_features.csv', index=False)
+    # #
+
+
+    # df_spiny.fillna(0,inplace=True)
+    # redundancy_removed_features = run_ward_cluster(df_spiny, spiny_feature_names, num_clusters = 9 ,output_dir = out_dir, output_postfix='_spiny'+ postfix)
+    # df_w_spiny = df_spiny[np.append(meta_feature_names,redundancy_removed_features)]
+    # df_w_spiny.to_csv(data_DIR +'/0108/spiny_selected_features.csv', index=False)
+    #
+
+if __name__ == "__main__":
+        main()

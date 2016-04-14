@@ -37,6 +37,11 @@ def map_better_algorithm_name(alg,algorithm_plugin_match_csv=LOOKUP_TABLE_FILE):
     return algorithm_name_mapping[alg]
 
 
+
+
+
+
+
 def  matchFileToAlgorithmName(file_name,lookup_table_file=LOOKUP_TABLE_FILE):
      if file_name.find("consensus") >-1:
          return 'consensus'
@@ -388,7 +393,11 @@ def collect_neuron_distance(input_distance_log_file_list, output_distance_csv,lo
 
 
 
+
+
+
 def collect_consensus_distance(input_distance_log_file_list, output_distance_csv,lookup_image_id_table_file):
+    print input_distance_log_file_list
     df_input = pd.read_csv(input_distance_log_file_list, header=None) # txt file contains the list of log files
 
     df_lookup_table = pd.read_csv(lookup_image_id_table_file)
@@ -401,7 +410,8 @@ def collect_consensus_distance(input_distance_log_file_list, output_distance_csv
     for i in range(df_input.size):
             logfile_path =  df_input.iloc[i][0]
 
-            image_id = int(logfile_path.split("/")[-3])
+
+            image_id = int(logfile_path.split("/")[-2])
 
             if image_id > df_lookup_table.image_file_name.size:
                   print "error in looking image ids"

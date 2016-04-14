@@ -144,7 +144,6 @@ def plot_two_algorithms(neuron_distance_csv, alg1,alg2):
 
 
 
-
 def plot_compare_consensus_distance2(distance_csv, outputDir,algorithms,metric, CASE_BY_CASE_PLOT = 0,value_label=None):
     df_nd = pd.read_csv(distance_csv)
     all_images = np.unique(df_nd.image_file_name)
@@ -176,6 +175,102 @@ def plot_compare_consensus_distance2(distance_csv, outputDir,algorithms,metric, 
     plt.close()
 
     return
+
+
+def TBD_plot_compare_consensus_distance_box_plot(distance_csv, outputDir,algorithms,metric, CASE_BY_CASE_PLOT = 0,value_label=None):
+    df_nd = pd.read_csv(distance_csv)
+    all_images = np.unique(df_nd.image_file_name)
+    if not path.exists(outputDir):
+        os.mkdir(outputDir)
+
+    shared_images = []
+    # if CASE_BY_CASE_PLOT:
+    #     for image in all_images:
+    #         df_image_cur = df_nd[df_nd.image_file_name == image]
+    #         if df_image_cur.shape[0] > 0:
+    #             plt.figure()
+    #             ax = sb.boxplot(x=metric, y="algorithm", data=df_image_cur,notch=True,whis=1.5, color="c")
+    #
+    #             # Add in points to show each observation
+    #             sb.stripplot(x=metric, y="algorithm", data=df_image_cur,jitter=False, size=2, color=".3", linewidth=0)
+    #             ax.set_xscale("log")
+    #             sb.despine(trim=True)
+    #
+    #
+    #             algorithm_names = [algorithm_name_mapping[x] for x in df_image_cur['algorithm']]
+    #             plt.yticks(range(df_image_cur['algorithm'].size), np.array(algorithm_names))
+    #             plt.xlabel(value_label)
+    #             #plt.subplots_adjust(left=0.4, bottom=0.1, top=0.9)
+    #             plt.savefig(outputDir + '/sorted/figs/' + image.split('/')[-1] + '_nd_boxplot.png', format='png')
+    #
+    #             plt.close()
+    #
+    #
+    #         else:
+    #             print image
+    #     #     if df_image_cur.shape[0] > 10:
+    #     #         shared_images.append(image)
+    #     # print "there are "+ str(len(shared_images)) +" images that have reconstructions from all " + str(20) +" algorithms."
+    #     #
+
+    ### all algorithm plot
+    dfg = df_nd.groupby('algorithm')
+    sample_size_per_algorithm=[]
+    for alg in algorithms:
+        sample_size_per_algorithm.append(dfg.get_group(alg).shape[0])
+
+
+    #plot the weighted average node distances
+    plt.figure()
+    sb.set_context("talk", font_scale=0.7)
+
+    ax = sb.boxplot(x=metric, y="algorithm", data=df_nd,whis=1.5, notch=True,color="c")
+
+    # Add in points to show each observation
+    sb.stripplot(x=metric, y="algorithm", data=df_nd,jitter=False, size=2, color=".3", linewidth=0)
+
+    sb.despine(trim=True)
+
+    algorithm_names = [algorithm_name_mapping[x] for x in algorithms]
+    ax.set_yticklabels(['%s ($n$=%d )'%(algorithm_names[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
+    #sb.set_context("talk", font_scale=3.0)
+    #plt.xticks(rotation="90")
+    plt.xlabel(value_label)
+    plt.subplots_adjust(left=0.5, bottom=0.1, top=0.9)
+    plt.savefig(outputDir + '/'+value_label+'.box_plot.png', format='png')
+    plt.show()
+    plt.close()
+
+    return
+
+
+
+def plot_compare_median_consensus(output_dir, df_order, metric, type = 'ts',DISPLAY = 0):
+    plt.figure()
+
+
+    if type =='ts':
+        #sb.tsplot(data=df_order, value=metric,time='order',unit="algorithm",condition="algorithm",err_style="unit_traces")
+
+        ax = sb.boxplot(x=metric, y="algorithm", data=df_order,
+                 whis=1.5, color="c")
+
+        # Add in points to show each observation
+        sb.stripplot(x=metric, y="algorithm", data=df_order,
+                jitter=True, size=3, color=".3", linewidth=0)
+        ax.set_xscale("log")
+        sb.despine(trim=True)
+
+       # plt.xlabel('images sorted by the average neuron distance of the median reconstruction')
+        plt.savefig(output_dir + '/compare_median_with_consensus_'+metric+'.png', format='png')
+
+
+
+    if DISPLAY:
+         plt.show()
+    plt.close()
+
+
 
 
 

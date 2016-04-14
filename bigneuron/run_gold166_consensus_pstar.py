@@ -60,7 +60,7 @@ def  gen_txt_jobs(neuron_distance_csv, input_dir, output_dir):
 
              output_eswc_path = out_dir+'/consensus.eswc'
              logfile = output_eswc_path+".log"
-             line1 = "./start_vaa3d.sh -x consensus_swc -f consensus_swc -i " +  input_dir +"/processed/*.swc   -o " + output_eswc_path + " -p 3 5 > "+logfile
+             line1 = "./start_vaa3d.sh -x consensus_swc -f consensus_swc -i " +  input_dir +"/processed/*.swc   -o " + output_eswc_path + " -p 6 5 > "+logfile
 
              #image_file = image_DIR+ '/'+ im[:-7]+'/'+im
              logfile= out_dir+"/median_distances.csv.log"
@@ -111,12 +111,15 @@ def  gen_qsub_jobs(neuron_distance_csv, input_dir, output_dir):
 
 
              output_eswc_path = out_dir+'/consensus.eswc'
+             output_distance_csv = out_dir+"/median_distances.csv"
+        #     if os.path.exists(output_distance_csv):
+         #        continue
              logfile = output_eswc_path+".log"
-             line1 = QMasterV3D+" -x consensus_swc -f consensus_swc -i " +  input_dir +"/processed/*.swc   -o " + output_eswc_path + " -p 6 5  > "+logfile
+             line1 = QMasterV3D+" -x consensus_swc -f consensus_swc -i " +  input_dir +"/processed/*.swc   -o " + output_eswc_path + " -p 3 5  > "+logfile
 
              #image_file = image_DIR+ '/'+ im[:-7]+'/'+im
              logfile= out_dir+"/median_distances.csv.log"
-             line2 =  QMasterV3D+" -x consensus_swc -f median_swc -i "+ input_dir +"/processed/*.swc  "+ output_eswc_path +" -o "+  out_dir+"/median_distances.csv > "+logfile
+             line2 =  QMasterV3D+" -x consensus_swc -f median_swc -i "+ output_eswc_path +"_SelectedNeurons.ano  "+ output_eswc_path +" -o "+  out_dir+"/median_distances.csv > "+logfile
 
 
              gold_swc = df_image.iloc[0]['gold_swc_file']
@@ -135,7 +138,8 @@ def  gen_qsub_jobs(neuron_distance_csv, input_dir, output_dir):
 
 
 #### main
-data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all_soma_sort_0322"
+data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/silver/0401_gold163_all_soma_sort"
+data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all_soma_sort_0328"
 output_dir = data_DIR
 neuron_distance_csv = "/data/mat/xiaoxiaol/data/big_neuron/silver/20160113_merged_gold_gt/neuron_distances_with_gold.csv"
 
