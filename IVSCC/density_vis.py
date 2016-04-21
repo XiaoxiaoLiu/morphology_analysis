@@ -11,7 +11,7 @@ from scipy import stats
 
 def read_swc(infile):
     ###n,type,x,y,z,radius,parent
-     swc_df = pd.read_csv(infile, sep=" ",skiprows = 3, header =None, names =['n','type','x','y','z','radius','parent'] )
+     swc_df = pd.read_csv(infile, sep=" ", header =None, comment="#",names =['n','type','x','y','z','radius','parent'] )
      return swc_df
 
 
@@ -29,7 +29,6 @@ def density2d_plot(swc_file):
 
 def main():
     # read swc files
-
     data_DIR ="/data/mat/xiaoxiaol/data/lims2/ivscc_0411"
     SWC_DIR = data_DIR+'/SWC'
     df_features_with_tags = pd.read_csv(data_DIR+'/ivscc_0411_features_with_meta.csv')
@@ -52,10 +51,11 @@ def main():
              z_coords.extend(df_swc.z)
         print "total number of node:",len(z_coords)
         f.close()
+
         plt.figure()
         lm= sn.distplot(z_coords,vertical=True, hist=True, kde=False)
         lm.set(ylim=(-1000, 5000))
-#, hist=True, kde=True)
+
         plt.ylabel('depth')
         plt.xlabel('counts')
         plt.title(cre+"("+str(len(df_cre))+")")

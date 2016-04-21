@@ -29,7 +29,7 @@ lookup_image_id_table_file = data_DIR +"/../image_name_lookup_table.csv"
 df_extract_median_consensus_distance = pd.read_csv(data_DIR+'/analysis_results/extracted_median_consensus.csv')
 
 merged_csv= data_DIR+'/consensus_median_algorithm_all_nd_ave.csv'
-EXTRACT_NUMBERS=1
+EXTRACT_NUMBERS=0
 
 if EXTRACT_NUMBERS == 1:
     dfg_t=df_extract_median_consensus_distance.groupby('algorithm')
@@ -147,6 +147,5 @@ plt_dist.plot_compare_consensus_distance(merged_csv, data_DIR,algorithms_ordered
                                          value_label='Weighted Average Neuron Distance 12 (to the Gold Standard)')
 #plt_dist.plot_similarities(merged_csv, data_DIR,algorithms_ordered,metric='weighted_ave_neuron_distance',CASE_BY_CASE_PLOT = 0,
 #                                        value_label='Similarities on  Weighted Average Neuron Distance (to the Gold Standard)')
-
 df_merge_m_c=df_merge[ (df_merge['algorithm'] == "median") |( df_merge['algorithm'] == "consensus")]
-plt_dist.plot_compare_median_consensus(output_dir=data_DIR,df_order= df_merge_m_c, metric='weighted_ave_neuron_distance', type = 'ts',DISPLAY = 1)
+plt_dist.plot_compare_median_consensus(output_dir=data_DIR,df_order= df_merge_m_c, metric='weighted_ave_neuron_distance', DISPLAY = 1)

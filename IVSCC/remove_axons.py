@@ -15,7 +15,7 @@ import os
 
 def read_swc(infile):
     ###n,type,x,y,z,radius,parent
-     swc_df = pd.read_csv(infile, sep=" ",skiprows = 3, header =None, names =['n','type','x','y','z','radius','parent'] )
+     swc_df = pd.read_csv(infile, sep=" ",comment = "#", header =None, names =['n','type','x','y','z','radius','parent'] )
      return swc_df
 
 

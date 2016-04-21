@@ -31,7 +31,7 @@ def cluster_specific_features(df_all, assign_ids, feature_names, output_csv_fn):
             b = df_all.iloc[ids_b][feature]
 
             t_stats,pval = stats.ttest_ind(a,b,equal_var=False)
-            print pval
+            #print pval
             df_pvalues.loc[feature,cluster_id] = -np.log10(pval)
 
 
@@ -41,17 +41,21 @@ def cluster_specific_features(df_all, assign_ids, feature_names, output_csv_fn):
     df_pvalues.index.name = "Features"
     df_pvalues.columns.name ="Clusters"
     d=df_pvalues[df_pvalues.columns].astype(float)
-    g = sns.heatmap(data=d,linewidths=0.1)
+
+    pl.figure(figsize=(15,20))
+    g = sns.heatmap(data=d,linewidths=0.1,vmin=3, vmax=20)
      #               cmap =sns.color_palette("coolwarm",7, as_cmap=True))
 
     g.set_xticklabels(labels)
     pl.yticks(rotation=0)
     pl.xticks(rotation=90)
-    pl.subplots_adjust(left=0.3, right=0.9, top=0.9, bottom=0.1)
-    pl.title('-log10(P value)')
+    pl.subplots_adjust(left=0.4,  bottom=0.3)
+    pl.title(output_csv_fn +':-log10(P value)')
+
+
     filename = output_csv_fn + '.png'
     pl.savefig(filename, dpi=300)
-    pl.show()
+    #pl.show()
     pl.close()
 
 
@@ -170,7 +174,7 @@ if 0:
      df_i=df_i[INHIBITORY_cols]
      df_i.to_csv(data_DIR+'/inhibitory_features.csv', index=False)
 
-if 1:
+if 0:
     df_e=pd.read_csv(data_DIR+'/excitatory_features.csv')
     df_i=pd.read_csv(data_DIR+'/inhibitory_features.csv')
     ###  feature specific
@@ -178,7 +182,31 @@ if 1:
     assign_ids=np.array(df_e['m-type'])
 
     cluster_specific_features(df_e, assign_ids, APICAL_features, data_DIR+'/exci_pvalues.csv')
-    print done
+
 
     assign_ids=np.array(df_i['m-type'])
     cluster_specific_features(df_i, assign_ids, AXON_features, data_DIR+'/inh_pvalues.csv')
+
+
+if 1:
+    df_e=pd.read_csv(data_DIR+'/excitatory_features.csv')
+    layers = np.unique(df_e['layer'])
+    print layers
+    dfg_e = df_e.groupby('layer')
+
+    for layer in layers:
+        print layer
+        df_layer = dfg_e.get_group(layer)
+        assign_ids=np.array(df_layer['m-type'])
+        cluster_specific_features(df_layer, assign_ids, APICAL_features, data_DIR+'/'+layer+'_exci.csv')
+
+
+    df_i=pd.read_csv(data_DIR+'/inhibitory_features.csv')
+    layers = np.unique(df_i['layer'])
+    dfg_i = df_i.groupby('layer')
+
+    for layer in layers:
+        print layer
+        df_layer = dfg_i.get_group(layer)
+        assign_ids = np.array(df_layer['m-type'])
+        cluster_specific_features(df_layer, assign_ids, AXON_features, data_DIR+'/'+layer+'_inh.csv')

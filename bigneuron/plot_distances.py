@@ -245,30 +245,77 @@ def TBD_plot_compare_consensus_distance_box_plot(distance_csv, outputDir,algorit
 
 
 
-def plot_compare_median_consensus(output_dir, df_order, metric, type = 'ts',DISPLAY = 0):
-    plt.figure()
+def plot_compare_median_consensus(output_dir, df_order, metric,DISPLAY = 0):
+   TYPE = 'diff'
 
 
-    if type =='ts':
-        #sb.tsplot(data=df_order, value=metric,time='order',unit="algorithm",condition="algorithm",err_style="unit_traces")
+   if DISPLAY:
+        plt.figure()
 
-        ax = sb.boxplot(x=metric, y="algorithm", data=df_order,
+
+   if TYPE == 'box':
+       ax = sb.boxplot(x=metric, y="algorithm", data=df_order,
                  whis=1.5, color="c")
 
-        # Add in points to show each observation
-        sb.stripplot(x=metric, y="algorithm", data=df_order,
+       # Add in points to show each observation
+       sb.stripplot(x=metric, y="algorithm", data=df_order,
                 jitter=True, size=3, color=".3", linewidth=0)
-        ax.set_xscale("log")
-        sb.despine(trim=True)
-
+       ax.set_xscale("log")
+       sb.despine(trim=True)
        # plt.xlabel('images sorted by the average neuron distance of the median reconstruction')
-        plt.savefig(output_dir + '/compare_median_with_consensus_'+metric+'.png', format='png')
+       plt.savefig(output_dir + '/compare_median_with_consensus_'+metric+'.png', format='png')
+
+       if DISPLAY:
+             plt.show()
+       plt.close()
 
 
 
-    if DISPLAY:
-         plt.show()
-    plt.close()
+   df_order = df_order.sort([metric], ascending=[0])
+
+
+   if DISPLAY:
+         plt.figure()
+
+   if TYPE =='ts':
+        #sb.factorplot(x='order', y=metric, hue="algorithm", data=df_order, ci=None, kind="point",join=True)
+        sb.pointplot(x='image_file_name', y=metric,data = df_order,hue="algorithm", join=True)
+        #sb.pointplot(x='image_file_name', y=metric,data = df_consensus, join=True)
+
+        plt.xlabel('images sorted by the average neuron distance of the median reconstruction')
+        plt.xticks(rotation='vertical')
+        plt.subplots_adjust(bottom=0.5, right=0.8, top=0.9)
+
+        plt.savefig(output_dir + '/compare_median_with_consensus_'+metric+'_ts.png', format='png')
+
+   if TYPE =='diff':
+        df_median = df_order[df_order['algorithm']== 'median']
+        df_consensus = df_order[df_order['algorithm']== 'consensus']
+        df_median.sort(['image_file_name'], ascending=[0])
+        df_consensus.sort(['image_file_name'], ascending=[0])
+
+        df_diff=pd.DataFrame(columns=[metric, 'image_file_name'])
+
+        y = np.array(df_consensus[metric].values - df_median[metric].values)
+        #df_diff['image_file_name'] = df_consensus['image_file_name']
+        #df_diff.sort([metric], ascending=[0])
+        f_big = len(np.nonzero(y<0)[0])
+
+        print "consensus is closer to each reconstructions than the median reconstructions in %.2f percent of the %d total images"  %( (100.0* f_big)/len(y), len(y))
+
+        #sb.pointplot(x='image_file_name', y=metric, data = df_diff, join=True)
+        y.sort()
+        plt.plot(range(len(y)),y,"b.-")
+        plt.plot(range(len(y)), np.zeros(len(y)),'r-')
+        plt.xlabel('images sorted by the average neuron distance of the median reconstruction')
+        plt.ylabel("d(conensus, gs) - d(median, gs) ")
+
+        plt.savefig(output_dir + '/compare_median_with_consensus_'+metric+'_diff.png', format='png')
+
+   if DISPLAY:
+        plt.show()
+        plt.close()
+
 
 
 
@@ -295,10 +342,7 @@ def plot_compare_consensus_distance(distance_csv, outputDir,algorithms,metric, C
                 plt.xlabel(value_label)
                 plt.subplots_adjust(left=0.4, bottom=0.1, top=0.9)
                 plt.savefig(outputDir + '/sorted/figs/' + image.split('/')[-1] + '_nd.png', format='png')
-
                 plt.close()
-
-
             else:
                 print image
         #     if df_image_cur.shape[0] > 10:
