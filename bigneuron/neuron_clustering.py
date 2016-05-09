@@ -13,7 +13,7 @@ else:
 p=  WORK_PATH + '/src/morphology_analysis'
 sys.path.append(p)
 
-import morph_clustering.feature_clustering as fc
+from clustering import morph_cluster as feature_clustering
 import utilities.morph_nfb_2_csv as nfb
 
 
@@ -50,7 +50,7 @@ def cluster_analysis(all_feature_file,output_dir,feature_type='all', method='war
         postfix += "_ol_clipped"
 
     print "??"
-    redundancy_removed_features_names = fc.remove_correlated_features(merged, feature_names, 0.95)
+    redundancy_removed_features_names = feature_clustering.remove_correlated_features(merged, feature_names, 0.95)
     print(" The %d features that are not closely correlated are %s" % (
         len(redundancy_removed_features_names), redundancy_removed_features_names))
 
@@ -58,13 +58,13 @@ def cluster_analysis(all_feature_file,output_dir,feature_type='all', method='war
 
     swc_screenshot_folder = None
     if method == "ap" or method == "all":
-        num_clusters, dunn_index1 = fc.affinity_propagation(merged, redundancy_removed_features_names,
+        num_clusters, dunn_index1 = feature_clustering.affinity_propagation(merged, redundancy_removed_features_names,
                                                      output_dir + '/ap' + postfix,
                                                     swc_screenshot_folder, REMOVE_OUTLIERS)
 
     num_clusters=13
     if method == "ward" or method == "all":
-        dunn_index2 = fc.ward_cluster(merged, redundancy_removed_features_names, num_clusters,
+        dunn_index2 = feature_clustering.ward_cluster(merged, redundancy_removed_features_names, num_clusters,
                                output_dir + '/ward' + postfix, swc_screenshot_folder,
                                REMOVE_OUTLIERS)
 
