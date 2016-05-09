@@ -29,7 +29,11 @@ lookup_image_id_table_file = data_DIR +"/../image_name_lookup_table.csv"
 df_extract_median_consensus_distance = pd.read_csv(data_DIR+'/analysis_results/extracted_median_consensus.csv')
 
 merged_csv= data_DIR+'/consensus_median_algorithm_all_nd_ave.csv'
-EXTRACT_NUMBERS=0
+EXTRACT_NUMBERS=1
+
+#METRIC = 'neuron_distance_12'
+METRIC = 'neuron_distance_ave'
+REPORTING_METRIC = 'weighted_neuron_distance_ave'
 
 if EXTRACT_NUMBERS == 1:
     dfg_t=df_extract_median_consensus_distance.groupby('algorithm')
@@ -64,8 +68,8 @@ if EXTRACT_NUMBERS == 1:
     #read nd distance csv
     df_nd = pd.read_csv(neuron_distance_csv)
     before = df_nd.shape[0]
-    df_nd = df_nd[df_nd['neuron_distance_12'] != 0]  # neuron distance bug, one node swc will have nd=0
-    df_nd = df_nd[df_nd['neuron_distance_12'] != -1]  # neuron distance bug, one node swc will have nd=0
+    df_nd = df_nd[df_nd[METRIC] != 0]  # neuron distance bug, one node swc will have nd=0
+    df_nd = df_nd[df_nd[METRIC] != -1]  # neuron distance bug, one node swc will have nd=0
     after = df_nd.shape[0]
     if after < before:
         print "\n\nwarning: removing 0 nd entries:", after-before
@@ -90,16 +94,16 @@ if EXTRACT_NUMBERS == 1:
 
 
     # compose a spreadsheet for comparison
-    df_merge = pd.DataFrame(columns=['image_file_name', 'algorithm', 'weighted_ave_neuron_distance'])
+
+    df_merge = pd.DataFrame(columns=['image_file_name', 'algorithm', REPORTING_METRIC])
     i=0
     for image in images:#images_have_consensus_results:
-         #print image
+         print image
          df_nd_image = df_nd_g.get_group(image)
          num_rows = df_nd_image.shape[0]
          #print num_rows
          for j in range(num_rows):
-             df_merge.loc[i] = [image, df_nd_image.iloc[j]['algorithm'], df_nd_image.iloc[j]['neuron_distance_12'] ]
-             #df_merge.loc[i] = [image, df_nd_image.iloc[j]['algorithm'], df_nd_image.iloc[j]['neuron_distance_ave'] ]
+             df_merge.loc[i] = [image, df_nd_image.iloc[j]['algorithm'], df_nd_image.iloc[j][METRIC] ]
              i= i+1
          df_con_matching = df_consensus_wd[df_consensus_wd['image_file_name']==image]
 
@@ -109,11 +113,10 @@ if EXTRACT_NUMBERS == 1:
              continue
          median_alg = rp.matchFileToAlgorithmName( median_swc_file.iloc[0]['swc_file_name'])
          df_median = df_nd_image[df_nd_image['algorithm']== median_alg]
-         median_nd = df_median.iloc[0]['neuron_distance_12']
+         median_nd = df_median.iloc[0][METRIC]
 
          if df_con_matching.shape[0] >0 :
-             #consensus_wd_t = df_con_matching.iloc[0]['weighted_neuron_distance_ave']
-             consensus_wd_t = df_con_matching.iloc[0]['weighted_neuron_distance_12']
+             consensus_wd_t = df_con_matching.iloc[0][REPORTING_METRIC]
              #print consensus_wd_t
              df_merge.loc[i] = [image,'consensus',consensus_wd_t]
              i= i+1
@@ -131,21 +134,39 @@ if EXTRACT_NUMBERS == 1:
 df_merge =pd.read_csv(merged_csv)
 algorithms = np.unique(df_merge.algorithm)
 dfg = df_merge.groupby('algorithm')
-sample_size_per_algorithm = np.zeros(algorithms.size)
-for i in range( algorithms.size):
-    sample_size_per_algorithm[i] = (dfg.get_group(algorithms[i]).shape[0])
 
-order = sample_size_per_algorithm.argsort()
+
+# order by sample size
+# sample_size_per_algorithm = np.zeros(algorithms.size)
+# for i in range( algorithms.size):
+#     sample_size_per_algorithm[i] = (dfg.get_group(algorithms[i]).shape[0])
+#
+# order = sample_size_per_algorithm.argsort()
+# algorithms_ordered = algorithms[order[::-1]]
+
+
+#remove algorithms that produce too few results
+for i in range( algorithms.size):
+      siz = (dfg.get_group(algorithms[i]).shape[0])
+      if siz<100:
+          df_merge = df_merge[df_merge['algorithm'] != algorithms[i]]
+
+algorithms = np.unique(df_merge.algorithm)
+ave_dis_algorithm = np.zeros(algorithms.size)
+for i in range( algorithms.size):
+    df_alg=dfg.get_group(algorithms[i])
+    ave_dis_algorithm[i] = df_alg[REPORTING_METRIC].mean()
+
+order = ave_dis_algorithm.argsort()
 algorithms_ordered = algorithms[order[::-1]]
 
 
 
 
-
 #error bar plot
-plt_dist.plot_compare_consensus_distance(merged_csv, data_DIR,algorithms_ordered,metric='weighted_ave_neuron_distance',CASE_BY_CASE_PLOT = 0,
-                                         value_label='Weighted Average Neuron Distance 12 (to the Gold Standard)')
+plt_dist.plot_compare_consensus_distance(merged_csv, data_DIR,algorithms_ordered,metric=REPORTING_METRIC,CASE_BY_CASE_PLOT = 1,
+                                         value_label='Weighted Average Neuron Distance  (w.r.t.  Gold Standard)')
 #plt_dist.plot_similarities(merged_csv, data_DIR,algorithms_ordered,metric='weighted_ave_neuron_distance',CASE_BY_CASE_PLOT = 0,
 #                                        value_label='Similarities on  Weighted Average Neuron Distance (to the Gold Standard)')
 df_merge_m_c=df_merge[ (df_merge['algorithm'] == "median") |( df_merge['algorithm'] == "consensus")]
-plt_dist.plot_compare_median_consensus(output_dir=data_DIR,df_order= df_merge_m_c, metric='weighted_ave_neuron_distance', DISPLAY = 1)
+plt_dist.plot_compare_median_consensus(output_dir=data_DIR,df_order= df_merge_m_c, metric=REPORTING_METRIC, DISPLAY = 1)

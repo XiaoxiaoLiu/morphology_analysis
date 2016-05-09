@@ -1,5 +1,6 @@
 __author__ = 'xiaoxiaol'
 __author__ = 'xiaoxiaol'
+__author__ = 'xiaoxiaol'
 __author__ = 'xiaoxiaoliu'
 
 
@@ -114,27 +115,18 @@ def  gen_qsub_jobs(neuron_distance_csv, input_dir, output_dir):
              output_distance_csv = out_dir+"/median_distances.csv"
         #     if os.path.exists(output_distance_csv):
          #        continue
-             logfile = output_eswc_path+".log"
-             line1 = QMasterV3D+" -x consensus_swc -f consensus_swc -i " +  input_dir +"/processed/*.swc   -o " + output_eswc_path + " -p 3 5  > "+logfile
 
-             #image_file = image_DIR+ '/'+ im[:-7]+'/'+im
-             logfile= out_dir+"/median_distances.csv.log"
-             line2 =  QMasterV3D+" -x consensus_swc -f median_swc -i "+ output_eswc_path +"_SelectedNeurons.ano  "+ output_eswc_path +" -o "+  out_dir+"/median_distances.csv > "+logfile
 
 
              gold_swc = df_image.iloc[0]['gold_swc_file']
              gold_swc = out_dir+'/00_'+gold_swc.split('/')[-1]
 
              distance_log_file = output_eswc_path+".weighted.dist.log"
-             # if os.path.exists(distance_log_file):
-             #     continue
-             line3 =  QMasterV3D+" -x neuron_weighted_distance -f  neuron_weighted_distance  -i "+ output_eswc_path +" "+ gold_swc +" -o "+distance_log_file
-
+             line =  "java -jar /data/mat/xiaoxiaol/data/big_neuron/DiademMetric/DiademMetric.jar  -G "+ gold_swc +" -T "+ output_eswc_path +" -D 5 -m true -o "+distance_log_file
+             #java -jar DiademMetric.jar -G ./Xiao_Xiao_test1_sn.swc  -T ./test.swc -D 5 -m true
 
 
              lines = line1+";"+line2+";"+line3
-             #lines = line3
-             print lines
              bn.run_command_lines(lines, 1,"./qsubs", count)
              count = count +1
 
@@ -144,10 +136,9 @@ def  gen_qsub_jobs(neuron_distance_csv, input_dir, output_dir):
 
 #### main
 data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/silver/0401_gold163_all_soma_sort"
-
+data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all_soma_sort_0328"
 output_dir = data_DIR
 neuron_distance_csv = "/data/mat/xiaoxiaol/data/big_neuron/silver/20160113_merged_gold_gt/neuron_distances_with_gold.csv"
-
 
 gen_qsub_jobs(neuron_distance_csv,data_DIR, output_dir)
 

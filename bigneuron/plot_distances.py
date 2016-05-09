@@ -291,14 +291,14 @@ def plot_compare_median_consensus(output_dir, df_order, metric,DISPLAY = 0):
    if TYPE =='diff':
         df_median = df_order[df_order['algorithm']== 'median']
         df_consensus = df_order[df_order['algorithm']== 'consensus']
-        df_median.sort(['image_file_name'], ascending=[0])
-        df_consensus.sort(['image_file_name'], ascending=[0])
+        df_median.sort(['image_file_name'], ascending=[0], inplace=True)
+        df_consensus.sort(['image_file_name'], ascending=[0], inplace=True)
 
         df_diff=pd.DataFrame(columns=[metric, 'image_file_name'])
 
         y = np.array(df_consensus[metric].values - df_median[metric].values)
         #df_diff['image_file_name'] = df_consensus['image_file_name']
-        #df_diff.sort([metric], ascending=[0])
+        #df_diff.sort([metric], ascending=[0], inplace=True)
         f_big = len(np.nonzero(y<0)[0])
 
         print "consensus is closer to each reconstructions than the median reconstructions in %.2f percent of the %d total images"  %( (100.0* f_big)/len(y), len(y))
@@ -311,6 +311,14 @@ def plot_compare_median_consensus(output_dir, df_order, metric,DISPLAY = 0):
         plt.ylabel("d(conensus, gs) - d(median, gs) ")
 
         plt.savefig(output_dir + '/compare_median_with_consensus_'+metric+'_diff.png', format='png')
+
+        print "investigate the following cases, where consensus is worse than median:"
+        for im in df_median['image_file_name']:
+              dif = df_median[df_median['image_file_name'] == im].iloc[0][metric] - df_consensus[df_consensus['image_file_name'] == im].iloc[0][metric]
+              if  dif < -5.0:
+                   print im +"  ,with a diff = " + str(dif)
+
+
 
    if DISPLAY:
         plt.show()
@@ -334,14 +342,20 @@ def plot_compare_consensus_distance(distance_csv, outputDir,algorithms,metric, C
             if df_image_cur.shape[0] > 0:
                 plt.figure()
 
+                df_image_cur.sort([metric], ascending=[1], inplace=True)
                 sb.barplot(y=range(df_image_cur['algorithm'].size),x=df_image_cur[metric],orient="h")
                 #plt.xticks(range(df_image_cur.swc_file.size), df_image_cur['algorithm'].values[:], rotation="90")
                 algorithm_names = [algorithm_name_mapping[x] for x in df_image_cur['algorithm']]
+                for index, item in enumerate(algorithm_names):
+                    if (item == "Consensus"):
+                            algorithm_names[index] = "==>Consensus"
+                    if (item == "median"):
+                            algorithm_names[index] = "==>Median"
                 plt.yticks(range(df_image_cur['algorithm'].size), np.array(algorithm_names))
 
                 plt.xlabel(value_label)
                 plt.subplots_adjust(left=0.4, bottom=0.1, top=0.9)
-                plt.savefig(outputDir + '/sorted/figs/' + image.split('/')[-1] + '_nd.png', format='png')
+                plt.savefig(outputDir + '/case_by_case/' + image.split('/')[-1] + '_nd.png', format='png')
                 plt.close()
             else:
                 print image
@@ -362,6 +376,11 @@ def plot_compare_consensus_distance(distance_csv, outputDir,algorithms,metric, C
     sb.set_context("talk", font_scale=0.7)
     a=sb.barplot(y='algorithm', x=metric, data=df_nd,order=algorithms)
     algorithm_names = [algorithm_name_mapping[x] for x in algorithms]
+    for index, item in enumerate(algorithm_names):
+                    if (item == "Consensus"):
+                            algorithm_names[index] = "==>Consensus"
+                    if (item == "median"):
+                            algorithm_names[index] = "==>Median"
     a.set_yticklabels(['%s ($n$=%d )'%(algorithm_names[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
     #sb.set_context("talk", font_scale=3.0)
     #plt.xticks(rotation="90")

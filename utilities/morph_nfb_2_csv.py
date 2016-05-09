@@ -11,6 +11,11 @@ GMI_FEATURE_TAGS = np.array(
     ['moment1', 'moment2', 'moment3', 'moment4', 'moment5', 'moment6', 'moment7', 'moment8', 'moment9', 'moment10',
      'moment11', 'moment12', 'moment13', 'avgR'])
 
+def get_GL_feature_names():
+    return GL_FEATURE_TAGS
+
+def get_GMI_feature_names():
+    return GMI_FEATURE_TAGS
 
 
 # ===================================================================

@@ -15,19 +15,7 @@ sys.path.append(p)
 import  bigneuron.median_compare_to_consensus as mc2c
 
 import pandas as pd
-import numpy as np
-#DATA='/home/xiaoxiaol/work/data'
-#DATA='/data/mat/xiaoxiaol/data/big_neuron'
-DATA='/mnt/BigNeuron/data'
-test = 0
 
-
-###################################################################################
-
-#DATA='/home/xiaoxiaol/work/data'
-#DATA='/data/mat/xiaoxiaol/data/big_neuron'
-DATA='/mnt/BigNeuron/data'
-test = 0
 
 
 subfolder="0401_gold163_all_soma_sort"

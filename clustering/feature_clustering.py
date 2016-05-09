@@ -1,3 +1,6 @@
+__author__ = 'xiaoxiaol'
+
+
 import numpy as np
 import pylab as pl
 import scipy
@@ -23,7 +26,7 @@ from itertools import cycle
 ZSCORE_OUTLIER_THRESHOLD = 3.5
 ####################################
 
-sns.set_context("poster")
+sns.set_context("paper")
 
 
 def zscore(features, remove_outlier=0):
@@ -114,50 +117,85 @@ def generateLinkerFileFromDF(df_in, output_ano_file, strip_path=False):
 
 
 ##############  heatmap plot: hierachical clustering  ########
-#
-# def heatmap_plot_distancematrix(df_distanceMatrix, merged, output_dir, title=None):
-#     pl.figure()
-#
-#     # Create a custom palette for creline colors
-#     cre_lines = np.unique(merged['cre_line'])
-#     cre_line_pal = sns.color_palette("hls", len(cre_lines))
-#     cre_line_lut = dict(zip(cre_lines, cre_line_pal))  # map creline type to color
-#     creline_colors = merged['cre_line'].map(cre_line_lut)
-#
-#     # Create a custom palette for dendrite_type colors  thre colors
-#     dendrite_types = np.unique(merged['dendrite_type'])
-#     dendrite_type_pal = sns.color_palette(['white','gray','black'])
-#     dendrite_type_lut = dict(zip(dendrite_types, dendrite_type_pal))
-#     dendritetype_colors = merged['dendrite_type'].map(dendrite_type_lut)
-#
-#     # Create a custom colormap for the heatmap values
-#     #cmap = sns.diverging_palette(240, 10, as_cmap=True)
-#
-#     g = sns.clustermap(df_distanceMatrix, method='ward', metric='euclidean', linewidths=0.0,
-#                        row_colors=dendritetype_colors, col_colors=creline_colors, cmap=cmap, xticklabels=False,
-#                        yticklabels=False)
-#     if title:
-#         pl.title(title)
-#     # Legend for row and col colors
-#
-#     for label in dendrite_types:
-#         pl.bar(0, 0, color=dendrite_type_lut[label], label=label, linewidth=0)
-#         pl.legend(loc="center", ncol=1)
-#
-#     for label in cre_lines:
-#         g.ax_col_dendrogram.bar(0, 0, color=cre_line_lut[label], label=label, linewidth=0)
-#         g.ax_col_dendrogram.legend(loc="center", ncol=3)
-#
-#     pl.title('Similarities')
-#
-#     filename = output_dir + '/similarity_heatmap.png'
-#     pl.savefig(filename, dpi=300)
-#     print("save similarity matrix heatmap figure to :" + filename)
-#     pl.close()
-   # return g
+
+def heatmap_plot_distancematrix(df_distanceMatrix, merged, output_dir, title=None):
+    pl.figure()
+
+    # Create a custom palette for creline colors
+    cre_lines = np.unique(merged['cre_line'])
+    cre_line_pal = sns.color_palette("hls", len(cre_lines))
+    cre_line_lut = dict(zip(cre_lines, cre_line_pal))  # map creline type to color
+    creline_colors = merged['cre_line'].map(cre_line_lut)
+
+    # Create a custom palette for dendrite_type colors  thre colors
+    dendrite_types = np.unique(merged['dendrite_type'])
+    dendrite_type_pal = sns.color_palette(['white','gray','black'])
+    dendrite_type_lut = dict(zip(dendrite_types, dendrite_type_pal))
+    dendritetype_colors = merged['dendrite_type'].map(dendrite_type_lut)
+
+    # Create a custom colormap for the heatmap values
+    #cmap = sns.diverging_palette(240, 10, as_cmap=True)
+
+    g = sns.clustermap(df_distanceMatrix, method='ward', metric='euclidean', linewidths=0.0,
+                       row_colors=dendritetype_colors, col_colors=creline_colors, cmap=cmap, xticklabels=False,
+                       yticklabels=False)
+    if title:
+        pl.title(title)
+    # Legend for row and col colors
+
+    for label in dendrite_types:
+        pl.bar(0, 0, color=dendrite_type_lut[label], label=label, linewidth=0)
+        pl.legend(loc="center", ncol=1)
+
+    for label in cre_lines:
+        g.ax_col_dendrogram.bar(0, 0, color=cre_line_lut[label], label=label, linewidth=0)
+        g.ax_col_dendrogram.legend(loc="center", ncol=3)
+
+    pl.title('Similarities')
+
+    filename = output_dir + '/similarity_heatmap.png'
+    pl.savefig(filename, dpi=300)
+    print("save similarity matrix heatmap figure to :" + filename)
+    pl.close()
+    return g
 
 
-def heatmap_plot_zscore(df_zscore_features, df_all, output_dir, title=None):
+def heatmap_plot_zscore(df_zscore_features, output_dir, title=None):
+    linkage = hierarchy.linkage(df_zscore_features, method='ward', metric='euclidean')
+
+    data = df_zscore_features.transpose()
+    row_linkage = hierarchy.linkage(data, method='ward', metric='euclidean')
+    feature_order = hierarchy.leaves_list(row_linkage)
+
+    #print data.index
+    matchIndex = [data.index[x] for x in feature_order]
+    #print matchIndex
+    data = data.reindex(matchIndex)
+
+    pl.figure()
+    g = sns.clustermap(data, row_cluster = False, col_linkage=linkage, method='ward', metric='euclidean',
+                       linewidths = 0.0,
+                       cmap = sns.cubehelix_palette(light=1, as_cmap=True),
+                       xticklabels=False, yticklabels=True,figsize=(30,10))
+
+    cax = pl.gcf().axes[-1]
+    cax.tick_params(labelsize=10)
+
+
+    if title:
+        pl.title(title)
+
+
+    filename = output_dir + '/zscore_feature_heatmap.png'
+    pl.savefig(filename, dpi=300)
+    pl.show()
+    print("save zscore matrix heatmap figure to :" + filename)
+    pl.close()
+    return linkage
+
+
+
+def heatmap_plot_zscore_with_dendrite_type(df_zscore_features, df_all, output_dir, title=None):
 
     # Create a custom palette for dendrite_type colors
     dendrite_types = [np.nan, 'aspiny', 'sparsely spiny', 'spiny']
@@ -450,6 +488,41 @@ def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, s
         os.mkdir(output_dir)
 
     df_assign_id = pd.DataFrame()
+    df_assign_id.index = df_all.index
+    df_assign_id['cluster_id'] = assign_ids
+    df_assign_id.to_csv(output_dir + "/cluster_id.csv", index=False)
+
+    clusters = np.unique(assign_ids)
+    num_cluster = len(clusters)
+
+    cluster_list = []  # for dunn index calculation
+    print("There are %d clusters in total" % num_cluster)
+    df_cluster = pd.DataFrame()
+    df_zscore_cluster = pd.DataFrame()
+    for i in clusters:
+        ids = np.nonzero(assign_ids == i)[0]  # starting from  0
+        df_cluster = df_all.iloc[ids]
+        print("  %d neurons in cluster %d" % (df_cluster.shape[0], i))
+        output_single_cluster_results(df_cluster, output_dir, "/cluster_" + str(i), snapshots_dir)
+
+        df_zscore_cluster = df_zscores.iloc[ids]
+        csv_file2 = output_dir + '/cluster_zscore_' + str(i) + '.csv'
+        df_zscore_cluster.to_csv(csv_file2, index=False)
+
+        cluster_list.append(df_zscore_cluster.values)
+
+    ## pick the cluster specific feature and plot histogram
+    cluster_specific_features(df_all, assign_ids, feature_names, output_dir+'/pvalues.csv')
+    return cluster_list
+
+
+
+
+def output_clusters_ivscc(assign_ids, df_zscores, df_all, feature_names, output_dir, snapshots_dir=None):
+    if not os.path.exists(output_dir):
+        os.mkdir(output_dir)
+
+    df_assign_id = pd.DataFrame()
     df_assign_id['specimen_name'] = df_all['specimen_name']
     df_assign_id['cluster_id'] = assign_ids
     df_assign_id.to_csv(output_dir + "/cluster_id.csv", index=False)
@@ -478,7 +551,7 @@ def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, s
     return cluster_list
 
 
-####### ward  hierachichal clustering  ###########
+
 def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_dir=None, RemoveOutliers = 0):
   print("\n\n\n  ***************  ward computation, max_cluster = %d  *************:" % max_cluster_num)
 
@@ -499,13 +572,48 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_d
       output_dir + '/zscore.csv', RemoveOutliers)
   if (df_outliers.shape[0] > 0 ):
     output_single_cluster_results(df_outliers, output_dir, "outliers", snapshots_dir)
-  linkage = heatmap_plot_zscore(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
+  linkage = heatmap_plot_zscore(df_zscores, output_dir, "feature zscores")
 
   assignments = hierarchy.fcluster(linkage, max_cluster_num, criterion="maxclust")
   #hierarchy.dendrogram(linkage)
 
   ## put assignments into ano files and csv files
   clusters_list = output_clusters(assignments, df_zscores, df_all_outlier_removed, feature_names, output_dir, snapshots_dir)
+  dunn_index = dunn(clusters_list)
+  print("dunn index is %f" % dunn_index)
+  return linkage,df_zscores
+
+
+
+
+####### ward  hierachichal clustering  ###########
+def ward_cluster_ivscc(df_all, feature_names, max_cluster_num, output_dir, snapshots_dir=None, RemoveOutliers = 0):
+  print("\n\n\n  ***************  ward computation, max_cluster = %d  *************:" % max_cluster_num)
+
+  if not os.path.exists(output_dir):
+    os.mkdir(output_dir)
+  else:
+    os.system("rm -r  " + output_dir + '/*')
+
+  #### similarity plots
+  # df_simMatrix = distance_matrix(df_all, feature_names, output_dir + "/morph_features_similarity_matrix.csv", 1)
+  # # visualize heatmap using ward on similarity matrix
+  # out = heatmap_plot_distancematrix(df_simMatrix, df_all, output_dir, "Similarity")
+  # linkage = out.dendrogram_row.calculated_linkage
+
+
+  ##### zscores  featuer plots
+  df_zscores, df_all_outlier_removed, df_outliers = get_zscore_features(df_all, feature_names,
+      output_dir + '/zscore.csv', RemoveOutliers)
+  if (df_outliers.shape[0] > 0 ):
+    output_single_cluster_results(df_outliers, output_dir, "outliers", snapshots_dir)
+  linkage = heatmap_plot_zscore_with_dendrite_type(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
+
+  assignments = hierarchy.fcluster(linkage, max_cluster_num, criterion="maxclust")
+  #hierarchy.dendrogram(linkage)
+
+  ## put assignments into ano files and csv files
+  clusters_list = output_clusters_ivscc(assignments, df_zscores, df_all_outlier_removed, feature_names, output_dir, snapshots_dir)
   dunn_index = dunn(clusters_list)
   print("dunn index is %f" % dunn_index)
   return linkage,df_zscores
@@ -564,12 +672,6 @@ def dunnindex_clusternumber(linkage,df_zscores, output_dir ="."):
 
 
 
-
-
-
-
-
-
 def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, RemoveOutliers=0):
   ######  Affinity Propogation ##############
 
@@ -621,141 +723,3 @@ def selectFeatures_MRMR(df_all, feature_names,  threshold=0, number_of_features=
     print cmd
     os.system(cmd)
     return
-
-
-
-def main(argv):
-
-    ######################################################################################################################
-
-    if (platform.system() == "Linux"):
-        WORK_PATH = "/local1/xiaoxiaol/work"
-    else:
-        WORK_PATH = "/Users/xiaoxiaoliu/work"
-    MRMR= WORK_PATH+"/src/mrmr_c_src/mrmr"
-    data_DIR = WORK_PATH + "/data/lims2/0923_pw_aligned"
-    default_all_feature_merged_file = data_DIR + '/meta_merged_allFeatures.csv'
-    default_output_dir = data_DIR + '/clustering_results'
-    default_swc_screenshot_folder =  data_DIR + "/figures/pw_aligned_bmps"
-
-    #######################################################################################################################
-
-
-    try:
-        opts, args = getopt.getopt(argv, "hi:o:m:f:", ["ifile=", "ofile=", "method=", "feature="])
-    except getopt.GetoptError:
-        print 'error: morph_cluster.py -i <inputfile> -o <outputfile> [-m <ap/ward/all>] [-f <rr/gmi/all/inv>]'
-        #sys.exit(1)
-
-    # example default setting
-    input_csv_file = default_all_feature_merged_file
-    output_dir = default_output_dir
-    swc_screenshot_folder = default_swc_screenshot_folder
-
-    method = "all"
-    SEL_FEATURE = "all"
-
-
-    if len(opts) < 2:
-        print 'usage: morph_cluster.py -i <input_csv_file> -o <output_dir> [-m <ap/ward/all>] [-f <rr/gmi/all/inv>]'
-        sys.stdout = open(output_dir + '/'+method + '_' +SEL_FEATURE+'.log', 'w')
-        #sys.exit(2)
-
-    for opt, arg in opts:
-        if opt == '-h':
-            print 'usage: morph_cluster.py -i <input_csv_file> -o <output_dir> [-m <ap/ward/all>][-f <rr/gmi/all/inv>]'
-            sys.exit()
-        elif opt in ("-i"):
-            input_csv_file = arg
-        elif opt in ("-o"):
-            output_dir = arg
-        elif opt in ("-m"):
-            method = arg
-        elif opt in ("-f"):
-            SEL_FEATURE = arg
-    print '\n\nInput parameters:'
-    print 'Input csv file is: ', input_csv_file
-    print 'Output dir is: ', output_dir
-    print 'Cluster method is: ', method
-    print 'Feature selection method is: ', SEL_FEATURE
-    print  'Outlier clipping threshold: ', ZSCORE_OUTLIER_THRESHOLD
-
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
-
-
-    ########################################################
-    all_feature_file = input_csv_file
-    #########################################################
-
-    gl_feature_names = np.array(
-        ['total_length', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips',
-         'overall_width', 'overall_height', 'overall_depth', 'average_diameter', 'num_nodes',
-         'total_surface', 'total_volume', 'max_euclidean_distance', 'max_path_distance', 'max_branch_order',
-         'average_contraction', 'average fragmentation', 'parent_daughter_ratio', 'bifurcation_angle_local',
-         'bifurcation_angle_remote','height_width_ratio','average_branch_length','length_surface_ratio'])
-    # remove scales
-    # gl_feature_names_inv = np.array(
-    #     ['num_nodes', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips',
-    #      'average_diameter', 'total_length',
-    #      'total_surface', 'total_volume', 'max_euclidean_distance', 'max_path_distance', 'max_branch_order',
-    #      'average_contraction', 'average fragmentation', 'parent_daughter_ratio', 'bifurcation_angle_local',
-    #      'bifurcation_angle_remote'])
-
-    gmi_feature_names = np.array(
-        ['moment1', 'moment2', 'moment3', 'moment4', 'moment5', 'moment6', 'moment7', 'moment8',
-         'moment9', 'moment10', 'moment11', 'moment12', 'moment13'])  ### removed ave_R
-
-    #selected_features = ['max_euclidean_distance', 'num_stems', 'num_bifurcations', 'average_contraction',
-    #                'parent_daughter_ratio']
-
-    all_feature_names = np.append(gl_feature_names, gmi_feature_names)
-
-    merged = pd.read_csv(all_feature_file)
-    print "There are %d neurons in this dataset" % merged.shape[0]
-
-    feature_names = all_feature_names
-    if SEL_FEATURE == "all":
-        feature_names = all_feature_names
-    if SEL_FEATURE == "gmi":
-        feature_names = gmi_feature_names
-    if SEL_FEATURE == "inv":
-        feature_names = gl_feature_names_inv
-    if SEL_FEATURE ==  "mrmr":
-         #selectFeatures_MRMR(merged, all_feature_names,4, 10,'MID', data_DIR)
-         # get the number from console
-         feature_names =[]
-
-    REMOVE_OUTLIERS = 0
-
-    postfix = "_" + SEL_FEATURE
-
-
-    if REMOVE_OUTLIERS > 0:
-        postfix += "_ol_removed"
-    else:
-        postfix += "_ol_clipped"
-
-    redundancy_removed_features_names = remove_correlated_features(merged, feature_names, 0.95)
-    print(" The %d features that are not closely correlated are %s" % (
-        len(redundancy_removed_features_names), redundancy_removed_features_names))
-
-
-    num_clusters = 13
-    if not os.path.exists( swc_screenshot_folder):
-        swc_screenshot_folder = None
-    if method == "ap" or method == "all":
-        num_clusters, dunn_index1 = affinity_propagation(merged, redundancy_removed_features_names,
-                                                     output_dir + '/ap' + postfix,
-                                                    swc_screenshot_folder, REMOVE_OUTLIERS)
-    if method == "ward" or method == "all":
-        dunn_index2 = ward_cluster(merged, redundancy_removed_features_names, num_clusters,
-                               output_dir + '/ward' + postfix, swc_screenshot_folder,
-                               REMOVE_OUTLIERS)
-
-    #     num_clusters = 10
-    #     dunn_index3= iterative_pca(merged,redundancy_removed_features_names,num_clusters)
-
-
-if __name__ == "__main__":
-    main(sys.argv[1:])
