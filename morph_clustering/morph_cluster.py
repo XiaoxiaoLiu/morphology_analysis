@@ -488,7 +488,7 @@ def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, s
         os.mkdir(output_dir)
 
     df_assign_id = pd.DataFrame()
-    df_assign_id.index = df_all.index
+   # df_assign_id.index = df_all.index
     df_assign_id['cluster_id'] = assign_ids
     df_assign_id.to_csv(output_dir + "/cluster_id.csv", index=False)
 
@@ -668,6 +668,7 @@ def dunnindex_clusternumber(linkage,df_zscores, output_dir ="."):
      fig = pl.gcf()
      fig.savefig(output_dir+'/dunnindex_clusternumber.pdf')
      pl.show()
+     pl.close()
      return
 
 
