@@ -2,20 +2,37 @@ import numpy as np
 import pandas as pd
 
 
+
 GL_FEATURE_TAGS = np.array(
     ['num_nodes', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips', 'overall_width',
      'overall_height', 'overall_depth', 'average_diameter', 'total_length', 'total_surface', 'total_volume',
      'max_euclidean_distance', 'max_path_distance', 'max_branch_order', 'average_contraction', 'average fragmentation',
      'parent_daughter_ratio', 'bifurcation_angle_local', 'bifurcation_angle_remote'])
+
 GMI_FEATURE_TAGS = np.array(
     ['moment1', 'moment2', 'moment3', 'moment4', 'moment5', 'moment6', 'moment7', 'moment8', 'moment9', 'moment10',
      'moment11', 'moment12', 'moment13', 'avgR'])
 
-def get_GL_feature_names():
-    return GL_FEATURE_TAGS
+GMI_FEATURES = np.array(
+    ['moment1', 'moment2', 'moment3', 'moment4', 'moment5', 'moment6', 'moment7', 'moment8', 'moment9', 'moment10',
+     'moment11', 'moment12', 'moment13'])
+
+
+GL_FEATURES_NO_RADII = np.array(
+    ['num_nodes', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips', 'overall_width',
+     'overall_height', 'overall_depth', 'total_length',
+     'max_euclidean_distance', 'max_path_distance', 'max_branch_order', 'average_contraction', 'average fragmentation',
+     'bifurcation_angle_local', 'bifurcation_angle_remote'])
+
+
+def get_GL_feature_names(type='all'):
+    if type == 'all':
+        return GL_FEATURE_TAGS
+    if type == 'no_radii':
+        return GL_FEATURES_NO_RADII
 
 def get_GMI_feature_names():
-    return GMI_FEATURE_TAGS
+    return GMI_FEATURES
 
 
 # ===================================================================
@@ -49,9 +66,9 @@ def generateALLFeatureCSV(feature_file, feature_csv_file):
 
     df = pd.DataFrame(allFeatures, columns=allColumns)
 
-    df['swc_file'] = pd.Series(swc_file_nameList, index=df.index)
+    df['swc_file_name'] = pd.Series(swc_file_nameList, index=df.index)
 
-    allColumns = np.append(np.array(['swc_file']), allColumns, 0)
+    allColumns = np.append(np.array(['swc_file_name']), allColumns, 0)
 
     df = df[allColumns]
 
@@ -70,7 +87,7 @@ def generateALLFeatureCSV_gold166(feature_file, feature_csv_file):
 
     df = pd.DataFrame(allFeatures, columns=allColumns)
 
-    df['swc_file'] = pd.Series(swc_file_nameList, index=df.index)
+    df['swc_file_name'] = pd.Series(swc_file_nameList, index=df.index)
 
     algorithmList = []
     imageList = []

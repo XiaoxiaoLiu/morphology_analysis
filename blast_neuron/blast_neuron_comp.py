@@ -527,17 +527,45 @@ def neuron_weighted_dist(inputeswc_path1, inputswc_path2, logfile='./test.log', 
 #	 vaa3d -x blastneuron -f inverse_projection -p "#i target.swc #o target_invp.swc"
 
 
-def pre_processing(inputswc_path, outputswc_path):  # prune align x-axis and resample
-    output_dir = os.path.dirname(outputswc_path)
-    if not os.path.exists(output_dir):
-        os.system("mkdir -p  " + output_dir)
-        print "create output dir: ", output_dir
+def pre_processing(inputswc_path, outputswc_path,GEN_QSUB = 0, qsub_script_dir='.', id=None): # prune align x-axis and resample
+
 
     #s =2  resampling size   #r = 0  --skip rotation
-    cmd = V3D + " -x blastneuron -f pre_processing -p \"#i " + inputswc_path + "  #o " + outputswc_path + " #s 2 #r 0\" "
-    print cmd
-    os.system(cmd)
-    return
+    arguments = " -x blastneuron -f pre_processing -p \"#i " + inputswc_path + "  #o " + outputswc_path + " #s 2 #r 0\" "
+
+    if (id ==None):
+       id=random.randint(1000000,9999999)
+
+    if GEN_QSUB  == 2 :
+        cmd = "./start_vaa3d.sh " + arguments
+        print cmd
+        job_fn = qsub_script_dir +'/'+str(id)+".txt"
+        gen_txt_job_script(cmd, job_fn)
+        return
+
+    if GEN_QSUB == 1  :
+        print "run on pstar:"
+        cmd = QMasterV3D + arguments
+        #print cmd
+        script_fn = qsub_script_dir +'/'+str(id)+'.qsub'
+        jobname = qsub_script_dir+'/'+str(id)
+        gen_qsub_script(cmd, jobname, script_fn)
+        return
+
+    if GEN_QSUB == 0:
+        output_dir = os.path.dirname(outputswc_path)
+        if not os.path.exists(output_dir):
+               os.system("mkdir -p  " + output_dir)
+        print "create output dir: ", output_dir
+        cmd = V3D + arguments
+        print cmd
+        command = Command(cmd)
+        command.run(timeout=60*5)
+        return
+
+
+
+
 
 
 def batch_compute(input_linker_fn, feature_fn):
@@ -563,7 +591,7 @@ def global_retrieve(inputswc_fn, feature_fn, result_fn, retrieve_number, logfile
 def genLinkerFile(swcDir, linker_file):
     input_swc_paths = [os.path.join(dirpath, f)
                        for dirpath, dirnames, files in os.walk(swcDir)
-                       for f in files if f.endswith('.swc')]
+                       for f in files if f.endswith('.swc') or f.endswith('.eswc')]
     if len(input_swc_paths)> 0:
         with open(linker_file, 'w') as f:
             for input_swc_path in input_swc_paths:
