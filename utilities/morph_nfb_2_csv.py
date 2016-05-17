@@ -4,7 +4,7 @@ import pandas as pd
 
 
 GL_FEATURE_TAGS = np.array(
-    ['num_nodes', 'soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips', 'overall_width',
+    ['soma_surface', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips', 'overall_width',
      'overall_height', 'overall_depth', 'average_diameter', 'total_length', 'total_surface', 'total_volume',
      'max_euclidean_distance', 'max_path_distance', 'max_branch_order', 'average_contraction', 'average fragmentation',
      'parent_daughter_ratio', 'bifurcation_angle_local', 'bifurcation_angle_remote'])
@@ -19,7 +19,7 @@ GMI_FEATURES = np.array(
 
 
 GL_FEATURES_NO_RADII = np.array(
-    ['num_nodes', 'num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips', 'overall_width',
+    ['num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips', 'overall_width',
      'overall_height', 'overall_depth', 'total_length',
      'max_euclidean_distance', 'max_path_distance', 'max_branch_order', 'average_contraction', 'average fragmentation',
      'bifurcation_angle_local', 'bifurcation_angle_remote'])

@@ -18,55 +18,54 @@ import morph_clustering.morph_cluster as fc
 import utilities.morph_nfb_2_csv as nfb
 
 
+def filter_featureset(all_feature_file,output_csv_file):
 
-
-def cluster_analysis(all_feature_file,output_dir,feature_type='all', method='ward'):
-    print datetime.now().strftime('starting:%Y-%m-%d %H:%M:%S')
-
-    merged = pd.read_csv(all_feature_file)
 
     gl_feature_names = nfb.get_GL_feature_names('no_radii')
-    print gl_feature_names
-
-
     gmi_feature_names = nfb.get_GMI_feature_names()
+    feature_names = np.append(gl_feature_names, gmi_feature_names)
+    print feature_names
+    df_clean = pd.read_csv(all_feature_file)
+    col_names = np.append(['swc_file_name'],feature_names)
+    df_clean = df_clean[col_names]
 
-    all_feature_names = np.append(gl_feature_names, gmi_feature_names)
+    df_clean.dropna(inplace=True) # drop rows contain NAs
+    df_clean=df_clean[df_clean['max_path_distance'] >0 ]
+    df_clean=df_clean[df_clean['max_branch_order'] > 1 ]
+    df_clean=df_clean[df_clean['total_length'] > 10 ]
+
+
+    df_clean.to_csv(output_csv_file)
+
+
+    return feature_names
+
+
+
+def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward'):
+    print datetime.now().strftime('starting:%Y-%m-%d %H:%M:%S')
+
+    df_f = pd.read_csv(clean_feature_file)
+
+
    # all_feature_names=gl_feature_names
-    print "There are %d neurons in this dataset" % merged.shape[0]
-
-    feature_names = all_feature_names
-    if feature_type == "all":
-        feature_names = all_feature_names
-    if feature_type == "gmi":
-        feature_names = gmi_feature_names
+    print "There are %d neurons in this dataset" % df_f.shape[0]
 
 
-    REMOVE_OUTLIERS = 0
-
-    postfix = "_" + feature_type
-
-
+    REMOVE_OUTLIERS = 0 #clipping the dataset
     if REMOVE_OUTLIERS > 0:
-        postfix += "_ol_removed"
+        postfix = "_ol_removed"
     else:
-        postfix += "_ol_clipped"
+        postfix = "_ol_clipped"
 
 
-    redundancy_removed_features_names = fc.remove_correlated_features(merged, feature_names, 0.95)
-    print(" The %d features that are not closely correlated are %s" % (
-        len(redundancy_removed_features_names), redundancy_removed_features_names))
-
-
-
-    swc_screenshot_folder = None
     if method == "ap" or method == "all":
-        fc.run_affinity_propagation(merged, redundancy_removed_features_names, output_dir, postfix)
+        fc.run_affinity_propagation(df_f, feature_names, output_dir, postfix)
 
 
-    num_clusters=11
+    num_clusters=29
     if method == "ward" or method == "all":
-        fc.run_ward_cluster(df_features=merged, feature_names=redundancy_removed_features_names, num_clusters=num_clusters,output_dir= output_dir,
+        fc.run_ward_cluster(df_features=df_f, feature_names=feature_names, num_clusters=num_clusters,output_dir= output_dir,
                                           output_postfix=postfix,experiment_type='bigneuron')
 
     print datetime.now().strftime('end:%Y-%m-%d %H:%M:%S')
@@ -75,34 +74,27 @@ def cluster_analysis(all_feature_file,output_dir,feature_type='all', method='war
 
 
 def main():
- dataset ='taiwan'
+     dataset ='taiwan'
 
 
- if dataset=='Janelia':
-    data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/consensus_all/janelia_set1"
-    output_dir = data_DIR+'/clustering_result'
-    if not os.path.exists(output_dir):
-         os.system('mkdir '+output_dir)
-    feature_nbf="/data/mat/xiaoxiaol/data/big_neuron/consensus_all/janelia_set1/j1_smooth_features.nfb"
-    output_feature_csv = data_DIR + '/j1_smooth_features_with_tags.csv'
-    nfb.generateALLFeatureCSV(feature_nbf, output_feature_csv)
+     if dataset=='Janelia':
+            data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/consensus_all/janelia_set1"
+            output_dir = data_DIR+'/clustering_result'
+            if not os.path.exists(output_dir):
+                 os.system('mkdir '+output_dir)
+            feature_tag_csv = data_DIR + '/j1_smooth_features_with_tags.csv'
+            output_clean_features_csv = data_DIR + '/j1_smooth_features_with_tags_cleaned.csv'
 
-    logfile = output_dir+'/clustering.log'
+     if dataset=='taiwan':
+            data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/consensus_all/taiwan"
+            output_dir = data_DIR+'/clustering_result'
+            if not os.path.exists(output_dir):
+                 os.system('mkdir '+output_dir)
+            feature_tag_csv = data_DIR + '/taiwan_smooth_features_with_tags.csv'
+            output_clean_features_csv = data_DIR + '/taiwan_smooth_features_with_tags_cleaned.csv'
 
-
-    cluster_analysis(output_feature_csv,output_dir,feature_type='all', method='ward')
-
- if dataset=='taiwan':
-    data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/consensus_all/taiwan"
-    output_dir = data_DIR+'/clustering_result'
-    if not os.path.exists(output_dir):
-         os.system('mkdir '+output_dir)
-
-    feature_tag_csv = data_DIR + '/taiwan_smooth_features_with_tags.csv'
-
-
-    cluster_analysis(feature_tag_csv,output_dir,feature_type='all', method='ward')
-
+     feature_names=filter_featureset(feature_tag_csv,output_clean_features_csv)
+     cluster_analysis(output_clean_features_csv,feature_names,output_dir, method='ward')
 
 
 

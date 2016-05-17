@@ -313,9 +313,11 @@ def heatmap_plot_zscore_bigneuron(df_zscore_features, df_all, output_dir, title=
     g = sns.clustermap(data, row_cluster = False, col_linkage=linkage, method='ward', metric='euclidean',
                        linewidths = 0.0,
                        cmap = sns.cubehelix_palette(light=1, as_cmap=True),figsize=(40,20))
-    pl.setp(g.ax_heatmap.xaxis.get_majorticklabels(), rotation=90 )
+
     pl.setp(g.ax_heatmap.yaxis.get_majorticklabels(), rotation=0)
-    pl.subplots_adjust(left=0.1, bottom=0.5, right=0.9, top=0.95)  # !!!!!
+    pl.setp(g.ax_heatmap.xaxis.get_majorticklabels(), rotation=90)
+    #g.ax_heatmap.set_xticklabels([])
+    pl.subplots_adjust(left=0.1, bottom=0.1, right=0.9, top=0.95)  # !!!!!
 
     if title:
         pl.title(title)
@@ -633,14 +635,11 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_d
     os.system("rm -r  " + output_dir + '/*')
 
 
-
   ##### zscores  featuer plots
   df_zscores, df_all_outlier_removed, df_outliers = get_zscore_features(df_all, feature_names,
       output_dir + '/zscore.csv', RemoveOutliers)
   if (df_outliers.shape[0] > 0 ):
     output_single_cluster_results(df_outliers, output_dir, "outliers", snapshots_dir)
-
-
 
 
   if datasetType =='ivscc':
@@ -721,7 +720,7 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
     print("\n\n\n ***************  affinity propogation computation ****************:")
 
 
-    redundancy_removed_features_names = remove_correlated_features(df_all, feature_names, 0.95)
+    redundancy_removed_features_names = remove_correlated_features(df_all, feature_names, 0.90)
     print(" The %d features that are not closely correlated are %s" % (
         len(redundancy_removed_features_names), redundancy_removed_features_names))
 
@@ -752,13 +751,13 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
 
 def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_postfix,experiment_type='ivscc'):
     #experiment type: ivscc, bbp, bigneuron
-    redundancy_removed_features_names = remove_correlated_features(df_features, feature_names, 0.95)
+    redundancy_removed_features_names = remove_correlated_features(df_features, feature_names, 0.90)
     print(" The %d features that are not closely correlated are %s" % (
         len(redundancy_removed_features_names), redundancy_removed_features_names))
 
     #num_clusters, dunn_index1 = affinity_propagation(merged, redundancy_removed_features_names, output_dir + '/ap' + postfix, swc_screenshot_folder, REMOVE_OUTLIERS)
     linkage, df_zscore = ward_cluster(df_features, redundancy_removed_features_names, num_clusters, output_dir + '/ward' + output_postfix, None, 0, experiment_type)
-    silhouette_clusternumber(linkage, df_zscore, 2,3*len(redundancy_removed_features_names),output_dir + '/ward' + output_postfix)
+    silhouette_clusternumber(linkage, df_zscore, 5,2*len(redundancy_removed_features_names),output_dir + '/ward' + output_postfix)
 
 
     ### similarity plots
@@ -772,7 +771,7 @@ def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_
 
 
 def run_affinity_propagation(df_features, feature_names,output_dir,output_postfix):
-    redundancy_removed_features_names = remove_correlated_features(df_features, feature_names, 0.95)
+    redundancy_removed_features_names = remove_correlated_features(df_features, feature_names, 0.90)
     print(" The %d features that are not closely correlated are %s" % (
         len(redundancy_removed_features_names), redundancy_removed_features_names))
 

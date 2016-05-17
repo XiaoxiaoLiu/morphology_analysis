@@ -25,11 +25,17 @@ import glob
 
 def main():
     ###############################################################################
-    preprocessing =0
-    data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/consensus_all/taiwan"
-    original_dir = data_DIR + "/consensus_0330_anisosmooth"
-    db_tags_csv_file = data_DIR + '/taiwan_smooth_features_with_tags.csv'  # 153 neurons
-
+    preprocessing =1
+    janelia =0
+    taiwan=1
+    if taiwan:
+        data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/consensus_all/taiwan"
+        original_dir = data_DIR + "/consensus_0330_anisosmooth"
+        db_tags_csv_file = data_DIR + '/taiwan_smooth_features_with_tags.csv'
+    if janelia:
+        data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/consensus_all/janelia_set1"
+        original_dir = data_DIR + "/consensus_0330_anisosmooth"
+        db_tags_csv_file = data_DIR + '/j1_smooth_features_with_tags.csv'
     ###############################################################################
 
     print original_dir
