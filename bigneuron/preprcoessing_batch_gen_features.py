@@ -25,7 +25,7 @@ import glob
 
 def main():
     ###############################################################################
-    preprocessing =1
+    preprocessing =0
     janelia =0
     taiwan=1
     if taiwan:
@@ -48,6 +48,8 @@ def main():
         count=0
         qsub_folder= "/data/mat/xiaoxiaol/work/qsub"
         os.system("rm "+qsub_folder+"/*.qsub")
+        os.system("rm "+qsub_folder+"/*.o*")
+        os.system("rm "+qsub_folder+"/jobs.txt")
         for input_swc_path in glob.glob(original_dir + "/*.eswc"):
 
             swc_fn = input_swc_path.split('/')[-1]

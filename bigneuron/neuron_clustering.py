@@ -24,7 +24,10 @@ def filter_featureset(all_feature_file,output_csv_file):
     gl_feature_names = nfb.get_GL_feature_names('no_radii')
     gmi_feature_names = nfb.get_GMI_feature_names()
     feature_names = np.append(gl_feature_names, gmi_feature_names)
+
+    feature_names = feature_names[feature_names !='num_stems']
     print feature_names
+
     df_clean = pd.read_csv(all_feature_file)
     col_names = np.append(['swc_file_name'],feature_names)
     df_clean = df_clean[col_names]
@@ -63,14 +66,24 @@ def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward')
         fc.run_affinity_propagation(df_f, feature_names, output_dir, postfix)
 
 
-    num_clusters=29
+
+
+    num_clusters = 143
     if method == "ward" or method == "all":
         fc.run_ward_cluster(df_features=df_f, feature_names=feature_names, num_clusters=num_clusters,output_dir= output_dir,
-                                          output_postfix=postfix,experiment_type='bigneuron')
+                                          output_postfix=postfix,experiment_type='bigneuron', low=110, high = 170)
 
     print datetime.now().strftime('end:%Y-%m-%d %H:%M:%S')
     return
 
+
+
+def add_nt_meta_taiwan(output_clean_features_csv,output_features_csv):
+     df_f=pd.read_csv(output_clean_features_csv)
+
+     df_f['swc_file_name'] =
+
+     df_out.to_csv(output_features_csv)
 
 
 def main():
@@ -85,6 +98,10 @@ def main():
             feature_tag_csv = data_DIR + '/j1_smooth_features_with_tags.csv'
             output_clean_features_csv = data_DIR + '/j1_smooth_features_with_tags_cleaned.csv'
 
+            feature_names=filter_featureset(feature_tag_csv,output_clean_features_csv)
+
+            output_features_csv = output_clean_features_csv
+
      if dataset=='taiwan':
             data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/consensus_all/taiwan"
             output_dir = data_DIR+'/clustering_result'
@@ -93,8 +110,16 @@ def main():
             feature_tag_csv = data_DIR + '/taiwan_smooth_features_with_tags.csv'
             output_clean_features_csv = data_DIR + '/taiwan_smooth_features_with_tags_cleaned.csv'
 
-     feature_names=filter_featureset(feature_tag_csv,output_clean_features_csv)
-     cluster_analysis(output_clean_features_csv,feature_names,output_dir, method='ward')
+            feature_names=filter_featureset(feature_tag_csv,output_clean_features_csv)
+
+
+            output_features_csv = data_DIR + '/taiwan_smooth_features_with_tags_cleaned_nt.csv'
+            add_nt_meta_taiwan(output_clean_features_csv,output_features_csv)
+
+
+
+
+     cluster_analysis(output_features_csv,feature_names,output_dir, method='ward')
 
 
 

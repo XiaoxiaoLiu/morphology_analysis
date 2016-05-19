@@ -531,7 +531,7 @@ def pre_processing(inputswc_path, outputswc_path,GEN_QSUB = 0, qsub_script_dir='
 
 
     #s =2  resampling size   #r = 0  --skip rotation
-    arguments = " -x blastneuron -f pre_processing -p \"#i " + inputswc_path + "  #o " + outputswc_path + " #s 2 #r 0\" "
+    arguments = " -x blastneuron -f pre_processing -p \"#i " + inputswc_path + "  #o " + outputswc_path + " #l 3 #s 2 #r 0\" "
 
     if (id ==None):
        id=random.randint(1000000,9999999)
@@ -544,9 +544,8 @@ def pre_processing(inputswc_path, outputswc_path,GEN_QSUB = 0, qsub_script_dir='
         return
 
     if GEN_QSUB == 1  :
-        print "run on pstar:"
         cmd = QMasterV3D + arguments
-        #print cmd
+        print "run on pstar:",cmd
         script_fn = qsub_script_dir +'/'+str(id)+'.qsub'
         jobname = qsub_script_dir+'/'+str(id)
         gen_qsub_script(cmd, jobname, script_fn)

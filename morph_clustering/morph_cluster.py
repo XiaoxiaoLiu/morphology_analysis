@@ -621,7 +621,7 @@ def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, s
         cluster_list.append(df_zscore_cluster.values)
 
     ## pick the cluster specific feature and plot histogram
-    cluster_specific_features(df_all, assign_ids, feature_names, output_dir+'/pvalues.csv')
+    #cluster_specific_features(df_all, assign_ids, feature_names, output_dir+'/pvalues.csv')
     return cluster_list
 
 
@@ -650,13 +650,16 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_d
       linkage = heatmap_plot_zscore_bigneuron(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
 
   assignments = hierarchy.fcluster(linkage, max_cluster_num, criterion="maxclust")
-  #hierarchy.dendrogram(linkage)
 
-  ## put assignments into ano files and csv files
-  clusters_list = output_clusters(assignments, df_zscores, df_all_outlier_removed, feature_names, output_dir, snapshots_dir)
-  dunn_index = dunn(clusters_list)
-  print("dunn index is %f" % dunn_index)
+  pl.figure()
+  hierarchy.dendrogram(linkage)
+  pl.savefig(output_dir+'/dendrogram.png')
+
+
   return linkage,df_zscores
+
+
+
 
 
 def silhouette_clusternumber(linkage,df_zscores,low=1, high=5,output_dir ="."):
@@ -680,21 +683,16 @@ def silhouette_clusternumber(linkage,df_zscores,low=1, high=5,output_dir ="."):
     return
 
 
-def dunnindex_clusternumber(linkage,df_zscores, output_dir ="."):
+def dunnindex_clusternumber(linkage,df_zscores, low=1, high=5,output_dir ="."):
      index_list=[]
-     for n_clusters in range(2,30):
+     for n_clusters in range(low,high):
          assignments = hierarchy.fcluster(linkage, n_clusters, criterion="maxclust")
          df_assign_id = pd.DataFrame()
 
          df_assign_id['cluster_id'] = assignments
-
          clusters = np.unique(assignments)
-         num_cluster = len(clusters)
-
          cluster_list = []  # for dunn index calculation
 
-         df_cluster = pd.DataFrame()
-         df_zscore_cluster = pd.DataFrame()
          for i in clusters:
             ids = np.nonzero(assignments == i)[0]  # starting from  0
             df_zscore_cluster = df_zscores.iloc[ids]
@@ -703,10 +701,10 @@ def dunnindex_clusternumber(linkage,df_zscores, output_dir ="."):
          dunn_index = dunn(cluster_list)
          index_list.append(dunn_index)
      pl.figure()
-     pl.plot(range(2,30),index_list,"*-")
+     pl.plot(range(low,high),index_list,"*-")
      pl.xlabel("cluster number")
      pl.ylabel("dunn index")
-     pl.savefig(output_dir+'/dunnindex_clusternumber.pdf')
+     pl.savefig(output_dir+'/dunnindex_clusternumber.png')
      #pl.show()
      return
 
@@ -749,16 +747,18 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
     return len(np.unique(labels)), dunn_index
 
 
-def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_postfix,experiment_type='ivscc'):
+
+
+def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_postfix,experiment_type='ivscc', low=2, high=5):
     #experiment type: ivscc, bbp, bigneuron
     redundancy_removed_features_names = remove_correlated_features(df_features, feature_names, 0.90)
     print(" The %d features that are not closely correlated are %s" % (
         len(redundancy_removed_features_names), redundancy_removed_features_names))
 
-    #num_clusters, dunn_index1 = affinity_propagation(merged, redundancy_removed_features_names, output_dir + '/ap' + postfix, swc_screenshot_folder, REMOVE_OUTLIERS)
-    linkage, df_zscore = ward_cluster(df_features, redundancy_removed_features_names, num_clusters, output_dir + '/ward' + output_postfix, None, 0, experiment_type)
-    silhouette_clusternumber(linkage, df_zscore, 5,2*len(redundancy_removed_features_names),output_dir + '/ward' + output_postfix)
 
+    linkage, df_zscore = ward_cluster(df_features, redundancy_removed_features_names, num_clusters, output_dir + '/ward' + output_postfix, None, 0, experiment_type)
+    #silhouette_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
+    dunnindex_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
 
     ### similarity plots
     #visualize heatmap using ward on similarity matrix
