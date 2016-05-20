@@ -45,7 +45,7 @@ from itertools import cycle
 
 
 ####################################
-ZSCORE_OUTLIER_THRESHOLD = 3
+ZSCORE_OUTLIER_THRESHOLD = 5
 ####################################
 
 sns.set_context("poster")
@@ -297,6 +297,16 @@ def heatmap_plot_zscore_bigneuron(df_zscore_features, df_all, output_dir, title=
 
     print "heatmap plot:bigneuron"
 
+    #taiwan
+    metric ='nt_type'
+    mtypes = np.unique(df_all[metric])
+    print mtypes
+    mtypes_pal = sns.color_palette("hls", len(mtypes))
+
+    mtypes_lut = dict(zip(mtypes, mtypes_pal))
+    mtypes_colors = df_all[metric].map(mtypes_lut)
+
+
 
     linkage = hierarchy.linkage(df_zscore_features, method='ward', metric='euclidean')
 
@@ -311,8 +321,8 @@ def heatmap_plot_zscore_bigneuron(df_zscore_features, df_all, output_dir, title=
 
     pl.figure()
     g = sns.clustermap(data, row_cluster = False, col_linkage=linkage, method='ward', metric='euclidean',
-                       linewidths = 0.0,
-                       cmap = sns.cubehelix_palette(light=1, as_cmap=True),figsize=(40,20))
+                       linewidths = 0.0,col_colors = [mtypes_colors],
+                       cmap = sns.cubehelix_palette(light=1, as_cmap=True),figsize=(40,10))
 
     pl.setp(g.ax_heatmap.yaxis.get_majorticklabels(), rotation=0)
     pl.setp(g.ax_heatmap.xaxis.get_majorticklabels(), rotation=90)
@@ -322,12 +332,21 @@ def heatmap_plot_zscore_bigneuron(df_zscore_features, df_all, output_dir, title=
     if title:
         pl.title(title)
 
+
+    location ="best"
+    num_cols=1
+    # Legend for row and col colors
+
+    for label in mtypes:
+         g.ax_row_dendrogram.bar(0, 0, color=mtypes_lut[label], label=label, linewidth=0.0)
+         g.ax_row_dendrogram.legend(loc=location, ncol=num_cols,borderpad=0)
+
     filename = output_dir + '/zscore_feature_heatmap.png'
     pl.savefig(filename, dpi=300)
     #pl.show()
     print("save zscore matrix heatmap figure to :" + filename)
     pl.close()
-    print "done clustering and  heatmap plotting"
+    print "done clustering and heatmap plotting"
     return linkage
 
 
@@ -626,13 +645,60 @@ def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, s
 
 
 ####### ward  hierachichal clustering  ###########
-def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_dir= None, RemoveOutliers = 0, datasetType='ivscc'):
+
+def fancy_dendrogram(*args, **kwargs):
+    max_d = kwargs.pop('max_d', None)
+    if max_d and 'color_threshold' not in kwargs:
+        kwargs['color_threshold'] = max_d
+    annotate_above = kwargs.pop('annotate_above', 0)
+
+    ddata = hierarchy.dendrogram(*args, **kwargs)
+
+    if not kwargs.get('no_plot', False):
+        pl.title('Hierarchical Clustering Dendrogram (truncated)')
+        pl.xlabel('sample index or (cluster size)')
+        pl.ylabel('distance')
+        for i, d, c in zip(ddata['icoord'], ddata['dcoord'], ddata['color_list']):
+            x = 0.5 * sum(i[1:3])
+            y = d[1]
+            if y > annotate_above:
+                pl.plot(x, y, 'o', c=c)
+                pl.annotate("%.3g" % y, (x, y), xytext=(0, -5),
+                             textcoords='offset points',
+                             va='top', ha='center')
+        if max_d:
+            pl.axhline(y=max_d, c='k')
+    return ddata
+
+def truncate_dendrogram(linkage, max_cluster_num,output_dir, max_d=0 ):
+
+    pl.figure()
+    pl.title('Hierarchical Clustering Dendrogram (truncated)')
+    pl.xlabel('sample index')
+    pl.ylabel('distance')
+
+    fancy_dendrogram(
+        linkage,
+        truncate_mode='lastp',
+        p=max_cluster_num,
+        leaf_rotation=90.,
+        leaf_font_size=12.,
+        show_contracted=True,
+        annotate_above=10,
+        max_d=max_d,  # plot a horizontal cut-off line
+    )
+    #pl.show()
+    pl.savefig(output_dir+'/dendrogram.png')
+    return
+
+
+
+def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_dir= None, RemoveOutliers = 0, datasetType='ivscc', plot_heatmap =1):
   print("\n\n\n  ***************  ward computation, max_cluster = %d  *************:" % max_cluster_num)
 
   if not os.path.exists(output_dir):
     os.mkdir(output_dir)
-  else:
-    os.system("rm -r  " + output_dir + '/*')
+
 
 
   ##### zscores  featuer plots
@@ -641,22 +707,23 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_d
   if (df_outliers.shape[0] > 0 ):
     output_single_cluster_results(df_outliers, output_dir, "outliers", snapshots_dir)
 
-
-  if datasetType =='ivscc':
-      linkage = heatmap_plot_zscore_ivscc(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
-  if datasetType =='bbp':
-      linkage = heatmap_plot_zscore_bbp(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
-  if datasetType =='bigneuron':
-      linkage = heatmap_plot_zscore_bigneuron(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
-
-  assignments = hierarchy.fcluster(linkage, max_cluster_num, criterion="maxclust")
-
-  pl.figure()
-  hierarchy.dendrogram(linkage)
-  pl.savefig(output_dir+'/dendrogram.png')
+  if plot_heatmap:
+      if datasetType =='ivscc':
+          link = heatmap_plot_zscore_ivscc(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
+      if datasetType =='bbp':
+          link = heatmap_plot_zscore_bbp(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
+      if datasetType =='bigneuron':
+          link = heatmap_plot_zscore_bigneuron(df_zscores, df_all_outlier_removed, output_dir, "feature zscores")
+  else:
+      link = hierarchy.linkage(df_zscores, method='ward', metric='euclidean')
 
 
-  return linkage,df_zscores
+  assignments = hierarchy.fcluster(link, max_cluster_num, criterion="maxclust")
+  output_clusters(assignments, df_zscores, df_all_outlier_removed, feature_names, output_dir, snapshots_dir)
+
+  truncate_dendrogram(link,max_cluster_num,output_dir,0)
+
+  return link,df_zscores
 
 
 
@@ -686,6 +753,7 @@ def silhouette_clusternumber(linkage,df_zscores,low=1, high=5,output_dir ="."):
 def dunnindex_clusternumber(linkage,df_zscores, low=1, high=5,output_dir ="."):
      index_list=[]
      for n_clusters in range(low,high):
+
          assignments = hierarchy.fcluster(linkage, n_clusters, criterion="maxclust")
          df_assign_id = pd.DataFrame()
 
@@ -699,6 +767,7 @@ def dunnindex_clusternumber(linkage,df_zscores, low=1, high=5,output_dir ="."):
             cluster_list.append(df_zscore_cluster.values)
 
          dunn_index = dunn(cluster_list)
+         print n_clusters, ":", dunn_index
          index_list.append(dunn_index)
      pl.figure()
      pl.plot(range(low,high),index_list,"*-")
@@ -748,23 +817,30 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
 
 
 
-
-def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_postfix,experiment_type='ivscc', low=2, high=5):
+import pickle
+def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_postfix,experiment_type='ivscc', low=2, high=5,plot_heatmap=1):
     #experiment type: ivscc, bbp, bigneuron
     redundancy_removed_features_names = remove_correlated_features(df_features, feature_names, 0.90)
     print(" The %d features that are not closely correlated are %s" % (
         len(redundancy_removed_features_names), redundancy_removed_features_names))
 
+    linkage, df_zscore = ward_cluster(df_features, redundancy_removed_features_names, num_clusters, output_dir + '/ward' + output_postfix, None, 0, experiment_type, plot_heatmap)
 
-    linkage, df_zscore = ward_cluster(df_features, redundancy_removed_features_names, num_clusters, output_dir + '/ward' + output_postfix, None, 0, experiment_type)
-    #silhouette_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
-    dunnindex_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
+
+    with open(output_dir+'/linkage.pik', 'wb') as f:
+          pickle.dump([linkage], f, -1)
+          print "Save linkage to :", output_dir+'/linkage.pik'
+
+    print "silhouette analysis:"
+    silhouette_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
+    #dunnindex_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
 
     ### similarity plots
     #visualize heatmap using ward on similarity matrix
     #( randomly select 500 from the dataset)
     #sample_size = 500
     #df_simMatrix = distance_matrix(df_features, redundancy_removed_features_names, output_dir + "/"+str(sample_size)+"_morph_features_similarity_matrix.csv",sample_size , 1)
+
     return redundancy_removed_features_names
 
 

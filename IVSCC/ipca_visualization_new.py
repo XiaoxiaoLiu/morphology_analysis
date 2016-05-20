@@ -47,16 +47,16 @@ def generateLinkerFileFromCSV(result_dir, csvfile, column_name=None, strip_path=
 # Data PATHs
 
 
-data_dir = "/home/xiaoxiaol/work/data/lims2/ivscc_0411/spiny_clustering_selected_feature"
+data_dir = "/home/xiaoxiaol/work/data/lims2/ivscc_0519"
 
-default_all_feature_merged_file = data_dir + '/Spiny.129neurons.11and8single.selfeat.AssignedID.csv'
+default_all_feature_merged_file = data_dir + '/spiny.MorphGrpID.HcustGap.Spiny.0519.csv'
 output_dir=data_dir
 
-df_c = pd.read_csv(data_dir + '/../ivscc_0411_features_with_meta.csv')
+df_c = pd.read_csv(data_dir + '/ivscc_0519_features_with_meta.csv')
 df_m = pd.read_csv(default_all_feature_merged_file)
 
 df_merged = pd.merge(df_c,df_m,how='inner',on=['specimen_id'])
 merged_file = output_dir +"/merged.csv"
 df_merged.to_csv(merged_file)
 
-generateLinkerFileFromCSV(output_dir, merged_file,'cluster_id',strip_path=False,fpath=data_dir + "/../SWC",swc_postfix="_pia.swc")
+generateLinkerFileFromCSV(output_dir, merged_file,'cluster_id',strip_path=False,fpath=data_dir + "/SWC",swc_postfix="_pia.swc")
