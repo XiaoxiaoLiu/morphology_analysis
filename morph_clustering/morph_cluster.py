@@ -251,7 +251,6 @@ def heatmap_plot_zscore_ivscc(df_zscore_features, df_all, output_dir, title=None
 
     #pl.tight_layout( fig, h_pad=20.0, w_pad=20.0)
 
-
     if title:
         pl.title(title)
     location ="best"
@@ -733,7 +732,7 @@ def silhouette_clusternumber(linkage,df_zscores,low=1, high=5,output_dir ="."):
 
     print("Silhouettee analysis:")
     scores=[]
-    for n_clusters in range(low,high):
+    for n_clusters in range(low,high,(high-low)/20):
          assignments = hierarchy.fcluster(linkage, n_clusters, criterion="maxclust")
          silhouette_avg = silhouette_score(df_zscores, assignments)
          print("For n_clusters =", n_clusters,"The average silhouette_score is :", silhouette_avg)
@@ -801,18 +800,19 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
     df_zscores, df_all_outlier_removed, df_outliers = get_zscore_features(df_all, redundancy_removed_features_names, None, RemoveOutliers)
     if (df_outliers.shape[0] > 0 ):
       output_single_cluster_results(df_outliers, output_dir, "outliers", snapshots_dir)
+    print "There are ", df_zscores.shape[0],"neurons entering the clustering"
 
     X = df_zscores.as_matrix()
 
-    af = AffinityPropagation().fit(X)
+    af = AffinityPropagation(preference=0).fit(X)
     cluster_centers_indices = af.cluster_centers_indices_
     labels = af.labels_
     labels = labels + 1  # the default labels start from 0, to be consistent with ward, add 1 so that it starts from 1
     clusters_list = output_clusters(labels, df_zscores, df_all_outlier_removed, redundancy_removed_features_names, output_dir,
         snapshots_dir)
-    dunn_index = dunn(clusters_list)
-    print("dunn index is %f" % dunn_index)
-    return len(np.unique(labels)), dunn_index
+    #dunn_index = dunn(clusters_list)
+    #print("dunn index is %f" % dunn_index)
+    return len(np.unique(labels))
 
 
 
@@ -822,19 +822,23 @@ def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_
     redundancy_removed_features_names = remove_correlated_features(df_features, feature_names, 0.90)
     print(" The %d features that are not closely correlated are %s" % (
         len(redundancy_removed_features_names), redundancy_removed_features_names))
-
-    linkage, df_zscore = ward_cluster(df_features, redundancy_removed_features_names, num_clusters, output_dir + '/ward' + output_postfix, None, RemoveOutliers, experiment_type, plot_heatmap)
-
-
-    with open(output_dir+'/linkage.pik', 'wb') as f:
+  
+    out_dir = output_dir+'/ward' + output_postfix
+    if os.path.exists(out_dir + "/linkage.pik"):
           pickle.dump([linkage], f, -1)
-          print "Save linkage to :", output_dir+'/linkage.pik'
+          print "load existing linkage file from disk:"
+          linkage = pickle.load( open( out_dir+"/linkage.pik", "rb" ) )
+    else:
+	  linkage, df_zscore = ward_cluster(df_features, redundancy_removed_features_names, num_clusters, out_dir, None, RemoveOutliers, experiment_type, plot_heatmap)
+          with open(output_dir+'/linkage.pik', 'wb') as f:
+               pickle.dump([linkage], f, -1)
+               print "Save linkage to :", output_dir+'/linkage.pik'
 
-    #print "silhouette analysis"
-    #silhouette_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
+    print "silhouette analysis"
+    silhouette_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
 
-    print "dunn index:"
-    dunnindex_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
+    #print "dunn index:"
+    #dunnindex_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
 
     ### similarity plots
     #visualize heatmap using ward on similarity matrix
@@ -852,6 +856,6 @@ def run_affinity_propagation(df_features, feature_names,output_dir,output_postfi
     print(" The %d features that are not closely correlated are %s" % (
         len(redundancy_removed_features_names), redundancy_removed_features_names))
 
-    num_clusters, dunn_index1 = affinity_propagation(df_features, redundancy_removed_features_names, output_dir + '/ap' + output_postfix, None, 0)
+    num_clusters  = affinity_propagation(df_features, redundancy_removed_features_names, output_dir + '/ap' + output_postfix, None, 0)
     print "ap clusters:",num_clusters
     return redundancy_removed_features_names

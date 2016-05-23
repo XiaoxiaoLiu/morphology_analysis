@@ -5,13 +5,9 @@ import numpy as np
 import pandas as pd
 from datetime import datetime
 
-if (platform.system() == "Linux"):
-    WORK_PATH = "/local1/xiaoxiaol/work"
-else:
-    WORK_PATH = "/Users/xiaoxiaoliu/work"
 
 
-p=  WORK_PATH + '/src/morphology_analysis'
+p='.'
 sys.path.append(p)
 
 import morph_clustering.morph_cluster as fc
@@ -24,9 +20,9 @@ def filter_featureset(all_feature_file,output_csv_file):
     gl_feature_names = nfb.get_GL_feature_names('no_radii')
     gmi_feature_names = nfb.get_GMI_feature_names()
 
-    #feature_names = np.append(gl_feature_names, gmi_feature_names)
+    feature_names = np.append(gl_feature_names, gmi_feature_names)
 
-    feature_names = gl_feature_names
+    #feature_names = gl_feature_names
 
     feature_names = feature_names[feature_names !='num_stems']
     print feature_names
@@ -60,7 +56,7 @@ def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward')
 
     REMOVE_OUTLIERS = 1 #clipping the dataset
     if REMOVE_OUTLIERS > 0:
-        postfix = "_ol_removed_5_glonly"
+        postfix = "_ol_removed"
     else:
         postfix = "_ol_clipped_5_glonly"
 
@@ -69,10 +65,10 @@ def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward')
         fc.run_affinity_propagation(df_f, feature_names, output_dir, postfix)
 
 
-    num_clusters = 155
+    num_clusters = 1000
     if method == "ward" or method == "all":
         fc.run_ward_cluster(df_features=df_f, feature_names=feature_names, num_clusters=num_clusters,output_dir= output_dir,
-                                          output_postfix=postfix,experiment_type='bigneuron', low=110, high = 170, plot_heatmap=1, RemoveOutliers=REMOVE_OUTLIERS)
+                                          output_postfix=postfix,experiment_type='bigneuron', low=500, high = 1500, plot_heatmap=0, RemoveOutliers=REMOVE_OUTLIERS)
 
     print datetime.now().strftime('end:%Y-%m-%d %H:%M:%S')
     return
@@ -125,7 +121,7 @@ def main():
             add_nt_meta_taiwan(output_clean_features_csv,output_features_csv)
 
      #generate linkage
-     cluster_analysis(output_features_csv,feature_names,output_dir, method='ward')
+     cluster_analysis(output_features_csv,feature_names,output_dir, method='ap')
 
      #load linkage
      #fc.plot_linkage(output_feature_csv,linkage)
