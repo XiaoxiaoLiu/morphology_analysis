@@ -121,7 +121,7 @@ def main():
             add_nt_meta_taiwan(output_clean_features_csv,output_features_csv)
 
      #generate linkage
-     cluster_analysis(output_features_csv,feature_names,output_dir, method='ap')
+     cluster_analysis(output_features_csv,feature_names,output_dir, method='ward')
 
      #load linkage
      #fc.plot_linkage(output_feature_csv,linkage)

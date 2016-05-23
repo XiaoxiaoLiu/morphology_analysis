@@ -687,7 +687,7 @@ def truncate_dendrogram(linkage, max_cluster_num,output_dir, max_d=0 ):
         max_d=max_d,  # plot a horizontal cut-off line
     )
 
-    pl.savefig(output_dir+'/dendrogram.png')
+    pl.savefig(output_dir+'/dendrogram.png',dpi=300)
     #pl.show()
     return
 
@@ -734,8 +734,8 @@ def silhouette_clusternumber(linkage,df_zscores,low=1, high=5,output_dir ="."):
     scores=[]
     for n_clusters in range(low,high,(high-low)/20):
          assignments = hierarchy.fcluster(linkage, n_clusters, criterion="maxclust")
-         silhouette_avg = silhouette_score(df_zscores, assignments)
-         print("For n_clusters =", n_clusters,"The average silhouette_score is :", silhouette_avg)
+         silhouette_avg = silhouette_score(df_zscores, assignments,metric='sqeuclidean')
+         print("For n_clusters =", n_clusters,"The average silhouette coefficient is :", silhouette_avg)
          scores.append(silhouette_avg)
     # plot sihouettee and cut
     pl.figure()
@@ -804,12 +804,16 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
 
     X = df_zscores.as_matrix()
 
-    af = AffinityPropagation(preference=0).fit(X)
+    af = AffinityPropagation().fit(X)
     cluster_centers_indices = af.cluster_centers_indices_
     labels = af.labels_
+    print("Silhouette Coefficient: %0.3f"
+      % silhouette_score(df_zscores, labels, metric='sqeuclidean'))
     labels = labels + 1  # the default labels start from 0, to be consistent with ward, add 1 so that it starts from 1
     clusters_list = output_clusters(labels, df_zscores, df_all_outlier_removed, redundancy_removed_features_names, output_dir,
         snapshots_dir)
+
+
     #dunn_index = dunn(clusters_list)
     #print("dunn index is %f" % dunn_index)
     return len(np.unique(labels))
