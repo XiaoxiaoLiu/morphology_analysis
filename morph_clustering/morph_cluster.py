@@ -700,8 +700,6 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_d
   if not os.path.exists(output_dir):
     os.mkdir(output_dir)
 
-
-
   ##### zscores  featuer plots
   df_zscores, df_all_outlier_removed, df_outliers = get_zscore_features(df_all, feature_names,
       output_dir + '/zscore.csv', RemoveOutliers)
@@ -819,13 +817,13 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
 
 
 import pickle
-def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_postfix,experiment_type='ivscc', low=2, high=5,plot_heatmap=1):
+def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_postfix,experiment_type='ivscc', low=2, high=5,plot_heatmap=1,RemoveOutliers=0):
     #experiment type: ivscc, bbp, bigneuron
     redundancy_removed_features_names = remove_correlated_features(df_features, feature_names, 0.90)
     print(" The %d features that are not closely correlated are %s" % (
         len(redundancy_removed_features_names), redundancy_removed_features_names))
 
-    linkage, df_zscore = ward_cluster(df_features, redundancy_removed_features_names, num_clusters, output_dir + '/ward' + output_postfix, None, 0, experiment_type, plot_heatmap)
+    linkage, df_zscore = ward_cluster(df_features, redundancy_removed_features_names, num_clusters, output_dir + '/ward' + output_postfix, None, RemoveOutliers, experiment_type, plot_heatmap)
 
 
     with open(output_dir+'/linkage.pik', 'wb') as f:

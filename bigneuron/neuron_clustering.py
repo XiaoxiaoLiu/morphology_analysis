@@ -58,9 +58,9 @@ def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward')
     print "There are %d neurons in this dataset" % df_f.shape[0]
 
 
-    REMOVE_OUTLIERS = 0 #clipping the dataset
+    REMOVE_OUTLIERS = 1 #clipping the dataset
     if REMOVE_OUTLIERS > 0:
-        postfix = "_ol_removed"
+        postfix = "_ol_removed_5_glonly"
     else:
         postfix = "_ol_clipped_5_glonly"
 
