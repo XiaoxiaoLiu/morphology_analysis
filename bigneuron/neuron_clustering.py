@@ -69,7 +69,7 @@ def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward')
         fc.run_affinity_propagation(df_f, feature_names, output_dir, postfix)
 
 
-    num_clusters = 143
+    num_clusters = 155
     if method == "ward" or method == "all":
         fc.run_ward_cluster(df_features=df_f, feature_names=feature_names, num_clusters=num_clusters,output_dir= output_dir,
                                           output_postfix=postfix,experiment_type='bigneuron', low=110, high = 170, plot_heatmap=1)

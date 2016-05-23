@@ -243,7 +243,7 @@ def heatmap_plot_zscore_ivscc(df_zscore_features, df_all, output_dir, title=None
 
     g = sns.clustermap(data, row_cluster = False, col_linkage=linkage, method='ward', metric='euclidean',
                        linewidths = 0.0,col_colors = [cre_line_colors,dendrite_type_colors],
-                       cmap = sns.cubehelix_palette(light=1, as_cmap=True),figsize=(40,20))
+                       cmap = sns.cubehelix_palette(light=1, as_cmap=True),figsize=(60,20))
     #g.ax_heatmap.xaxis.set_xticklabels()
     pl.setp(g.ax_heatmap.xaxis.get_majorticklabels(), rotation=90 )
     pl.setp(g.ax_heatmap.yaxis.get_majorticklabels(), rotation=0)
@@ -687,8 +687,9 @@ def truncate_dendrogram(linkage, max_cluster_num,output_dir, max_d=0 ):
         annotate_above=10,
         max_d=max_d,  # plot a horizontal cut-off line
     )
-    #pl.show()
+
     pl.savefig(output_dir+'/dendrogram.png')
+    #pl.show()
     return
 
 
@@ -831,9 +832,11 @@ def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_
           pickle.dump([linkage], f, -1)
           print "Save linkage to :", output_dir+'/linkage.pik'
 
-    print "silhouette analysis:"
-    silhouette_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
-    #dunnindex_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
+    #print "silhouette analysis"
+    #silhouette_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
+
+    print "dunn index:"
+    dunnindex_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
 
     ### similarity plots
     #visualize heatmap using ward on similarity matrix

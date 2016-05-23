@@ -88,7 +88,7 @@ def main():
     axon_feature_names = cols[cols.str.contains('axon')]
     apical_feature_names =cols[cols.str.contains('apical')]
 
-    print "remove radii features"
+    print "remove radii features!!!!"
     exit()
 
     meta_feature_names = np.array(['specimen_name','specimen_id','dendrite_type','cre_line','region_info','filename','swc_file_name'])
