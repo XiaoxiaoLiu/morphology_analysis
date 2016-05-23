@@ -7,8 +7,19 @@ from datetime import datetime
 
 
 
-p='.'
+machine_name = platform.node()
+if machine_name.contains( "ibs"):
+    WORK_PATH = "/local1/xiaoxiaol/work"
+if machine_name.contains( "pstar"):
+    WORK_PATH = "/home/xiaoxiaol"
+if machine_name.contains( "swk"):
+    WORK_PATH = "/Users/xiaoxiaoliu/work"
+
+
+p=  WORK_PATH + '/src/morphology_analysis'
 sys.path.append(p)
+
+
 
 import morph_clustering.morph_cluster as fc
 import utilities.morph_nfb_2_csv as nfb
