@@ -602,8 +602,7 @@ def output_single_cluster_results(df_cluster, output_dir, output_prefix, snapsho
     if (snapshots_dir):
         copySnapshots(df_cluster, snapshots_dir, output_dir + '/' + output_prefix)
         assemble_screenshots(output_dir + '/' + output_prefix, output_dir + '/' + output_prefix + '_assemble.png', 128)
-    else:
-        print "no bmp copying from:", snapshots_dir
+
     return
 
 
@@ -629,7 +628,7 @@ def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, s
     for i in clusters:
         ids = np.nonzero(assign_ids == i)[0]  # starting from  0
         df_cluster = df_all.iloc[ids]
-        print("  %d neurons in cluster %d" % (df_cluster.shape[0], i))
+        #print("  %d neurons in cluster %d" % (df_cluster.shape[0], i))
         output_single_cluster_results(df_cluster, output_dir, "/cluster_" + str(i), snapshots_dir)
 
         df_zscore_cluster = df_zscores.iloc[ids]

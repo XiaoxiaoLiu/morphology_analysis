@@ -8,11 +8,11 @@ from datetime import datetime
 
 
 machine_name = platform.node()
-if machine_name.contains( "ibs"):
+if 'ibs' in  machine_name:
     WORK_PATH = "/local1/xiaoxiaol/work"
-if machine_name.contains( "pstar"):
+if 'pstar' in  machine_name:
     WORK_PATH = "/home/xiaoxiaol"
-if machine_name.contains( "swk"):
+if 'swk' in  machine_name:
     WORK_PATH = "/Users/xiaoxiaoliu/work"
 
 
