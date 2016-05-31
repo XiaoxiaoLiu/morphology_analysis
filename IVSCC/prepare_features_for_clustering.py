@@ -88,6 +88,10 @@ def main():
     axon_feature_names = cols[cols.str.contains('axon')]
     apical_feature_names =cols[cols.str.contains('apical')]
 
+    print basal_feature_names
+    print apical_feature_names
+    print axon_feature_names
+
     print "remove radii features!!!!"
     exit()
 

@@ -45,7 +45,7 @@ from itertools import cycle
 
 
 ####################################
-ZSCORE_OUTLIER_THRESHOLD = 5
+ZSCORE_OUTLIER_THRESHOLD = 3
 ####################################
 
 sns.set_context("poster")
@@ -101,35 +101,12 @@ def distance_matrix(df_all, feature_names, out_distanceMatrix_file, sample_size 
     return df_dist
 
 
-def copySnapshots(df_in, snapshots_dir, output_dir):
-    if not os.path.exists(output_dir):
-        os.mkdir(output_dir)
-    swc_files = df_in['swc_file_name']
-    if len(swc_files) > 0:
-        for afile in swc_files:
-            filename = snapshots_dir + '/' + afile.split('/')[-1] + '.BMP'
-            if os.path.exists(filename):
-                os.system("cp  " + filename + "  " + output_dir + "/\n")
-    return
 
 
 
 
-def assemble_screenshots(input_dir, output_image_file_name, size):
-    files = glob.glob(input_dir + "/*.BMP")
 
-    assemble_image = Image.new("RGB", (size * len(files),size))
 
-    y = 0
-    for infile in files:
-        im = Image.open(infile)
-        im.thumbnail((size, size), Image.ANTIALIAS)
-        assemble_image.paste(im, (y, 0))
-        y += size
-
-    assemble_image.save(output_image_file_name)
-
-    return
 
 
 def generateLinkerFileFromDF(df_in, output_ano_file, strip_path=False, swc_path=None):
@@ -201,10 +178,10 @@ def heatmap_plot_zscore_ivscc(df_zscore_features, df_all, output_dir, title=None
 
     # Create a custom palette for creline colors
     cre_lines = np.unique(df_all['cre_line'])
-    print cre_lines
-    cre_lines = ['Pvalb-IRES-Cre','Sst-IRES-Cre','Gad2-IRES-Cre', 'Htr3a-Cre_NO152',
-                 'Nr5a1-Cre', 'Ntsr1-Cre','Rbp4-Cre_KL100' ,'Rorb-IRES2-Cre-D', 'Scnn1a-Tg2-Cre',
-                 'Scnn1a-Tg3-Cre','Slc17a6-IRES-Cre','Cux2-CreERT2']
+    #print cre_lines
+    #cre_lines = ['Pvalb-IRES-Cre','Sst-IRES-Cre','Gad2-IRES-Cre', 'Htr3a-Cre_NO152',
+    #             'Nr5a1-Cre', 'Ntsr1-Cre','Rbp4-Cre_KL100' ,'Rorb-IRES2-Cre-D', 'Scnn1a-Tg2-Cre',
+    #             'Scnn1a-Tg3-Cre','Slc17a6-IRES-Cre','Cux2-CreERT2']
 
     cre_line_pal = sns.color_palette("BrBG", len(cre_lines))
 
@@ -230,21 +207,21 @@ def heatmap_plot_zscore_ivscc(df_zscore_features, df_all, output_dir, title=None
     #cmap = sns.diverging_palette(240, 10, as_cmap=True)
 
     linkage = hierarchy.linkage(df_zscore_features, method='ward', metric='euclidean')
-
+    print "linkage genearted"
     data = df_zscore_features.transpose()
     row_linkage = hierarchy.linkage(data, method='ward', metric='euclidean')
     feature_order = hierarchy.leaves_list(row_linkage)
 
-    #print data.index
+    print data.index
     matchIndex = [data.index[x] for x in feature_order]
-    #print matchIndex
+    print matchIndex
     data = data.reindex(matchIndex)
 
-
+    print "plot heatmap"
     g = sns.clustermap(data, row_cluster = False, col_linkage=linkage, method='ward', metric='euclidean',
-                       linewidths = 0.0,col_colors = [cre_line_colors,dendrite_type_colors],
+                       linewidths = 0.0,col_colors = [cre_line_colors],
                        cmap = sns.cubehelix_palette(light=1, as_cmap=True),figsize=(60,20))
-    #g.ax_heatmap.xaxis.set_xticklabels()
+
     pl.setp(g.ax_heatmap.xaxis.get_majorticklabels(), rotation=90 )
     pl.setp(g.ax_heatmap.yaxis.get_majorticklabels(), rotation=0)
     pl.subplots_adjust(left=0.1, bottom=0.5, right=0.9, top=0.95)  # !!!!!
@@ -279,14 +256,14 @@ def heatmap_plot_zscore_ivscc(df_zscore_features, df_all, output_dir, title=None
     # g.ax_row_dendrogram.legend(loc=location, ncol=num_cols, borderpad=0.0)
 
 
-    for label in dendrite_types:
-        g.ax_row_dendrogram.bar(0, 0, color = dendrite_type_lut[label], label=label, linewidth=0)
-        g.ax_row_dendrogram.legend(loc=location, ncol= num_cols, borderpad=0.0)
+    # for label in dendrite_types:
+    #     g.ax_row_dendrogram.bar(0, 0, color = dendrite_type_lut[label], label=label, linewidth=0)
+    #     g.ax_row_dendrogram.legend(loc=location, ncol= num_cols, borderpad=0.0)
 
 
     filename = output_dir + '/zscore_feature_heatmap.png'
     pl.savefig(filename, dpi=300)
-    #pl.show()
+    pl.show()
     print("save zscore matrix heatmap figure to :" + filename)
     pl.close()
     return linkage
@@ -436,7 +413,7 @@ def remove_correlated_features(df_all, feature_names, coef_threshold=0.98):
                         removed_names.append(feature_names[j])
                         print("highly correlated:[" + feature_names[i] + ", " + feature_names[j] + " ]")
 
-    subset_features_names = feature_names.tolist()
+    subset_features_names = feature_names#.tolist()
     for i in range(len(removed_names)):
         if removed_names[i] in subset_features_names:
             print ("remove " + removed_names[i])
@@ -550,39 +527,43 @@ def get_zscore_features(df_all, feature_names, out_file, REMOVE_OUTLIER=0,
         normalized > zscore_threshold)
     print("Found %d  |z score| > %f in zscore matrix :" % (num_outliers, zscore_threshold) )
 
-    df_all_modified = df_all
+    df_all_modified = df_all  # with original feature value
     df_outliers = pd.DataFrame()
+
     if num_outliers > 0:
         if not REMOVE_OUTLIER:  # just clip
             normalized[normalized < -zscore_threshold] = -zscore_threshold
             normalized[normalized > zscore_threshold] = zscore_threshold
-        # else:
-        #     outliers_l = np.nonzero(normalized < -zscore_threshold)
-        #     outliers_h = np.nonzero(normalized > zscore_threshold)
-        #     outlier_index = np.unique((np.append(outliers_l[0], outliers_h[0])))
-        #
-        #     # remove outlier rows
-        #     df_all_modified = df_all_modified.drop(df_all_modified.index[outlier_index])
-        #     normalized = np.delete(normalized, outlier_index, 0)
-        #
-        #     # re-zscoring and clipping
-        #     # m_featureArray = df_all_modified[feature_names].astype(float)
-        #     # normalized = zscore(m_featureArray)
-        #     # normalized[normalized < -zscore_threshold] = -zscore_threshold
-        #     # normalized[normalized > zscore_threshold] = zscore_threshold
-        #
-        #
-        #     print("Removed %d outlier neurons" % len(outlier_index))
-        #
-        #     df_outliers = df_all.iloc[outlier_index]
+
+        else:
+            outliers_l = np.nonzero(normalized < -zscore_threshold)
+            outliers_h = np.nonzero(normalized > zscore_threshold)
+            outlier_index = np.unique((np.append(outliers_l[0], outliers_h[0])))
+
+            # remove outlier rows
+            df_all_modified = df_all_modified.drop(df_all_modified.index[outlier_index])
+            normalized = np.delete(normalized, outlier_index, 0)
+
+            # re-zscoring and clipping
+            # m_featureArray = df_all_modified[feature_names].astype(float)
+            # normalized = zscore(m_featureArray)
+            # normalized[normalized < -zscore_threshold] = -zscore_threshold
+            # normalized[normalized > zscore_threshold] = zscore_threshold
+
+            print("Removed %d outlier neurons" % len(outlier_index))
+
+            df_outliers = df_all.iloc[outlier_index]
+
 
     df_z = pd.DataFrame(normalized)
     df_z.columns = feature_names
-    df_z.index = df_all['swc_file_name']
+    df_z.index = df_all_modified['swc_file_name']
 
     if out_file:
         df_z.to_csv(out_file, index=True)
+        df_all_modified.to_csv(out_file[0:-10]+'feature_modified.csv', index=True)
         print("save to " + out_file )
+
 
     if (df_z.shape[0] != df_all_modified.shape[0]):
         print ("error:  the sample size of the zscore and the original table does not match!")
@@ -591,7 +572,7 @@ def get_zscore_features(df_all, feature_names, out_file, REMOVE_OUTLIER=0,
 
 
 #############################################################################################
-def output_single_cluster_results(df_cluster, output_dir, output_prefix, snapshots_dir=None, swc_path = None):
+def output_single_cluster_results(df_cluster, output_dir, output_prefix,  swc_path = None):
     csv_file = output_dir + '/' + output_prefix + '.csv'
     df_cluster.to_csv(csv_file, index=False)
 
@@ -599,14 +580,10 @@ def output_single_cluster_results(df_cluster, output_dir, output_prefix, snapsho
     generateLinkerFileFromDF(df_cluster, ano_file, False, swc_path)
     # copy bmp vaa3d snapshots images over
 
-    if (snapshots_dir):
-        copySnapshots(df_cluster, snapshots_dir, output_dir + '/' + output_prefix)
-        assemble_screenshots(output_dir + '/' + output_prefix, output_dir + '/' + output_prefix + '_assemble.png', 128)
-
     return
 
 
-def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, snapshots_dir=None):
+def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, swc_path=None):
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
@@ -629,7 +606,7 @@ def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, s
         ids = np.nonzero(assign_ids == i)[0]  # starting from  0
         df_cluster = df_all.iloc[ids]
         #print("  %d neurons in cluster %d" % (df_cluster.shape[0], i))
-        output_single_cluster_results(df_cluster, output_dir, "/cluster_" + str(i), snapshots_dir)
+        output_single_cluster_results(df_cluster, output_dir, "/cluster_" + str(i), swc_path)
 
         df_zscore_cluster = df_zscores.iloc[ids]
         csv_file2 = output_dir + '/cluster_zscore_' + str(i) + '.csv'
@@ -692,7 +669,8 @@ def truncate_dendrogram(linkage, max_cluster_num,output_dir, max_d=0 ):
 
 
 
-def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_dir= None, RemoveOutliers = 0, datasetType='ivscc', plot_heatmap =1):
+def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, swc_path= None, RemoveOutliers = 0,
+                 datasetType='ivscc', plot_heatmap =1):
   print("\n\n\n  ***************  ward computation, max_cluster = %d  *************:" % max_cluster_num)
 
   if not os.path.exists(output_dir):
@@ -702,7 +680,7 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_d
   df_zscores, df_all_outlier_removed, df_outliers = get_zscore_features(df_all, feature_names,
       output_dir + '/zscore.csv', RemoveOutliers)
   if (df_outliers.shape[0] > 0 ):
-    output_single_cluster_results(df_outliers, output_dir, "outliers", snapshots_dir)
+    output_single_cluster_results(df_outliers, output_dir, "outliers", swc_path)
 
   if plot_heatmap:
       if datasetType =='ivscc':
@@ -716,7 +694,7 @@ def ward_cluster(df_all, feature_names, max_cluster_num, output_dir, snapshots_d
 
 
   assignments = hierarchy.fcluster(link, max_cluster_num, criterion="maxclust")
-  output_clusters(assignments, df_zscores, df_all_outlier_removed, feature_names, output_dir, snapshots_dir)
+  output_clusters(assignments, df_zscores, df_all_outlier_removed, feature_names, output_dir, swc_path)
 
   truncate_dendrogram(link,max_cluster_num,output_dir,0)
 
@@ -731,7 +709,10 @@ def silhouette_clusternumber(linkage,df_zscores,low=1, high=5,output_dir ="."):
 
     print("Silhouettee analysis:")
     scores=[]
-    for n_clusters in range(low,high,(high-low)/20):
+    step = 1
+    if step < (high-low)/20:
+         step = (high-low)/20
+    for n_clusters in range(low,high,step):
          assignments = hierarchy.fcluster(linkage, n_clusters, criterion="maxclust")
          silhouette_avg = silhouette_score(df_zscores, assignments,metric='sqeuclidean')
          print("For n_clusters =", n_clusters,"The average silhouette coefficient is :", silhouette_avg)
@@ -778,7 +759,7 @@ def dunnindex_clusternumber(linkage,df_zscores, low=1, high=5,output_dir ="."):
 
 
 
-def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, RemoveOutliers=0):
+def affinity_propagation(df_all, feature_names, output_dir, swc_path=None, RemoveOutliers=0):
   ######  Affinity Propogation ##############
 
     print("\n\n\n ***************  affinity propogation computation ****************:")
@@ -796,9 +777,10 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
 
 
         # Compute Affinity Propagation
-    df_zscores, df_all_outlier_removed, df_outliers = get_zscore_features(df_all, redundancy_removed_features_names, None, RemoveOutliers)
+    df_zscores, df_all_outlier_removed, df_outliers = get_zscore_features(df_all, redundancy_removed_features_names,
+    output_dir+'/zscore.csv', RemoveOutliers)
     if (df_outliers.shape[0] > 0 ):
-      output_single_cluster_results(df_outliers, output_dir, "outliers", snapshots_dir)
+      output_single_cluster_results(df_outliers, output_dir, "outliers", swc_path)
     print "There are ", df_zscores.shape[0],"neurons entering the clustering"
 
     X = df_zscores.as_matrix()
@@ -810,7 +792,7 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
       % silhouette_score(df_zscores, labels, metric='sqeuclidean'))
     labels = labels + 1  # the default labels start from 0, to be consistent with ward, add 1 so that it starts from 1
     clusters_list = output_clusters(labels, df_zscores, df_all_outlier_removed, redundancy_removed_features_names, output_dir,
-        snapshots_dir)
+        swc_path)
 
 
     #dunn_index = dunn(clusters_list)
@@ -820,7 +802,7 @@ def affinity_propagation(df_all, feature_names, output_dir, snapshots_dir=None, 
 
 
 import pickle
-def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_postfix,experiment_type='ivscc', low=2, high=5,plot_heatmap=1,RemoveOutliers=0):
+def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_postfix,experiment_type='ivscc', low=2, high=5,plot_heatmap=1,RemoveOutliers=0, swc_path=None):
     #experiment type: ivscc, bbp, bigneuron
     redundancy_removed_features_names = remove_correlated_features(df_features, feature_names, 0.90)
     print(" The %d features that are not closely correlated are %s" % (
@@ -832,7 +814,7 @@ def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_
           print "load existing linkage file from disk:"
           linkage = pickle.load( open( out_dir+"/linkage.pik", "rb" ) )
     else:
-	  linkage, df_zscore = ward_cluster(df_features, redundancy_removed_features_names, num_clusters, out_dir, None, RemoveOutliers, experiment_type, plot_heatmap)
+	  linkage, df_zscore = ward_cluster(df_features, redundancy_removed_features_names, num_clusters, out_dir, swc_path, RemoveOutliers, experiment_type, plot_heatmap)
           with open(output_dir+'/linkage.pik', 'wb') as f:
                pickle.dump([linkage], f, -1)
                print "Save linkage to :", output_dir+'/linkage.pik'
@@ -854,11 +836,11 @@ def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_
 
 
 
-def run_affinity_propagation(df_features, feature_names,output_dir,output_postfix):
+def run_affinity_propagation(df_features, feature_names,output_dir,output_postfix, swc_path=None,outlier_removal=0):
     redundancy_removed_features_names = remove_correlated_features(df_features, feature_names, 0.90)
     print(" The %d features that are not closely correlated are %s" % (
         len(redundancy_removed_features_names), redundancy_removed_features_names))
 
-    num_clusters  = affinity_propagation(df_features, redundancy_removed_features_names, output_dir + '/ap' + output_postfix, None, 0)
+    num_clusters  = affinity_propagation(df_features, redundancy_removed_features_names, output_dir + '/ap' + output_postfix, swc_path, outlier_removal)
     print "ap clusters:",num_clusters
     return redundancy_removed_features_names

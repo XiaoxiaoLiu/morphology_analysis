@@ -25,6 +25,12 @@ GL_FEATURES_NO_RADII = np.array(
      'bifurcation_angle_local', 'bifurcation_angle_remote'])
 
 
+GL_FEATURES_NO_RADII = np.array(
+    ['num_stems', 'num_bifurcations', 'num_branches', 'num_of_tips', 'overall_width',
+     'overall_height', 'overall_depth', 'total_length',
+     'max_euclidean_distance', 'max_path_distance', 'max_branch_order', 'average_contraction', 'average fragmentation',
+     'bifurcation_angle_local', 'bifurcation_angle_remote'])
+
 def get_GL_feature_names(type='all'):
     if type == 'all':
         return GL_FEATURE_TAGS
