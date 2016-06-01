@@ -45,7 +45,7 @@ from itertools import cycle
 
 
 ####################################
-ZSCORE_OUTLIER_THRESHOLD = 3
+ZSCORE_OUTLIER_THRESHOLD = 5
 ####################################
 
 sns.set_context("poster")
@@ -168,6 +168,7 @@ def plot_confusion_matrix(cm, xlabel, ylabel, xnames, ynames,  title='Confusion 
 
 def heatmap_plot_zscore_ivscc(df_zscore_features, df_all, output_dir, title=None):
     print "heatmap plot:ivscc"
+    sns.set_context("talk", font_scale=1.4)
     # Create a custom palette for dendrite_type colors
     dendrite_types = [np.nan, 'aspiny', 'sparsely spiny', 'spiny']
     # dendrite_type_pal = sns.color_palette("coolwarm", len(dendrite_types))
@@ -189,10 +190,10 @@ def heatmap_plot_zscore_ivscc(df_zscore_features, df_all, output_dir, title=None
     cre_line_colors = df_all['cre_line'].map(cre_line_lut)
 
 
-    # layers = np.unique(df_all['layer'])
-    # layer_pal = sns.light_palette("green", len(layers))
-    # layer_lut = dict(zip(layers, layer_pal))
-    # layer_colors = df_all['layer'].map(layer_lut)
+    layers = np.unique(df_all['layer'])
+    layer_pal = sns.light_palette("black", len(layers))
+    layer_lut = dict(zip(layers, layer_pal))
+    layer_colors = df_all['layer'].map(layer_lut)
 
     # # only if types are available
     # types = np.unique(df_all['types'])
@@ -212,19 +213,19 @@ def heatmap_plot_zscore_ivscc(df_zscore_features, df_all, output_dir, title=None
     row_linkage = hierarchy.linkage(data, method='ward', metric='euclidean')
     feature_order = hierarchy.leaves_list(row_linkage)
 
-    print data.index
+
     matchIndex = [data.index[x] for x in feature_order]
-    print matchIndex
+
     data = data.reindex(matchIndex)
 
     print "plot heatmap"
     g = sns.clustermap(data, row_cluster = False, col_linkage=linkage, method='ward', metric='euclidean',
-                       linewidths = 0.0,col_colors = [cre_line_colors],
-                       cmap = sns.cubehelix_palette(light=1, as_cmap=True),figsize=(60,20))
+                       linewidths = 0.0,col_colors = [cre_line_colors,layer_colors],
+                       cmap = sns.cubehelix_palette(light=1, as_cmap=True),figsize=(60,15))
 
     pl.setp(g.ax_heatmap.xaxis.get_majorticklabels(), rotation=90 )
     pl.setp(g.ax_heatmap.yaxis.get_majorticklabels(), rotation=0)
-    pl.subplots_adjust(left=0.1, bottom=0.5, right=0.9, top=0.95)  # !!!!!
+    pl.subplots_adjust(left=0.1, bottom=0.5, right=0.8, top=0.95)  # !!!!!
 
     #pl.tight_layout( fig, h_pad=20.0, w_pad=20.0)
 
@@ -242,9 +243,9 @@ def heatmap_plot_zscore_ivscc(df_zscore_features, df_all, output_dir, title=None
         g.ax_row_dendrogram.bar(0, 0, color = "white", label=" ", linewidth=0)
         g.ax_row_dendrogram.legend(loc=location, ncol=num_cols, borderpad=0.0)
 
-    # for label in layers:
-    #      pl.bar(0, 0, color=layer_lut[label], label=label, linewidth=1)
-    #      pl.legend(loc="left", ncol=2,borderpad=0.5)
+    for label in layers:
+        g.ax_row_dendrogram.bar(0, 0, color=layer_lut[label], label=label, linewidth=0)
+        g.ax_row_dendrogram.legend(loc=location, ncol=1,borderpad=0.0)
 
     #
     # for label in types:
@@ -263,7 +264,7 @@ def heatmap_plot_zscore_ivscc(df_zscore_features, df_all, output_dir, title=None
 
     filename = output_dir + '/zscore_feature_heatmap.png'
     pl.savefig(filename, dpi=300)
-    pl.show()
+    #pl.show()
     print("save zscore matrix heatmap figure to :" + filename)
     pl.close()
     return linkage
@@ -587,9 +588,16 @@ def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, s
     if not os.path.exists(output_dir):
         os.mkdir(output_dir)
 
-    df_assign_id = pd.DataFrame()
+    df_assign_id = pd.DataFrame(columns=['specimen_name', 'specimen_id', 'cluster_id'])
+
     if 'specimen_name' in df_all.columns:
          df_assign_id['specimen_name'] = df_all['specimen_name']
+    else:
+        print "missing specimen_name:",df_all.columns
+    if 'specimen_id' in df_all.columns:
+         df_assign_id['specimen_id'] = df_all['specimen_id']
+    else:
+        print "missing specimen_id:",df_all.columns
     df_assign_id['cluster_id'] = assign_ids
     df_assign_id.to_csv(output_dir + "/cluster_id.csv", index=False)
 
@@ -765,7 +773,7 @@ def affinity_propagation(df_all, feature_names, output_dir, swc_path=None, Remov
     print("\n\n\n ***************  affinity propogation computation ****************:")
 
 
-    redundancy_removed_features_names = remove_correlated_features(df_all, feature_names, 0.90)
+    redundancy_removed_features_names = remove_correlated_features(df_all, feature_names, 0.95)
     print(" The %d features that are not closely correlated are %s" % (
         len(redundancy_removed_features_names), redundancy_removed_features_names))
 
@@ -802,14 +810,15 @@ def affinity_propagation(df_all, feature_names, output_dir, swc_path=None, Remov
 
 
 import pickle
-def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_postfix,experiment_type='ivscc', low=2, high=5,plot_heatmap=1,RemoveOutliers=0, swc_path=None):
+def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_postfix,experiment_type='ivscc', low=2, high=5,
+                     plot_heatmap=1,RemoveOutliers=0, swc_path=None, rerun=1):
     #experiment type: ivscc, bbp, bigneuron
-    redundancy_removed_features_names = remove_correlated_features(df_features, feature_names, 0.90)
+    redundancy_removed_features_names = remove_correlated_features(df_features, feature_names, 0.95)
     print(" The %d features that are not closely correlated are %s" % (
         len(redundancy_removed_features_names), redundancy_removed_features_names))
   
     out_dir = output_dir+'/ward' + output_postfix
-    if os.path.exists(out_dir + "/linkage.pik"):
+    if os.path.exists(out_dir + "/linkage.pik") and rerun ==0:
           pickle.dump([linkage], f, -1)
           print "load existing linkage file from disk:"
           linkage = pickle.load( open( out_dir+"/linkage.pik", "rb" ) )
@@ -837,7 +846,7 @@ def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_
 
 
 def run_affinity_propagation(df_features, feature_names,output_dir,output_postfix, swc_path=None,outlier_removal=0):
-    redundancy_removed_features_names = remove_correlated_features(df_features, feature_names, 0.90)
+    redundancy_removed_features_names = remove_correlated_features(df_features, feature_names, 0.95)
     print(" The %d features that are not closely correlated are %s" % (
         len(redundancy_removed_features_names), redundancy_removed_features_names))
 

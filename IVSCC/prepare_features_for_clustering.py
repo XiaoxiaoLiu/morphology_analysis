@@ -65,12 +65,12 @@ def cleanup_query_csv(db_tags_csv_file):
 def main():
 
     data_DIR = '/data/mat/xiaoxiaol/data/lims2/ivscc_0519'
-    feature_file = data_DIR +'/ivscc_0519.csv'
+    feature_file = data_DIR +'/ivscc_0519_pca_aligned_all.csv'
 
-    df_features_with_tags = cleanup_query_csv(feature_file)
+    #df_features_with_tags = cleanup_query_csv(feature_file)
 
-    feature_meta_file= data_DIR+'/ivscc_0519_features_with_meta.csv'
-    df_features_with_tags.to_csv(feature_meta_file, index=False)
+    feature_meta_file= data_DIR+'/ivscc_0519_pca_aligned_with_meta.csv'
+    #df_features_with_tags.to_csv(feature_meta_file, index=False)
 
 
 
@@ -92,8 +92,6 @@ def main():
     print apical_feature_names
     print axon_feature_names
 
-    print "remove radii features!!!!"
-    exit()
 
     meta_feature_names = np.array(['specimen_name','specimen_id','dendrite_type','cre_line','region_info','filename','swc_file_name'])
 
@@ -116,12 +114,12 @@ def main():
 
     df_spiny = df_groups.get_group('spiny')
     df_w_spiny = df_spiny[np.append(meta_feature_names,spiny_feature_names)]
-    df_w_spiny.to_csv(data_DIR +'/spiny_features.csv', index=False)
+    df_w_spiny.to_csv(data_DIR +'/spiny_features_pca_aligned.csv', index=False)
 
 
     df_aspiny =  pd.concat([df_groups.get_group('aspiny'),df_groups.get_group('sparsely spiny')],axis=0)
     df_w_aspiny = df_aspiny[np.append(meta_feature_names,aspiny_feature_names)]
-    df_w_aspiny.to_csv(data_DIR +'/aspiny_features.csv', index=False)
+    df_w_aspiny.to_csv(data_DIR +'/aspiny_features_pca_aligned.csv', index=False)
 
 
     print "There are %d neurons are aspiny " % df_aspiny.shape[0]

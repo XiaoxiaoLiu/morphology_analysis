@@ -30,7 +30,7 @@ def filter_featureset(all_feature_file,output_csv_file):
     feature_names  = features.get_feature_names('spiny')
 
     df_clean = pd.read_csv(all_feature_file)
-    col_names = np.append(['swc_file_name','dendrite_type','specimen_id','specimen_name','region_info','cre_line'],feature_names)
+    col_names = np.append(['swc_file_name','dendrite_type','specimen_id','specimen_name','layer','cre_line'],feature_names)
     df_clean = df_clean[col_names]
 
     df_clean.dropna(inplace=True) # drop rows contain NAs
@@ -44,8 +44,10 @@ def filter_featureset(all_feature_file,output_csv_file):
 
 
 
-def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward'):
+def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward',swc_path = None):
     print datetime.now().strftime('starting:%Y-%m-%d %H:%M:%S')
+    if (swc_path == None):
+        swc_path = "./SWC"
 
     df_f = pd.read_csv(clean_feature_file)
 
@@ -62,15 +64,15 @@ def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward')
 
 
     if method == "ap" or method == "all":
-        fc.run_affinity_propagation(df_f, feature_names, output_dir, postfix, "/data/mat/xiaoxiaol/data/lims2/ivscc_0519/SWC",REMOVE_OUTLIERS)
+        fc.run_affinity_propagation(df_f, feature_names, output_dir, postfix,swc_path,REMOVE_OUTLIERS)
 
 
-    num_clusters = 12
+    num_clusters = 22
     if method == "ward" or method == "all":
         fc.run_ward_cluster(df_features=df_f, feature_names=feature_names, num_clusters=num_clusters,
                             output_dir= output_dir,
-                            output_postfix=postfix,experiment_type='ivscc', low=3, high = 20, plot_heatmap=1,
-                            RemoveOutliers=REMOVE_OUTLIERS, swc_path="/data/mat/xiaoxiaol/data/lims2/ivscc_0519/SWC")
+                            output_postfix=postfix,experiment_type='ivscc', low=8, high = 35, plot_heatmap=1,
+                            RemoveOutliers=REMOVE_OUTLIERS, swc_path=swc_path)
 
     print datetime.now().strftime('end:%Y-%m-%d %H:%M:%S')
     return
@@ -86,15 +88,16 @@ def main():
 
      if dataset=='IVSCC':
             data_DIR = "/data/mat/xiaoxiaol/data/lims2/ivscc_0519"
-            output_dir = data_DIR+'/clustering_result'
+            output_dir = data_DIR+'/ephys_overlap_clustering_result_pca_aligned'
             if not os.path.exists(output_dir):
                  os.system('mkdir '+output_dir)
-            feature_tag_csv = data_DIR + '/spiny_features_curated.csv'
-            output_clean_features_csv = data_DIR + '/spiny_features_filtered.csv'
+            feature_tag_csv = data_DIR + '/ephys_overlap_spiny_features_pca_aligned.csv'
+            output_clean_features_csv = data_DIR + '/ephys_overlap_spiny_features_pca_aligned_filtered.csv'
             feature_names = filter_featureset (feature_tag_csv,output_clean_features_csv)
 
      #generate linkage
-     cluster_analysis(output_clean_features_csv,feature_names,output_dir, method='ward')
+     swc_path = "/data/mat/xiaoxiaol/data/lims2/ivscc_0519/PCA_aligned"
+     cluster_analysis(output_clean_features_csv,feature_names,output_dir, 'ward',swc_path)
 
      #merge cluster id
 
