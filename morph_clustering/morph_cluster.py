@@ -42,6 +42,7 @@ from sklearn.cluster import AffinityPropagation
 from sklearn import metrics
 import numpy.random
 from itertools import cycle
+import gap_analysis as gap
 
 
 ####################################
@@ -467,6 +468,9 @@ def dunn(k_list):
     return di
 
 
+
+
+
 ###############################  cluster specific features #####
 
 def cluster_specific_features(df_all, assign_ids, feature_names, output_csv_fn):
@@ -503,7 +507,7 @@ def cluster_specific_features(df_all, assign_ids, feature_names, output_csv_fn):
     g.set_xticklabels(labels)
     pl.yticks(rotation=0)
     pl.xticks(rotation=90)
-    pl.subplots_adjust(left=0.5, right=0.9, top=0.9, bottom=0.1)
+    pl.subplots_adjust(left=0.8, right=0.95, top=0.95, bottom=0.3)
     pl.title('-log10(P value)')
     filename = output_csv_fn + '.png'
     pl.savefig(filename, dpi=300)
@@ -610,7 +614,10 @@ def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, s
     df_cluster = pd.DataFrame()
     df_zscore_cluster = pd.DataFrame()
 
-    for i in clusters:
+     #pick the examplar and save into ano file
+    print "Save cluster examplar to  exmplar.ano."
+    with open(output_dir+'/examplar.ano', 'w') as outf:
+      for i in clusters:
         ids = np.nonzero(assign_ids == i)[0]  # starting from  0
         df_cluster = df_all.iloc[ids]
         #print("  %d neurons in cluster %d" % (df_cluster.shape[0], i))
@@ -622,8 +629,19 @@ def output_clusters(assign_ids, df_zscores, df_all, feature_names, output_dir, s
 
         cluster_list.append(df_zscore_cluster.values)
 
+        afile=df_cluster.iloc[len(df_cluster)/2]['swc_file_name']
+        #print afile
+        filename = swc_path + '/'+afile
+        line = 'SWCFILE=' + filename + '\n'
+        outf.write(line)
+
     ## pick the cluster specific feature and plot histogram
-    #cluster_specific_features(df_all, assign_ids, feature_names, output_dir+'/pvalues.csv')
+    cluster_specific_features(df_all, assign_ids, feature_names, output_dir+'/pvalues.csv')
+
+
+    outf.close()
+
+
     return cluster_list
 
 
@@ -830,6 +848,10 @@ def run_ward_cluster(df_features, feature_names, num_clusters,output_dir,output_
 
     print "silhouette analysis"
     silhouette_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)
+
+    print "\n\n\n\ngap analysis"
+    gap.gap_analysis(df_zscore.values,low,high,10,output_dir + '/ward' + output_postfix)
+
 
     #print "dunn index:"
     #dunnindex_clusternumber(linkage, df_zscore, low,high,output_dir + '/ward' + output_postfix)

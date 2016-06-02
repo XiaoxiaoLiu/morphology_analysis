@@ -71,7 +71,7 @@ def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward',
     if method == "ward" or method == "all":
         fc.run_ward_cluster(df_features=df_f, feature_names=feature_names, num_clusters=num_clusters,
                             output_dir= output_dir,
-                            output_postfix=postfix,experiment_type='ivscc', low=8, high = 35, plot_heatmap=1,
+                            output_postfix=postfix,experiment_type='ivscc', low=8, high = 35, plot_heatmap=0,
                             RemoveOutliers=REMOVE_OUTLIERS, swc_path=swc_path)
 
     print datetime.now().strftime('end:%Y-%m-%d %H:%M:%S')
@@ -83,10 +83,10 @@ def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward',
 
 
 def main():
-     dataset ='IVSCC'
+     dataset ='IVSCC_PCA_aligned' #'IVSCC_Ephys_Overlap'
 
 
-     if dataset=='IVSCC':
+     if dataset=='IVSCC_Ephys_Overlap':
             data_DIR = "/data/mat/xiaoxiaol/data/lims2/ivscc_0519"
             output_dir = data_DIR+'/ephys_overlap_clustering_result_pca_aligned'
             if not os.path.exists(output_dir):
@@ -94,9 +94,18 @@ def main():
             feature_tag_csv = data_DIR + '/ephys_overlap_spiny_features_pca_aligned.csv'
             output_clean_features_csv = data_DIR + '/ephys_overlap_spiny_features_pca_aligned_filtered.csv'
             feature_names = filter_featureset (feature_tag_csv,output_clean_features_csv)
+            swc_path = "/data/mat/xiaoxiaol/data/lims2/ivscc_0519/PCA_aligned"
 
-     #generate linkage
-     swc_path = "/data/mat/xiaoxiaol/data/lims2/ivscc_0519/PCA_aligned"
+     if dataset=='IVSCC_PCA_aligned':
+            data_DIR = "/data/mat/xiaoxiaol/data/lims2/ivscc_0519"
+            output_dir = data_DIR+'/clustering_result_pca_aligned'
+            if not os.path.exists(output_dir):
+                 os.system('mkdir '+output_dir)
+            feature_tag_csv = data_DIR + '/spiny_features_pca_aligned.csv'
+            output_clean_features_csv = data_DIR + '/spiny_features_pca_aligned_filtered.csv'
+            feature_names = filter_featureset (feature_tag_csv,output_clean_features_csv)
+            swc_path = "/data/mat/xiaoxiaol/data/lims2/ivscc_0519/PCA_aligned"
+
      cluster_analysis(output_clean_features_csv,feature_names,output_dir, 'ward',swc_path)
 
      #merge cluster id
