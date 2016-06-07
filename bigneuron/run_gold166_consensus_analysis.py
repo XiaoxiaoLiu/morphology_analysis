@@ -25,8 +25,7 @@ data_DIR="/data/mat/xiaoxiaol/data/big_neuron/silver/"+subfolder
 
 df_nd = pd.read_csv(data_DIR+'/list.txt')
 imageIDs = df_nd['image_id'].apply(str)
-if test:
-     imageIDs=['12','21','249']
+
 
 mc2c.pipe(input_data_dir=data_DIR, output_dir=data_DIR+"/analysis_results", imageIDs=imageIDs,distance_file_postfix='median_distances.csv', COLLECT_FROM_DISTANCE_MATRIX=1,EXTRACT_MEDIAN_CONSENSUS=1, DISPLAY=0)
 print "\n\n\n"

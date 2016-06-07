@@ -77,5 +77,6 @@ def gap_analysis (data, low=5, high =15,num_reference_bootstraps = 10, output_di
     plt.plot(range(len(gaps)), gaps,"*-")
     plt.xlabel("cluster number")
     plt.ylabel("gap")
-    plt.show()
+    #plt.show()
     plt.savefig(output_dir+'/gap.png')
+    plt.close()

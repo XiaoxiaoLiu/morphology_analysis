@@ -47,16 +47,17 @@ def generateLinkerFileFromCSV(result_dir, csvfile, column_name=None, strip_path=
 # Data PATHs
 
 
-data_dir = "/home/xiaoxiaol/work/data/lims2/ivscc_0519"
+data_dir = "/home/xiaoxiaol/work/data/lims2/ivscc_0519/CK"
 
-default_all_feature_merged_file = data_dir + '/spiny.MorphGrpID.HcustGap.Spiny.0519.csv'
+default_all_feature_merged_file = data_dir + '/Final.specimen.selected.all.ss.06032016.csv'
 output_dir=data_dir
 
-df_c = pd.read_csv(data_dir + '/ivscc_0519_features_with_meta.csv')
+df_c = pd.read_csv(data_dir + '/../ivscc_0519_features_with_meta.csv')
 df_m = pd.read_csv(default_all_feature_merged_file)
 
-df_merged = pd.merge(df_c,df_m,how='inner',on=['specimen_id'])
-merged_file = output_dir +"/merged.csv"
+df_merged = pd.merge(df_c,df_m,how='inner',on=['specimen_name'])
+merged_file = output_dir +"/selected_feature_merged.csv"
 df_merged.to_csv(merged_file)
 
-generateLinkerFileFromCSV(output_dir, merged_file,'cluster_id',strip_path=False,fpath=data_dir + "/SWC",swc_postfix="_pia.swc")
+generateLinkerFileFromCSV(output_dir+'/all', merged_file,'clusterID.all',strip_path=False,fpath=data_dir + "/../PCA_aligned",swc_postfix="_pia.swc")
+generateLinkerFileFromCSV(output_dir+'/selected', merged_file,'clusterID',strip_path=False,fpath=data_dir + "/../PCA_aligned",swc_postfix="_pia.swc")

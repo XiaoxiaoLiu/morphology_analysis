@@ -180,40 +180,56 @@ def dark_pruning(input_eswc_path, input_image, output_eswc_path, visible_thre=40
         command.run(timeout=60*10)
         return
 
+def RUN_Vaa3d_Job(arguments,GEN_QSUB=0, qsub_script_dir=".", id=None):
 
+    if GEN_QSUB == 0:
+        # run in local python env
+        cmd = V3D + arguments
+        print cmd
+        command = Command(cmd)
+        command.run(timeout=60*10)
+        return
 
-def consensus(input_ano_path, output_eswc_path, vote_threshold=3, max_cluster_distance = 5, GEN_QSUB = 0, qsub_script_dir= ".", id=None):
-    output_dir = os.path.dirname(output_eswc_path)
-    logfile = output_eswc_path+'.log'
-    if not os.path.exists(output_dir):
-        os.system("mkdir -p  " + output_dir)
-        print "create output dir: ", output_dir
-
-    arguments = " -x consensus_swc -f consensus_swc -i " + input_ano_path + " -o " + output_eswc_path + " -p "+ str(vote_threshold)+" "+str(max_cluster_distance)+" > "+logfile
-    if (id ==None):
-       id=random.randint(1000000,9999999)
+    if GEN_QSUB == 1  :
+        #run in mindscope clusters
+        cmd = QMasterV3D + arguments
+        #print cmd
+        if (id ==None):
+            id=random.randint(1000000,9999999)
+        if not os.path.exists(qsub_script_dir):
+            os.system("mkdir -p  " + qsub_script_dir)
+            print "create qsub output dir: ", qsub_script_dir
+        script_fn = qsub_script_dir +'/'+str(id)+'.qsub'
+        jobname = qsub_script_dir+'/'+str(id)
+        gen_qsub_script(cmd, jobname, script_fn)
+        return
 
     if GEN_QSUB  == 2 :
+        # run on titan
         cmd = "./start_vaa3d.sh " + arguments
         print cmd
         job_fn = qsub_script_dir +'/'+str(id)+".txt"
         gen_txt_job_script(cmd, job_fn)
         return
 
-    if GEN_QSUB == 1  :
-        cmd = QMasterV3D + arguments
-        #print cmd
-        script_fn = qsub_script_dir +'/'+str(id)+'.qsub'
-        jobname = qsub_script_dir+'/'+str(id)
-        gen_qsub_script(cmd, jobname, script_fn)
-        return
+    print "UNKNOW job type parameter: GEN_QSUB"
+    return
 
-    if GEN_QSUB == 0:
-        cmd = V3D + arguments
-        print cmd
-        command = Command(cmd)
-        command.run(timeout=60*10)
-        return
+
+
+def consensus(input_ano_path, output_eswc_path, vote_threshold=3, max_cluster_distance = 5, resampling = 0, remove_outlier = 1, GEN_QSUB = 0, qsub_script_dir= ".", id=None):
+    output_dir = os.path.dirname(output_eswc_path)
+    logfile = output_eswc_path+'.log'
+    if not os.path.exists(output_dir):
+        os.system("mkdir -p  " + output_dir)
+        print "create output dir: ", output_dir
+
+    arguments = " -x consensus_swc -f consensus_swc -i " + input_ano_path + " -o " + output_eswc_path + " -p "+ str(vote_threshold)+" "+str(max_cluster_distance)+"  "+str(resampling)+" "+str(remove_outlier)+"> "+logfile
+
+    RUN_Vaa3d_Job(arguments, GEN_QSUB, qsub_script_dir, id)
+    return
+
+
 
 
 def median_swc(input_ano_path, output_csv, GEN_QSUB = 0, qsub_script_dir= ".", id=None):
@@ -238,6 +254,9 @@ def median_swc(input_ano_path, output_csv, GEN_QSUB = 0, qsub_script_dir= ".", i
     if GEN_QSUB == 1  :
         cmd = QMasterV3D + arguments
         #print cmd
+        if not os.path.exists(qsub_script_dir):
+            os.system("mkdir -p  " + qsub_script_dir)
+            print "create qsub output dir: ", qsub_script_dir
         script_fn = qsub_script_dir +'/'+str(id)+'.qsub'
         jobname = qsub_script_dir+'/'+str(id)
         gen_qsub_script(cmd, jobname, script_fn)
@@ -249,6 +268,7 @@ def median_swc(input_ano_path, output_csv, GEN_QSUB = 0, qsub_script_dir= ".", i
         command = Command(cmd)
         command.run(timeout=60*10)
         return
+
 
 def vote_map(input_ano_path, output_img_path, GEN_QSUB = 0, qsub_script_dir= "."):
     output_dir = os.path.dirname(output_img_path)
@@ -303,7 +323,6 @@ def run_neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSU
 
     # log file format
     # file1 file2   8.20009e-07  0 0
-
     arguments = " -x neuron_distance -f neuron_distance -i " + inputswc_path1 + " " + inputswc_path2 + " -o " + logfile + " >tmp.log"
 
     if GEN_QSUB :
@@ -388,7 +407,6 @@ def read_neuron_dist_log(logfile):
 # differen-structure-average = 56.6913
 # percent of different-structure = 0.617058
 
-
     # read log file
     f = open(logfile, 'r')
 
@@ -409,6 +427,7 @@ def read_neuron_dist_log(logfile):
     line = f.readline()
     perc = float(line.split(' ')[-1])  #percent of different-structure
     return {'input_file1':input_file1, 'input_file2':input_file2,'dist_12':d_12,'dist_21':d_21, 'ave': ave, 'diff': diff, 'perc': perc}
+
 
 
 def read_weighted_neuron_dist_log(logfile):
