@@ -32,12 +32,14 @@ import pandas as pd
 ### parse the query csv and generate a dataframe with required db tags
 def cleanup_query_csv(db_tags_csv_file):
     df_db_tags = pd.read_csv(db_tags_csv_file)
-    swc_file_names1 = []
+    swc_file_names = []
     cre_lines = []
     layers = []
     for i in range(df_db_tags.shape[0]):
         swc_fn = df_db_tags['filename'][i].split('/')[-1]
-        swc_file_names1.append(swc_fn)
+        #_m.swc ==> _m_pia.swc
+        swc_fn=swc_fn[:-4]+"_pia.swc"
+        swc_file_names.append(swc_fn)
 
         if not pd.isnull(df_db_tags['dendrite_type'][i]):
             df_db_tags.set_value(i, 'dendrite_type', df_db_tags.dendrite_type[i].split(' - ')[-1])
@@ -54,7 +56,7 @@ def cleanup_query_csv(db_tags_csv_file):
             layer = df_db_tags['region_info'][i].split(' ')[-1]
         layers.append(layer)
 
-    df_db_tags['swc_file_name'] = pd.Series(swc_file_names1)  ### add swc_file_name tag for merging
+    df_db_tags['swc_file_name'] = pd.Series(swc_file_names)  ### add swc_file_name tag for merging
     df_db_tags['cre_line'] = pd.Series(cre_lines)
     df_db_tags['layer'] = pd.Series(layers)
     return df_db_tags

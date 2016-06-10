@@ -1,8 +1,5 @@
 __author__ = 'xiaoxiaol'
-__author__ = 'xiaoxiaol'
-__author__ = 'xiaoxiaol'
-__author__ = 'xiaoxiaoliu'
-
+# not quite working yet
 
 
 import pandas as pd

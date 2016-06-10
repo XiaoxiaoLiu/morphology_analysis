@@ -393,6 +393,8 @@ def plot_compare_consensus_distance(distance_csv, outputDir,algorithms,metric, C
     return
 
 
+
+
 def plot_neuron_distance(neuron_distance_csv, outputDir,algorithms,CASE_BY_CASE_PLOT = 0):
     #neuron_distance_csv = data_DIR + "/neuron_distance.r.csv"
     #outputDir = data_DIR + "/neuron_dist_plots_r"
@@ -426,7 +428,8 @@ def plot_neuron_distance(neuron_distance_csv, outputDir,algorithms,CASE_BY_CASE_
         #         shared_images.append(image)
         # print "there are "+ str(len(shared_images)) +" images that have reconstructions from all " + str(20) +" algorithms."
         #
-
+    if algorithms== None:
+        algorithms = np.unique(df_nd.algorithm)
     ### all algorithm plot
     dfg = df_nd.groupby('algorithm')
     sample_size_per_algorithm=[]
@@ -438,36 +441,36 @@ def plot_neuron_distance(neuron_distance_csv, outputDir,algorithms,CASE_BY_CASE_
     #plot the average node distances
     plt.figure()
     sb.set_context("talk", font_scale=0.7)
-    a=sb.barplot(y='algorithm', x='neuron_distance', data=df_nd,order=algorithms)
+    a=sb.barplot(y='algorithm', x='neuron_distance_ave', data=df_nd,order=algorithms)
     algorithm_names = [algorithm_name_mapping[x] for x in algorithms]
     a.set_yticklabels(['%s ($n$=%d )'%(algorithm_names[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
     #sb.set_context("talk", font_scale=3.0)
     #plt.xticks(rotation="90")
-    plt.xlabel('Average Neuron Distance (D1)')
+    plt.xlabel('Average Neuron Distance')
     plt.subplots_adjust(left=0.4, bottom=0.1, top=0.9)
-    plt.savefig(outputDir + '/average_neuron_distance_D1.png', format='png')
+    plt.savefig(outputDir + '/average_neuron_distance.png', format='png')
     #plt.show()
     plt.close()
 
-    #plot the differences
-    plt.figure()
-    sb.set_context("talk", font_scale=0.7)
-    #df_nd['neuron_difference'] = df_nd['neuron_distance_diff'] *df_nd['neuron_distance_perc']
-    a=sb.barplot(y='algorithm', x='neuron_difference', data=df_nd,order=algorithms,orient='h')
-    algorithm_names = [algorithm_name_mapping[x] for x in algorithms]
-    a.set_yticklabels(['%s ($n$=%d )'%(algorithm_names[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
-    #sb.set_context("talk", font_scale=3.0)
-    #plt.xticks(rotation="90")
-    plt.xlabel('Neuron Difference Score (D2*D3)')
-    plt.subplots_adjust(left=0.4,right=0.9, bottom=0.1, top=0.9)
-    plt.savefig(outputDir + '/neuron_difference_score_D2D3.png', format='png')
-    #plt.show()
-    plt.close()
+    # #plot the differences
+    # plt.figure()
+    # sb.set_context("talk", font_scale=0.7)
+    # #df_nd['neuron_difference'] = df_nd['neuron_distance_diff'] *df_nd['neuron_distance_perc']
+    # a=sb.barplot(y='algorithm', x='neuron_difference', data=df_nd,order=algorithms,orient='h')
+    # algorithm_names = [algorithm_name_mapping[x] for x in algorithms]
+    # a.set_yticklabels(['%s ($n$=%d )'%(algorithm_names[i], sample_size_per_algorithm[i]) for i in range(algorithms.size) ])
+    # #sb.set_context("talk", font_scale=3.0)
+    # #plt.xticks(rotation="90")
+    # plt.xlabel('Neuron Difference Score (D2*D3)')
+    # plt.subplots_adjust(left=0.4,right=0.9, bottom=0.1, top=0.9)
+    # plt.savefig(outputDir + '/neuron_difference_score_D2D3.png', format='png')
+    # #plt.show()
+    # plt.close()
     return
 
 
 
-def plot_blasneuron_distance(bn_csv,outputDir,algorithms,CASE_BY_CASE_PLOT=0):
+def plot_blasneuron_distance(bn_csv,outputDir,algorithms=None,CASE_BY_CASE_PLOT=0):
 
     #outputDir = data_DIR + '/bn_dist'
     df_nd = pd.read_csv(bn_csv)
@@ -494,6 +497,9 @@ def plot_blasneuron_distance(bn_csv,outputDir,algorithms,CASE_BY_CASE_PLOT=0):
                 plt.savefig(outputDir + '/sorted/figs/' + image.split('/')[-1] + '_bn_dist.png', format='png')
 
                 plt.close()
+
+    if algorithms== None:
+        algorithms = np.unique(df_nd.algorithm)
 
 
     myalgorithms = np.unique(df_nd.algorithm)
