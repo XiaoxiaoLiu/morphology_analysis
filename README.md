@@ -1,4 +1,6 @@
 # morphology_analysis
-data analsyis for neuron reconstructions
+A scripting sandbox for analyzing large-scale neuron reconstructions/morphologies.
 
-A collection of python scripts to pipeline mneuron morphology data anlaysis.
+Mostly for the BigNeuron Project. (bigneuron.org)
+
+
