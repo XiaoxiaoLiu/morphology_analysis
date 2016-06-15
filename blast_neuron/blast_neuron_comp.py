@@ -216,7 +216,7 @@ def RUN_Vaa3d_Job(arguments,GEN_QSUB=0, qsub_script_dir=".", id=None):
     return
 
 
-
+# the new template function
 def consensus(input_ano_path, output_eswc_path, vote_threshold=3, max_cluster_distance = 5, resampling = 0, remove_outlier = 1, GEN_QSUB = 0, qsub_script_dir= ".", id=None):
     output_dir = os.path.dirname(output_eswc_path)
     logfile = output_eswc_path+'.log'
@@ -225,6 +225,19 @@ def consensus(input_ano_path, output_eswc_path, vote_threshold=3, max_cluster_di
         print "create output dir: ", output_dir
 
     arguments = " -x consensus_swc -f consensus_swc -i " + input_ano_path + " -o " + output_eswc_path + " -p "+ str(vote_threshold)+" "+str(max_cluster_distance)+"  "+str(resampling)+" "+str(remove_outlier)+"> "+logfile
+
+    RUN_Vaa3d_Job(arguments, GEN_QSUB, qsub_script_dir, id)
+    return
+
+
+def standardize(input_swc_path, ref_swc_file,output_swc_path, gap_threshold=3, new_type=-1, GEN_QSUB = 0, qsub_script_dir= ".", id=None):
+    output_dir = os.path.dirname(output_swc_path)
+    logfile = output_swc_path+'.log'
+    if not os.path.exists(output_dir):
+        os.system("mkdir -p  " + output_dir)
+        print "create output dir: ", output_dir
+
+    arguments = " -x  standardize -f standardize -i " + ref_swc_file +" "+input_swc_path + " -o " + output_swc_path + " -p "+ str(gap_threshold)+" "+str(new_type)+"> "+logfile
 
     RUN_Vaa3d_Job(arguments, GEN_QSUB, qsub_script_dir, id)
     return
@@ -648,7 +661,6 @@ WORK_PATH = "/local1/xiaoxiaol/work"
 MRMR= WORK_PATH+"/src/mrmr_c_src/mrmr"
 def selectFeatures_MRMR(df_all, feature_names,  threshold=0, number_of_features=10, selection_method='MID', data_DIR="."):
     #write out feature array into a csv file, then execute MRMR
-
 
     csvfile = data_DIR+"/zscore_for_mrmr.csv"
     np.savetxt(csvfile, featureArray, delimiter=",")

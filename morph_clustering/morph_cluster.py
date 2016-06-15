@@ -573,6 +573,8 @@ def get_zscore_features(df_all, feature_names, out_file, REMOVE_OUTLIER=0,
     if (df_z.shape[0] != df_all_modified.shape[0]):
         print ("error:  the sample size of the zscore and the original table does not match!")
 
+    df_outliers.to_csv(out_file[0:-10]+'zscore_outliers.csv', index=True)
+
     return df_z, df_all_modified, df_outliers
 
 

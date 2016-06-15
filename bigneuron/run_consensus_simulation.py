@@ -88,21 +88,14 @@ def plot_neuron_distance_by_groups(neuron_distance_csv, outputDir,algorithms,CAS
     #outputDir = data_DIR + "/neuron_dist_plots_r"
     df_nd = pd.read_csv(neuron_distance_csv)
 
-
-
     all_images = np.unique(df_nd.image_file_name)
     if not path.exists(outputDir):
         os.mkdir(outputDir)
-
-
 
     dfg = df_nd.groupby('image_file_name')
     sample_size_per_img=[]
     for img in all_images:
         sample_size_per_img.append(dfg.get_group(img).shape[0])
-
-
-
 
     plt.figure()
     sb.set_context("talk")
@@ -116,8 +109,6 @@ def plot_neuron_distance_by_groups(neuron_distance_csv, outputDir,algorithms,CAS
     plt.savefig(outputDir + '/group_by_image_average_neuron_distance.png', format='png')
     plt.show()
     plt.close()
-
-
 
     plt.figure()
     g=sb.lmplot(x="SNR", y="neuron_distance_ave", col="correlated", hue="sigma", data=df_nd,legend_out=False)
@@ -186,8 +177,6 @@ input_dir = data_DIR
 
 
 #plt_dist.plot_neuron_distance(output_neuron_distance_csv,input_dir,None,0)
-
-
 df_nd = pd.read_csv(output_neuron_distance_csv)
 df_new_nd= pd.DataFrame(columns=['image_file_name','SNR','sigma','correlated','swc_file','gold_swc_file','algorithm','neuron_distance_12','neuron_distance_21','neuron_distance_ave','neuron_distance_diff','neuron_distance_perc'])
 df_new_nd[df_nd.columns] = df_nd

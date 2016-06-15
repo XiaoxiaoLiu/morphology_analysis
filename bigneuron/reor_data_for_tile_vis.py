@@ -18,7 +18,7 @@ import blast_neuron.blast_neuron_comp as bn
 
 data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/silver"
 
-output_dir = "/data/mat/xiaoxiaol/data/big_neuron/silver/gold_163_all_soma_sort_0209"
+output_dir = "/data/mat/xiaoxiaol/data/big_neuron/silver/0401_gold163_all_soma_sort"
 os.system("mkdir "+output_dir)
 
 neuron_distance_csv = "/data/mat/xiaoxiaol/data/big_neuron/silver/20160113_merged_gold_gt/neuron_distances_with_gold.csv"
@@ -48,11 +48,11 @@ images = np.unique(df_nd['image_file_name'])
 
 dfg = df_nd.groupby('image_file_name')
 
-df_feature_79=pd.DataFrame()
+df_ims=pd.DataFrame()
 for im in images:
 
      df_image = dfg.get_group(im)
-     df_feature_79=df_feature_79.append(df_image,ignore_index=True)
+     df_ims=df_ims.append(df_image,ignore_index=True)
 
      #print df_image['swc_file']
      #sort by distance
@@ -84,8 +84,9 @@ for im in images:
 
      output_image = out_dir +'/'+im
      #copy image
-     os.system("ln -s  "+image_file + " "+ output_image)
-     os.system("ln -s  "+out_dir+"/processed/consensus_p2.eswc  "+out_dir+"/consensus_p2.eswc")
+     os.system("rm  "+output_image)
+     os.system("cp -f "+image_file + " "+ output_image)
+
 
      i=1
      for swc_file in df_image['swc_file']:
@@ -98,9 +99,9 @@ for im in images:
      #bn.genLinkerFile( out_dir, out_dir+"/"+im_id+'.ano')
 
 
-#df_feature_79.to_csv(data_DIR+"/gold_trainning_subset/neuron_distances.csv")
-#print df_feature_79.algorithm
-#print df_feature_79.image_file_name
+#df_ims.to_csv(data_DIR+"/gold_trainning_subset/neuron_distances.csv")
+#print df_ims.algorithm
+#print df_ims.image_file_name
 
 
 
