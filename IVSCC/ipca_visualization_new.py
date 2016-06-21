@@ -33,7 +33,7 @@ def generateLinkerFileFromCSV(result_dir, csvfile, column_name=None, strip_path=
 
 
     if swc_postfix is None:
-         swc_postfix=".swc"
+         swc_postfix="_pia.swc"
     count = 1
     for atype in unique_types:
         print atype
@@ -58,7 +58,7 @@ def generateLinkerFileFromCSV(result_dir, csvfile, column_name=None, strip_path=
 
 data_dir = "/home/xiaoxiaol/work/data/lims2/ivscc_0607/CK"
 
-default_all_feature_merged_file = data_dir + '/Final.specimen.allfeat.ordered.csv'
+default_all_feature_merged_file = data_dir + '/Final.specimen.selected.NewPIWM.csv'
 output_dir=data_dir
 
 # df_c = pd.read_csv(data_dir + '/../ivscc_0607_new_aligned_with_meta.csv')
@@ -70,7 +70,7 @@ output_dir=data_dir
 
 
 os.system("mkdir  "+output_dir+'/all')
-os.system("mkdir  "+output_dir+'/selected')
+#os.system("mkdir  "+output_dir+'/selected')
 
-generateLinkerFileFromCSV(output_dir+'/all', default_all_feature_merged_file,'clusterID.all',strip_path=False,fpath=data_dir + "/../pia_swc")
+generateLinkerFileFromCSV(output_dir+'/all', default_all_feature_merged_file,'clusterID',strip_path=False,fpath=data_dir + "/../pia_swc")
 #generateLinkerFileFromCSV(output_dir+'/selected', merged_file,'clusterID',strip_path=False,fpath=data_dir + "/../pia_swc")

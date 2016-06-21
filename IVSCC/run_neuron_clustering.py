@@ -27,7 +27,9 @@ import IVSCC_features as features
 
 def filter_featureset(all_feature_file,output_csv_file):
 
-    feature_names  = features.get_feature_names('spiny')
+    feature_names  = features.get_feature_names('spiny_dendrite')
+    print feature_names
+    exit()
 
     df_clean = pd.read_csv(all_feature_file)
     col_names = np.append(['swc_file_name','dendrite_type','specimen_id','specimen_name','layer','cre_line'],feature_names)
@@ -58,7 +60,7 @@ def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward',
 
     REMOVE_OUTLIERS = 1 #clipping the dataset
     if REMOVE_OUTLIERS > 0:
-        postfix = "_ol_removed"
+        postfix = "_ol_removed_full_dendrite"
     else:
         postfix = "_ol_clipped_5_glonly"
 
@@ -67,7 +69,7 @@ def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward',
         fc.run_affinity_propagation(df_f, feature_names, output_dir, postfix,swc_path,REMOVE_OUTLIERS)
 
 
-    num_clusters = 22
+    num_clusters = 12
     if method == "ward" or method == "all":
         fc.run_ward_cluster(df_features=df_f, feature_names=feature_names, num_clusters=num_clusters,
                             output_dir= output_dir,
@@ -110,12 +112,12 @@ def main():
             output_dir = data_DIR+'/clustering_result'
             if not os.path.exists(output_dir):
                  os.system('mkdir '+output_dir)
-            feature_tag_csv = data_DIR + '/spiny_features.csv'
-            output_clean_features_csv = data_DIR + '/spiny_features_filtered.csv'
+            feature_tag_csv = data_DIR + '/spiny_features_full_dendrite.csv'
+            output_clean_features_csv = data_DIR + '/spiny_features_filtered_full_dendrite.csv'
             feature_names = filter_featureset (feature_tag_csv,output_clean_features_csv)
             swc_path = data_DIR+"/pia_swc"
 
-     cluster_analysis(output_clean_features_csv,feature_names,output_dir, 'ap',swc_path)
+     cluster_analysis(output_clean_features_csv,feature_names,output_dir, 'ward',swc_path)
 
      #merge cluster id
 

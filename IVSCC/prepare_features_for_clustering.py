@@ -115,8 +115,9 @@ def main():
     df_groups = df_features.groupby(['dendrite_type'])
 
     df_spiny = df_groups.get_group('spiny')
-    df_w_spiny = df_spiny[np.append(meta_feature_names,spiny_feature_names)]
-    df_w_spiny.to_csv(data_DIR +'/spiny_features.csv', index=False)
+    # chose different sets of features
+    df_w_spiny = df_spiny[np.append(meta_feature_names,all_dendritic_feature_names)]
+    df_w_spiny.to_csv(data_DIR +'/spiny_features_full_dendrite.csv', index=False)
 
 
     df_aspiny =  pd.concat([df_groups.get_group('aspiny'),df_groups.get_group('sparsely spiny')],axis=0)

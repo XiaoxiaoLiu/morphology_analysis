@@ -1,4 +1,5 @@
 __author__ = 'xiaoxiaoliu'
+import numpy as np
 
 basal_features = [
        #u'basal_dendrite_average_diameter',
@@ -151,6 +152,8 @@ def get_feature_names(type='basal'):
         return axon_features
     if type =="spiny":
        return apical_features
+    if type =="spiny_dendrite":
+       return  basal_features.append(apical_features)
     if type =="aspiny":
        # np.append(gl_feature_names, gmi_feature_names)
        return basal_features

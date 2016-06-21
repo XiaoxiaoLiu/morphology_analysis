@@ -33,20 +33,23 @@ output_dir = data_DIR
 #run_consensus(data_DIR, output_dir)
 
 
+os.system("rm "+data_DIR+"/qsub2/*.qsub")
+os.system("rm "+data_DIR+"/qsub2/*.o*")
 
-subdirs = [x[0] for x in os.walk(data_DIR)]
-count = 0
-for recon_dir in subdirs[1:]:
-        folder_name = recon_dir.split('/')[-1]
-        if 'auto_recons' in  folder_name:
-                  print recon_dir
-                  folder_name = recon_dir.split('/')[-1]
-                  files = glob.glob(recon_dir+'/../00_*.swc')
-                  if len(files)>0:
-                       gs_swc_file =files[0]
-                  out_gs_file = gs_swc_file.split('.swc')[0]+'.strict.swc'
-                  if not os.path.exists(out_gs_file):
-                       bn.re_estimate_radius(input_swc_path=gs_swc_file, ref_swc_file=gs_swc_file,output_swc_path=out_gs_file, gap_threshold=1, new_type=3, GEN_QSUB = 1, qsub_script_dir=  data_DIR+"/qsub", id=None)
 
+for item in os.listdir(data_DIR):
+    folder_name = os.path.join(data_DIR, item)
+
+    if os.path.isdir(folder_name):
+        print folder_name
+        imagefile = glob.glob(folder_name+'/*.v3dpbd')
+        imagefile.extend(glob.glob(folder_name+'/*.v3draw'))
+        files =glob.glob(folder_name+'/*.strict.swc')
+
+        if len(files)>0 and len(imagefile)>0:
+            gs_swc_file =files[0]
+            if not os.path.exists(gs_swc_file+".out.swc"):
+
+                bn.estimate_radius(input_image=imagefile[0], input_swc_path=gs_swc_file,bg_th=40, GEN_QSUB = 0, qsub_script_dir= output_dir+"/qsub2", id=None)
 
 

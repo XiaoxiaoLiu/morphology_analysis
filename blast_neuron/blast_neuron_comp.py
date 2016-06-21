@@ -84,9 +84,10 @@ def gen_qsub_script(cmd, job_name, script_fn):
         print "create output dir: ", output_dir
 
     FILE = open(script_fn, 'w')
-    FILE.write("#PBS -q dque\n")
+    #FILE.write("#PBS -q dque\n")
+    FILE.write("#PBS -q mindscope\n")
     FILE.write("#PBS -l vmem=16g\n")
-    FILE.write("#PBS -l walltime=24:00:00\n")
+    FILE.write("#PBS -l walltime=2:00:00\n")
     FILE.write("#PBS -l ncpus=1\n")
     FILE.write("#PBS -N %s\n" % job_name)
     FILE.write("#PBS -r n\n")
@@ -224,7 +225,7 @@ def consensus(input_ano_path, output_eswc_path, vote_threshold=3, max_cluster_di
         os.system("mkdir -p  " + output_dir)
         print "create output dir: ", output_dir
 
-    arguments = " -x consensus_swc -f consensus_swc -i " + input_ano_path + " -o " + output_eswc_path + " -p "+ str(vote_threshold)+" "+str(max_cluster_distance)+"  "+str(resampling)+" "+str(remove_outlier)+"> "+logfile
+    arguments = " -x consensus_swc -f consensus_swc -i " + input_ano_path + " -o " + output_eswc_path + " -p "+ str(vote_threshold)+" "+str(max_cluster_distance)+"  "+str(resampling)+" "+str(remove_outlier)+" >"+logfile
 
     RUN_Vaa3d_Job(arguments, GEN_QSUB, qsub_script_dir, id)
     return
@@ -237,12 +238,24 @@ def standardize(input_swc_path, ref_swc_file,output_swc_path, gap_threshold=3, n
         os.system("mkdir -p  " + output_dir)
         print "create output dir: ", output_dir
 
-    arguments = " -x  standardize -f standardize -i " + ref_swc_file +" "+input_swc_path + " -o " + output_swc_path + " -p "+ str(gap_threshold)+" "+str(new_type)+"> "+logfile
+    arguments = " -x  standardize -f standardize -i " + ref_swc_file +" "+input_swc_path + " -o " + output_swc_path + " -p "+ str(gap_threshold)+" "+str(new_type)+" >"+logfile
 
     RUN_Vaa3d_Job(arguments, GEN_QSUB, qsub_script_dir, id)
     return
 
 
+def estimate_radius(input_image, input_swc_path,bg_th=40, GEN_QSUB = 0, qsub_script_dir= ".", id=None):
+    output_swc_path = input_swc_path+'.out.swc' #specified by the plugin
+    output_dir = os.path.dirname(output_swc_path)
+    logfile = output_swc_path+'.log'
+    if not os.path.exists(output_dir):
+        os.system("mkdir -p  " + output_dir)
+        print "create output dir: ", output_dir
+
+    arguments = " -x  neuron_radius  -f neuron_radius -i " + input_image +" "+input_swc_path  + " -p "+ str(bg_th)+" >"+logfile
+
+    RUN_Vaa3d_Job(arguments, GEN_QSUB, qsub_script_dir, id)
+    return
 
 
 def median_swc(input_ano_path, output_csv, GEN_QSUB = 0, qsub_script_dir= ".", id=None):

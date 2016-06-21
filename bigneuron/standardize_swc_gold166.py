@@ -36,6 +36,9 @@ output_dir = data_DIR
 
 
 
+os.system("rm "+data_DIR+"/qsub/*.qsub")
+os.system("rm "+data_DIR+"/qsub/*.o*")
+
 subdirs = [x[0] for x in os.walk(data_DIR)]
 count = 0
 for recon_dir in subdirs[1:]:
@@ -48,7 +51,7 @@ for recon_dir in subdirs[1:]:
                        gs_swc_file =files[0]
                   out_gs_file = gs_swc_file.split('.swc')[0]+'.strict.swc'
                   if not os.path.exists(out_gs_file):
-                      bn.standardize(input_swc_path=gs_swc_file, ref_swc_file=gs_swc_file,output_swc_path=out_gs_file, gap_threshold=1, new_type=3, GEN_QSUB = 1, qsub_script_dir=  data_DIR+"/qsub", id=None)
+                      bn.standardize(input_swc_path=gs_swc_file, ref_swc_file=gs_swc_file,output_swc_path=out_gs_file, gap_threshold=10, new_type=3, GEN_QSUB = 1, qsub_script_dir=  data_DIR+"/qsub", id=None)
 
                   swc_files = glob.glob(recon_dir+'/*.swc')
                   for i in range(len(swc_files)) :
@@ -57,7 +60,7 @@ for recon_dir in subdirs[1:]:
                       out_fn=recon_dir+"/../processed/"+fn
                       if not os.path.exists(out_fn):
                            if os.path.getsize(input) < 5*1024*1024:
-                              bn.standardize(input_swc_path=input, ref_swc_file=gs_swc_file,output_swc_path=out_fn, gap_threshold=1, new_type=3, GEN_QSUB = 1, qsub_script_dir= data_DIR+"/qsub", id=None)
+                              bn.standardize(input_swc_path=input, ref_swc_file=gs_swc_file,output_swc_path=out_fn, gap_threshold=10, new_type=3, GEN_QSUB = 1, qsub_script_dir= data_DIR+"/qsub", id=None)
                            else:
                               print "swc file size too big, skip:",input
 
