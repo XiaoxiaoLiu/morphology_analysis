@@ -28,6 +28,17 @@ LOOKUP_TABLE_FILE = "/data/mat/xiaoxiaol/data/big_neuron/silver/ported_neuron_tr
 
 
 
+
+def get_algorithm_name_dict():
+    data_DIR =  "/data/mat/xiaoxiaol/data/big_neuron/silver"
+    algorithm_plugin_match_csv = data_DIR + "/ported_neuron_tracing_spreadsheet.csv"
+    df_check_table = pd.read_csv(algorithm_plugin_match_csv)
+    keys = df_check_table['algorithm']
+    values = df_check_table['better_algorithm_name']
+    algorithm_name_mapping = dict(zip(keys, values))
+    return algorithm_name_mapping
+
+
 def map_better_algorithm_name(alg,algorithm_plugin_match_csv=LOOKUP_TABLE_FILE):
 
     df_check_table = pd.read_csv(algorithm_plugin_match_csv)
@@ -70,6 +81,18 @@ def  matchFileToAlgorithmName(file_name,lookup_table_file=LOOKUP_TABLE_FILE):
      return  alg
 
 
+
+
+def parse_and_add_algorithm_info(df_in):
+        df_out = df_in
+        algorithm_list=[]
+        for i in range(len(df_in)):
+            fn = df_in.iloc[i]['swc_file_name']
+            algorithm = matchFileToAlgorithmName(fn)
+            algorithm_list.append(algorithm)
+
+        df_out['algorithm'] = pd.Series(algorithm_list)
+        return df_out
 
 
 

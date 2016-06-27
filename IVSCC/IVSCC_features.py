@@ -144,17 +144,42 @@ axon_features = [
 
 
 def get_feature_names(type='basal'):
+    if type =="all_dendrite":
+        all_dendrite_features=[]
+        all_dendrite_features.extend(basal_features)
+        all_dendrite_features.extend(apical_features)
+        all_dendrite_features.extend(axon_features)
+        return  all_dendrite_features
     if type == "basal":
         return basal_features
     if type == "apical":
+        print "apical features:", len(apical_features)
         return apical_features
     if type == "axon":
         return axon_features
-    if type =="spiny":
-       return apical_features
     if type =="spiny_dendrite":
-       return  basal_features.append(apical_features)
+        # apical + basal
+       spiny_dendrite_features=[]
+       spiny_dendrite_features.extend(basal_features)
+       spiny_dendrite_features.extend(apical_features)
+       return  spiny_dendrite_features
     if type =="aspiny":
        # np.append(gl_feature_names, gmi_feature_names)
        return basal_features
-
+    if type =="spiny_dendrite_no_z":
+       spiny_dendrite_features=[]
+       spiny_dendrite_features.extend(basal_features)
+       spiny_dendrite_features.extend(apical_features)
+       for feature in spiny_dendrite_features:
+            if "_z" in feature:
+                  spiny_dendrite_features.remove(feature)
+                  print "remove ", feature
+       return  spiny_dendrite_features
+    if type == "apical_no_z":
+        apical_no_z_features = apical_features[:] ### be careful! pass by copying
+        for feature in apical_no_z_features:
+            if "_z" in feature:
+                  apical_no_z_features.remove(feature)
+                  print "remove ", feature
+        print "apical( no z) features:", len(apical_no_z_features)
+        return apical_no_z_features

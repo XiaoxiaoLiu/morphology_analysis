@@ -7,18 +7,19 @@ import numpy as np
 import pandas as pd
 
 data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/silver/0401_gold163_all_soma_sort"
-df_metrics = pd.read_csv(data_DIR+'/image_profiling_p0.05_original_gs.csv')
+#df_metrics = pd.read_csv(data_DIR+'/image_profiling_p0.05_original_gs.csv')
+df_metrics = pd.read_csv(data_DIR+'/radius_estimation_profiling.csv')
 
 #
 df_meta = pd.read_csv(data_DIR+'/image_name_lookup_table_with_limited_meta.csv')
 df_data= pd.merge(df_metrics,df_meta, on='image_id' )
 df_data["meta"] =df_data["species"]+ "-"+df_data["lab"]+ " ("+df_data["image_id"].map(str)+")"
-df_data.to_csv(data_DIR+'/image_profiling_p0.05_original_gs_with_meta.csv', index=False)
-
-
-df_data = pd.read_csv(data_DIR+'/image_profiling_p0.05_original_gs_with_meta.csv')
+#df_data.to_csv(data_DIR+'/image_profiling_p0.05_original_gs_with_meta.csv', index=False)
+df_data.to_csv(data_DIR+'/image_profiling_p0.05_reestimated_radius_gs_with_meta.csv', index=False)
+#df_data = pd.read_csv(data_DIR+'/image_profiling_p0.05_original_gs_with_meta.csv')
 
 df_data.sort(['CNR'], ascending=[1], inplace=True)
+df_data.loc[df_data['CNR'] >100, 'CNR'] = 100
 #sort_by_cnr = np.argsort(df_metrics['CNR'])
 
 sb.set_context("poster")
@@ -42,6 +43,7 @@ plt.tight_layout(h_pad=0)
 plt.xlabel('images')
 
 #plt.plot(range(len(df_metrics)),df_metrics['CNR'])
-plt.savefig(data_DIR+'/image_profile_metrics_meta.png')
+#plt.savefig(data_DIR+'/image_profile_metrics_meta.png')
+plt.savefig(data_DIR+'/image_profile_metrics_meta_radius_reestimated.png')
 plt.show()
 #plt.close()
