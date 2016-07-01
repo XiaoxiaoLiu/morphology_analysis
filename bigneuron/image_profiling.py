@@ -53,7 +53,7 @@ def profiling(input_img, input_swc, output_file, dilation_ratio = 3, flip = 0, i
 def runGold(write_path, img_csv, overall_csv):
 
     #create df table with headers
-    cols = ['image_id', 'CNR', 'dynamic_range', 'mean_fg', 'mean_bg', 'mean_tubularity']
+    cols = ['image_id', 'CNR', 'SNR', 'dynamic_range', 'mean_fg', 'mean_bg', 'mean_tubularity']
     overall_profile = pd.DataFrame(columns=cols)
 
     print data_DIR
@@ -79,18 +79,20 @@ def runGold(write_path, img_csv, overall_csv):
             for f in os.listdir(subfolder_path):
 
                 #checking all files in directory for img and trace
-                if f.endswith('.out.swc'):
+                if f.endswith('strict.swc.out.swc'):
                     swc = os.path.join(subfolder_path, f)
                     print "found swc"
                 if f.endswith(('.v3dpbd','.v3draw')):
                     img = os.path.join(subfolder_path, f)
 
-            logfile = os.path.join(subfolder_write_path, 'profile_out.csv.log')
+            #formatting log file construction - add .log, join with path, then add command line argument ' > '
+            logfile = img_csv + '.log'
+            logfile = os.path.join(subfolder_write_path, logfile)
             logfile = " > " + logfile
 
             #create profile if all files necessary were found
             if swc != None and img != None:
-                profiling(img, swc, profile_path, 3, 0, 0, 0.025, logfile)
+                profiling(img, swc, profile_path, 3, 0, 0, 0.01, logfile)
                 print "Img: %s" % img
                 print "Swc: %s" % swc
                 print "Profile path: %s" %profile_path
@@ -105,7 +107,8 @@ def runGold(write_path, img_csv, overall_csv):
                     print "Folder %d did not create a profile.csv" %folder_num
                 else:
                     #if file exists get data
-                    stats = [int(os.path.basename(dirName)), profile_df.at[0,'cnr'], profile_df.at[0,'dynamic_range'], profile_df.at[0,'fg_mean'], profile_df.at[0,'bg_mean'], profile_df.at[0,'tubularity_mean']]
+                    # take from row 2 because only want dendrite data, type=3
+                    stats = [int(os.path.basename(dirName)), profile_df.at[2,'cnr'], profile_df.at[2,'snr'], profile_df.at[2,'dynamic_range'], profile_df.at[2,'fg_mean'], profile_df.at[2,'bg_mean'], profile_df.at[2,'tubularity_mean']]
                     print stats
                     overall_profile.loc[len(overall_profile)]=stats
 
@@ -119,8 +122,7 @@ def runGold(write_path, img_csv, overall_csv):
 
     return
 
-runGold('/data/mat/xiaoxiaol/data/big_neuron/silver/0401_gold163_all_soma_sort/', 'profile_out.csv', 'radius_estimation_profiling.csv')
-#runGold('/local1/home/coriannaj/Desktop/0401_gold163_all_soma_sort/', 'profile-025.csv', 'image_profiling-.025.csv')
+runGold('/data/mat/xiaoxiaol/data/big_neuron/silver/0401_gold163_all_soma_sort/', 'profile_strict.csv', 'radius_estimation_profiling-strict.csv')
 
 #to add additional folders to data compilation
 def runAddGold(data_dir, out_file, images):
@@ -148,8 +150,9 @@ def runAddGold(data_dir, out_file, images):
                 print "Folder %s did not create a profile.csv" %img_d
             else:
                 # if file exists get data
-                stats = [158, img_d, profile_df.at[0, 'cnr'], profile_df.at[0, 'dynamic_range'],
-                         profile_df.at[0, 'fg_mean'], profile_df.at[0, 'bg_mean'], profile_df.at[0, 'tubularity_mean']]
+                # take from row 2 because only want dendrite data, type=3
+                stats = [158, img_d, profile_df.at[2, 'cnr'], profile_df.at[2, 'dynamic_range'],
+                         profile_df.at[2, 'fg_mean'], profile_df.at[2, 'bg_mean'], profile_df.at[2, 'tubularity_mean']]
                 print stats
                 data_df.loc[len(data_df)] = stats
 
