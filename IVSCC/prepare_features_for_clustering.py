@@ -22,7 +22,7 @@ import blast_neuron.blast_neuron_comp as bn
 
 import glob
 import pandas as pd
-
+import IVSCC_features as features
 
 
 
@@ -86,24 +86,20 @@ def main():
     #########################################################
     df_features = pd.read_csv(all_feature_file)
     cols = df_features.columns
-    basal_feature_names =cols[cols.str.contains('basal')]
-    axon_feature_names = cols[cols.str.contains('axon')]
-    apical_feature_names =cols[cols.str.contains('apical')]
 
-    print basal_feature_names
-    print apical_feature_names
-    print axon_feature_names
+    basal_feature_names  = features.get_feature_names('basal')
+    axon_feature_names= features.get_feature_names('axon')
+    apical_feature_names = features.get_feature_names('apical')
+    apical_no_z_feature_names = features.get_feature_names('apical_no_z')
 
+    spiny_feature_names =  features.get_feature_names('spiny_dendrite')
+    spiny_no_z_feature_names =  features.get_feature_names('spiny_dendrite_no_z')
 
     meta_feature_names = np.array(['specimen_name','specimen_id','dendrite_type','cre_line','region_info','layer','filename','swc_file_name'])
 
-    all_dendritic_feature_names =  np.append(basal_feature_names, apical_feature_names)  #bbp_feature_names
-    spiny_feature_names =  apical_feature_names
-    aspiny_feature_names = basal_feature_names
 
+    all_dendritic_feature_names = features.get_feature_names('all_dendrite')
 
-
-    print df_features.columns
     df_features[all_dendritic_feature_names]= df_features[all_dendritic_feature_names].astype(float)
     print "There are %d neurons in this dataset" % df_features.shape[0]
     print "Dendrite types: ", np.unique(df_features['dendrite_type'])
@@ -113,21 +109,34 @@ def main():
     # df_features_all.to_csv(data_DIR+'/0108/all_dendrite_features.csv')
 
     df_groups = df_features.groupby(['dendrite_type'])
-
     df_spiny = df_groups.get_group('spiny')
+    print "There are %d neurons are spiny\n\n" % df_spiny.shape[0]
+
     # chose different sets of features
-    df_w_spiny = df_spiny[np.append(meta_feature_names,all_dendritic_feature_names)]
-    df_w_spiny.to_csv(data_DIR +'/spiny_features_full_dendrite.csv', index=False)
+    df_w_spiny = df_spiny[np.append(meta_feature_names,apical_feature_names)]
+    print len(apical_feature_names)
+    df_w_spiny.to_csv(data_DIR +'/spiny_apical_features.csv', index=False)
+
+    df_w_spiny = df_spiny[np.append(meta_feature_names,apical_no_z_feature_names)]
+    print len(apical_no_z_feature_names)
+    df_w_spiny.to_csv(data_DIR +'/spiny_apical_no_z_features.csv', index=False)
+
+
+    df_w_spiny = df_spiny[np.append(meta_feature_names,spiny_feature_names)]
+    df_w_spiny.to_csv(data_DIR +'/spiny_apical_basal_feature.csv', index=False)
+
+    df_w_spiny = df_spiny[np.append(meta_feature_names,spiny_no_z_feature_names)]
+    df_w_spiny.to_csv(data_DIR +'/spiny_apical_basal_no_z_feature.csv', index=False)
+
 
 
     df_aspiny =  pd.concat([df_groups.get_group('aspiny'),df_groups.get_group('sparsely spiny')],axis=0)
+    print "There are %d neurons are aspiny " % df_aspiny.shape[0]
+
+    aspiny_feature_names =  features.get_feature_names('aspiny')
     df_w_aspiny = df_aspiny[np.append(meta_feature_names,aspiny_feature_names)]
     df_w_aspiny.to_csv(data_DIR +'/aspiny_features.csv', index=False)
 
-
-    print "There are %d neurons are aspiny " % df_aspiny.shape[0]
-
-    print "There are %d neurons are spiny\n\n" % df_spiny.shape[0]
 
 
 

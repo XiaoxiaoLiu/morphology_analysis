@@ -25,11 +25,10 @@ import morph_clustering.morph_cluster as fc
 import IVSCC_features as features
 
 
-def filter_featureset(all_feature_file,output_csv_file):
+def filter_featureset(all_feature_file,output_csv_file,feature_set_type):
 
-    feature_names  = features.get_feature_names('spiny_dendrite')
-    print feature_names
-    exit()
+    feature_names  = features.get_feature_names(feature_set_type)
+
 
     df_clean = pd.read_csv(all_feature_file)
     col_names = np.append(['swc_file_name','dendrite_type','specimen_id','specimen_name','layer','cre_line'],feature_names)
@@ -46,7 +45,7 @@ def filter_featureset(all_feature_file,output_csv_file):
 
 
 
-def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward',swc_path = None):
+def cluster_analysis(clean_feature_file,feature_names,output_dir,feature_set_type,  method='ward',swc_path = None):
     print datetime.now().strftime('starting:%Y-%m-%d %H:%M:%S')
     if (swc_path == None):
         swc_path = "./SWC"
@@ -60,7 +59,7 @@ def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward',
 
     REMOVE_OUTLIERS = 1 #clipping the dataset
     if REMOVE_OUTLIERS > 0:
-        postfix = "_ol_removed_full_dendrite"
+        postfix = "_ol_removed_"+feature_set_type
     else:
         postfix = "_ol_clipped_5_glonly"
 
@@ -86,7 +85,7 @@ def cluster_analysis(clean_feature_file,feature_names,output_dir, method='ward',
 
 def main():
      dataset ='IVSCC_0607'
-
+     feature_set_type = 'spiny_dendrite_no_z'
      if dataset=='IVSCC_Ephys_Overlap':
             data_DIR = "/data/mat/xiaoxiaol/data/lims2/ivscc_0519"
             output_dir = data_DIR+'/ephys_overlap_clustering_result_pca_aligned'
@@ -94,7 +93,7 @@ def main():
                  os.system('mkdir '+output_dir)
             feature_tag_csv = data_DIR + '/ephys_overlap_spiny_features_pca_aligned.csv'
             output_clean_features_csv = data_DIR + '/ephys_overlap_spiny_features_pca_aligned_filtered.csv'
-            feature_names = filter_featureset (feature_tag_csv,output_clean_features_csv)
+            feature_names = filter_featureset (feature_tag_csv,output_clean_features_csv,feature_set_type)
             swc_path = "/data/mat/xiaoxiaol/data/lims2/ivscc_0519/PCA_aligned"
 
      if dataset=='IVSCC_PCA_aligned':
@@ -104,7 +103,7 @@ def main():
                  os.system('mkdir '+output_dir)
             feature_tag_csv = data_DIR + '/spiny_features_pca_aligned.csv'
             output_clean_features_csv = data_DIR + '/spiny_features_pca_aligned_filtered.csv'
-            feature_names = filter_featureset (feature_tag_csv,output_clean_features_csv)
+            feature_names = filter_featureset (feature_tag_csv,output_clean_features_csv,feature_set_type)
             swc_path = "/data/mat/xiaoxiaol/data/lims2/ivscc_0519/PCA_aligned"
 
      if dataset=='IVSCC_0607':
@@ -114,10 +113,10 @@ def main():
                  os.system('mkdir '+output_dir)
             feature_tag_csv = data_DIR + '/spiny_features_full_dendrite.csv'
             output_clean_features_csv = data_DIR + '/spiny_features_filtered_full_dendrite.csv'
-            feature_names = filter_featureset (feature_tag_csv,output_clean_features_csv)
+            feature_names = filter_featureset (feature_tag_csv,output_clean_features_csv,feature_set_type)
             swc_path = data_DIR+"/pia_swc"
 
-     cluster_analysis(output_clean_features_csv,feature_names,output_dir, 'ward',swc_path)
+     cluster_analysis(output_clean_features_csv,feature_names,output_dir,feature_set_type, 'ap',swc_path)
 
      #merge cluster id
 

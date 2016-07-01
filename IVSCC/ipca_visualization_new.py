@@ -58,7 +58,7 @@ def generateLinkerFileFromCSV(result_dir, csvfile, column_name=None, strip_path=
 
 data_dir = "/home/xiaoxiaol/work/data/lims2/ivscc_0607/CK"
 
-default_all_feature_merged_file = data_dir + '/Final.specimen.selected.NewPIWM.csv'
+default_all_feature_merged_file = data_dir + '/Hclust.spiny_apical_basal_feature.csv'
 output_dir=data_dir
 
 # df_c = pd.read_csv(data_dir + '/../ivscc_0607_new_aligned_with_meta.csv')
@@ -68,9 +68,9 @@ output_dir=data_dir
 # merged_file = output_dir +"/selected_feature_merged.csv"
 # df_merged.to_csv(merged_file)
 
+subfolder = default_all_feature_merged_file .split('/')[-1].split('.csv')[0]
+os.system("mkdir  "+output_dir+'/'+subfolder)
 
-os.system("mkdir  "+output_dir+'/all')
-#os.system("mkdir  "+output_dir+'/selected')
-
-generateLinkerFileFromCSV(output_dir+'/all', default_all_feature_merged_file,'clusterID',strip_path=False,fpath=data_dir + "/../pia_swc")
+#'AP.euc'
+generateLinkerFileFromCSV(output_dir+'/'+subfolder, default_all_feature_merged_file,'clusterID.all',strip_path=False,fpath=data_dir + "/../pia_swc", swc_postfix=".swc")
 #generateLinkerFileFromCSV(output_dir+'/selected', merged_file,'clusterID',strip_path=False,fpath=data_dir + "/../pia_swc")

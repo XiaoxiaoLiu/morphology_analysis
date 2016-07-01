@@ -507,7 +507,7 @@ def cluster_specific_features(df_all, assign_ids, feature_names, output_csv_fn):
     g.set_xticklabels(labels)
     pl.yticks(rotation=0)
     pl.xticks(rotation=90)
-    pl.subplots_adjust(left=0.8, right=0.95, top=0.95, bottom=0.3)
+    pl.subplots_adjust(left=0.5, right=0.95, top=0.95, bottom=0.3)
     pl.title('-log10(P value)')
     filename = output_csv_fn + '.png'
     pl.savefig(filename, dpi=300)

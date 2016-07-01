@@ -11,13 +11,21 @@ import pandas as pd
 data_DIR =  "/data/mat/xiaoxiaol/data/big_neuron/silver"
 
 algorithm_plugin_match_csv = data_DIR + "/ported_neuron_tracing_spreadsheet.csv"
-
 df_check_table = pd.read_csv(algorithm_plugin_match_csv)
 keys = df_check_table['algorithm']
 values = df_check_table['better_algorithm_name']
 algorithm_name_mapping = dict(zip(keys, values))
 
+
+
+
+
 sb.set_context("talk", font_scale=0.7)
+
+
+def get_algorithm_name_dict():
+    return algorithm_name_mapping
+
 
 def calculate_similarities(neuron_distance_csv,metric='neuron_distance', output_similarity_csv =None):
     df_nd = pd.read_csv(neuron_distance_csv)
