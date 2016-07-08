@@ -84,7 +84,7 @@ def cluster_analysis(clean_feature_file,feature_names,output_dir,feature_set_typ
 
 
 def main():
-     dataset ='IVSCC_0607'
+     dataset ='axon'#'IVSCC_0607'
      feature_set_type = 'spiny_dendrite_no_z'
      if dataset=='IVSCC_Ephys_Overlap':
             data_DIR = "/data/mat/xiaoxiaol/data/lims2/ivscc_0519"
@@ -116,7 +116,20 @@ def main():
             feature_names = filter_featureset (feature_tag_csv,output_clean_features_csv,feature_set_type)
             swc_path = data_DIR+"/pia_swc"
 
-     cluster_analysis(output_clean_features_csv,feature_names,output_dir,feature_set_type, 'ap',swc_path)
+     if dataset=='axon':
+            data_DIR = "/data/mat/xiaoxiaol/data/lims2/ivscc_0607"
+            output_dir = data_DIR+'/axon_clustering_result'
+            if not os.path.exists(output_dir):
+                 os.system('mkdir '+output_dir)
+            feature_tag_csv = data_DIR + '/aspiny_full_axons_cloud_features.csv'
+            output_clean_features_csv = data_DIR + '/axon_features_filtered.csv'
+            feature_set_type='axon_cloud'
+            feature_names = filter_featureset (feature_tag_csv,output_clean_features_csv,feature_set_type)
+            swc_path = data_DIR+"/pia_swc"
+
+     #cluster_analysis(output_clean_features_csv,feature_names,output_dir,feature_set_type, 'ap',swc_path)
+
+     cluster_analysis(output_clean_features_csv,feature_names,output_dir,feature_set_type, 'ward',swc_path)
 
      #merge cluster id
 

@@ -98,7 +98,17 @@ apical_features = [
        #u'apical_dendrite_total_surface', u'apical_dendrite_total_volume',
        u'apical_dendrite_width']
 
-
+axon_cloud_features = [
+      # u'cloud_depth',
+       u'cloud_first_compartment_moment_x',
+       u'cloud_first_compartment_moment_y',
+       #u'cloud_first_compartment_moment_z',
+       u'cloud_height',
+       u'cloud_second_compartment_moment_x',
+       u'cloud_second_compartment_moment_y',
+      # u'cloud_second_compartment_moment_z',
+       u'cloud_width'
+]
 
 axon_features = [
        #u'axon_average_diameter',
@@ -123,13 +133,15 @@ axon_features = [
        u'axon_first_compartment_moment_x', u'axon_first_compartment_moment_y',
        u'axon_first_compartment_moment_z', u'axon_height',
        u'axon_max_branch_order', u'axon_max_euclidean_distance',
-       u'axon_max_path_distance', u'axon_mean_fragmentation',
+       u'axon_max_path_distance', u'axon_mean_fragmentation',6
        #u'axon_mean_parent_daughter_ratio',
        u'axon_neurites_over_branches',
        u'axon_num_bifurcations', u'axon_num_branches', u'axon_num_neurites',
        #u'axon_num_nodes',
        #u'axon_num_stems',
-       u'axon_num_tips',
+       u'axon_num_tips'
+
+
        #u'axon_parent_daughter_ratio',
        u'axon_second_bifurcation_moment_x',
        u'axon_second_bifurcation_moment_y',
@@ -157,6 +169,8 @@ def get_feature_names(type='basal'):
         return apical_features
     if type == "axon":
         return axon_features
+    if type == "axon_cloud":
+        return axon_cloud_features
     if type =="spiny_dendrite":
         # apical + basal
        spiny_dendrite_features=[]
