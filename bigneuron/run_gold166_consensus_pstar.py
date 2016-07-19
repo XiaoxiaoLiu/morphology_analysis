@@ -96,8 +96,9 @@ def  gen_qsub_jobs(neuron_distance_csv, input_dir, output_dir):
         QMasterV3D = "/data/mat/xiaoxiaol/work/bin/bin_vaa3d_for_clusters/vaa3d"
 
         dfg = df_nd.groupby('image_file_name')
-        os.system('rm -r ./qsubs')
-        os.system('mkdir ./qsubs')
+        os.system('rm  '+data_DIR+'/qsub/*.qsub')
+        os.system('rm  '+data_DIR+'/qsub/*.o*')
+        #os.system('mkdir ./qsubs')
 
         count = 0
         for im in images:
@@ -110,32 +111,31 @@ def  gen_qsub_jobs(neuron_distance_csv, input_dir, output_dir):
              input_dir = out_dir
 
 
-             output_eswc_path = out_dir+'/consensus.eswc'
-             output_distance_csv = out_dir+"/median_distances.csv"
-        #     if os.path.exists(output_distance_csv):
-         #        continue
+             output_eswc_path = out_dir+'/consensus3.eswc'
+             output_distance_csv = out_dir+"/median_distances3.csv"
+             if os.path.exists(output_distance_csv):
+                 continue
              logfile = output_eswc_path+".log"
-             line1 = QMasterV3D+" -x consensus_swc -f consensus_swc -i " +  input_dir +"/processed/*.swc   -o " + output_eswc_path + " -p 3 5  > "+logfile
+             line1 = QMasterV3D+" -x consensus_swc -f consensus_swc -i " +  input_dir +"/processed/*.swc   -o " + output_eswc_path + " -p 3 5 1  > "+logfile
 
              #image_file = image_DIR+ '/'+ im[:-7]+'/'+im
-             logfile= out_dir+"/median_distances.csv.log"
-             line2 =  QMasterV3D+" -x consensus_swc -f median_swc -i "+ output_eswc_path +"_SelectedNeurons.ano  "+ output_eswc_path +" -o "+  out_dir+"/median_distances.csv > "+logfile
+             logfile= out_dir+"/median_distances3.csv.log"
+             line2 =  QMasterV3D+" -x consensus_swc -f median_swc -i "+ output_eswc_path +"_SelectedNeurons.ano  "+ output_eswc_path +" -o "+  output_distance_csv+" > "+logfile
 
 
              gold_swc = df_image.iloc[0]['gold_swc_file']
              gold_swc = out_dir+'/00_'+gold_swc.split('/')[-1]
 
-             distance_log_file = output_eswc_path+".weighted.dist.log"
+             distance_log_file = output_eswc_path+".weighted.dist3.log"
              # if os.path.exists(distance_log_file):
              #     continue
              line3 =  QMasterV3D+" -x neuron_weighted_distance -f  neuron_weighted_distance  -i "+ output_eswc_path +" "+ gold_swc +" -o "+distance_log_file
 
 
-
              lines = line1+";"+line2+";"+line3
              #lines = line3
              print lines
-             bn.run_command_lines(lines, 1,"./qsubs", count)
+             bn.run_command_lines(lines, 1,data_DIR+"/qsub", count)
              count = count +1
 
         return

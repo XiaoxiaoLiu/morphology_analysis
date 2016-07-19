@@ -140,8 +140,6 @@ axon_features = [
        #u'axon_num_nodes',
        #u'axon_num_stems',
        u'axon_num_tips'
-
-
        #u'axon_parent_daughter_ratio',
        u'axon_second_bifurcation_moment_x',
        u'axon_second_bifurcation_moment_y',

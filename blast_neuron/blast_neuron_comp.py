@@ -54,30 +54,6 @@ def gen_txt_job_script(cmd, job_fn):
 
 
 def gen_qsub_script(cmd, job_name, script_fn):
-# example.qsub
-# ## There are several queues available.  Please check with !ITsupport to verify which queue you should use
-# #PBS -q mindscope
-# # Declare that your job will use no more than some amount of memory _at_peak_
-# #PBS -l vmem=16g
-# # Allow up to 2 hours of walltime.  Default is 12 hours
-# #PBS -l walltime=00:30:00
-# # Request just one core on the host
-# #PBS -l ncpus=1
-# # Give your job a descriptive name. This is visible in qstat and other job reports.  Also serves as the default basename for log files
-# #PBS -N /data/mat/xiaoxiaol/data/gold166/gold166_results_combined/sorted/checked6_human_culturedcell_Cambridge_in_vitro_confocal_GFP/Series009/Series009.v3dpbd_x216_y266_z36_app2.swc
-# # Should torque automatically re-run the job on error?
-# #PBS -r n
-# # Merge STDOUT into STDERR
-# #PBS -j oe
-# # location for stderr/stdout log files _after_ job completion
-# #
-# #
-# export DISPLAY=:13918
-# Xvfb :13918 -auth /dev/null &pwd
-
-# export LD_LIBRARY_PATH=/data/mat/xiaoxiaol/work/bin/bin_vaa3d_for_clusters
-# /data/mat/xiaoxiaol/work/bin/bin_vaa3d_for_clusters/vaa3d -x neuron_distance -f neuron_distance -i /data/mat/xiaoxiaol/data/gold166/gold166_results_combined/sorted/checked6_human_culturedcell_Cambridge_in_vitro_confocal_GFP/Series009/Series009.v3dpbd_x216_y266_z36_app2.swc  /data/mat/xiaoxiaol/data/gold166/gold166_results_combined/sorted/checked6_human_culturedcell_Cambridge_in_vitro_confocal_GFP/Series009/Series009.v3dpbd_x216_y266_z36_app2.swc -o /data/mat/xiaoxiaol/work/testqmaster.log
-# kill %1
     output_dir = os.path.dirname(script_fn)
     if not os.path.exists(output_dir):
         os.system("mkdir -p  " + output_dir)
@@ -87,7 +63,7 @@ def gen_qsub_script(cmd, job_name, script_fn):
     #FILE.write("#PBS -q dque\n")
     FILE.write("#PBS -q mindscope\n")
     FILE.write("#PBS -l vmem=16g\n")
-    FILE.write("#PBS -l walltime=2:00:00\n")
+    FILE.write("#PBS -l walltime=4:00:00\n")
     FILE.write("#PBS -l ncpus=1\n")
     FILE.write("#PBS -N %s\n" % job_name)
     FILE.write("#PBS -r n\n")
@@ -218,14 +194,14 @@ def RUN_Vaa3d_Job(arguments,GEN_QSUB=0, qsub_script_dir=".", id=None):
 
 
 # the new template function
-def consensus(input_ano_path, output_eswc_path, vote_threshold=3, max_cluster_distance = 5, resampling = 0, remove_outlier = 1, GEN_QSUB = 0, qsub_script_dir= ".", id=None):
+def consensus(input_ano_path, output_eswc_path, vote_threshold=3, max_cluster_distance = 5, remove_outlier = 1, GEN_QSUB = 0, qsub_script_dir= ".", id=None):
     output_dir = os.path.dirname(output_eswc_path)
     logfile = output_eswc_path+'.log'
     if not os.path.exists(output_dir):
         os.system("mkdir -p  " + output_dir)
         print "create output dir: ", output_dir
 
-    arguments = " -x consensus_swc -f consensus_swc -i " + input_ano_path + " -o " + output_eswc_path + " -p "+ str(vote_threshold)+" "+str(max_cluster_distance)+"  "+str(resampling)+" "+str(remove_outlier)+" >"+logfile
+    arguments = " -x consensus_swc -f consensus_swc -i " + input_ano_path + " -o " + output_eswc_path + " -p "+ str(vote_threshold)+" "+str(max_cluster_distance)+" "+str(remove_outlier)+" >"+logfile
 
     RUN_Vaa3d_Job(arguments, GEN_QSUB, qsub_script_dir, id)
     return
