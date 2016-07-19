@@ -21,7 +21,6 @@ def plot_confusion_matrix(cm, title='Confusion matrix', cmap=plt.cm.Blues):
 
 
 
-
 data_DIR = "/data/mat/xiaoxiaol/data/lims2/ivscc_0519"
 # output_dir = data_DIR+'/ephys_overlap_clustering_result_pca_aligned'
 # df_e=pd.read_csv(output_dir+"/ward_ol_removed/cluster_id.csv")
