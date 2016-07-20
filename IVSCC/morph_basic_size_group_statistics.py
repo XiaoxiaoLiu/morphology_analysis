@@ -72,7 +72,7 @@ def pull_stats(df_spiny):
 
 
 def main():
-   dataset = 'yun'
+   dataset = 'IVSCC'
    if dataset == 'IVSCC':
             data_DIR = '/data/mat/xiaoxiaol/data/lims2/ivscc_0603_no_affine'
             feature_file = data_DIR +'/ivscc_0603_csv_no_affine.csv'

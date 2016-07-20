@@ -1,10 +1,4 @@
-
-####  TO BE REMOVED, included in the ipython notebook
-
-
-
 import pandas as pd
-
 import platform
 
 
@@ -47,11 +41,8 @@ df_f = pd.read_csv(preprocessed_dir + '/features_with_db_tags.csv')
 df_f.columns=fnames
 
 df_f['height_width_ratio'] = df_f['overall_height']/df_f['overall_width']
-
 df_f['average_branch_length']=df_f['total_length']/df_f['num_branches']
-
 df_f ['length_surface_ratio'] = df_f ['total_length']/df_f['total_surface']
-
 
 df_f.to_csv(preprocessed_dir + '/features_with_db_tags_added.csv')
 

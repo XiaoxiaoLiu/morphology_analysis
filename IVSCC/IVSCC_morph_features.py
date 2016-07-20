@@ -1,6 +1,12 @@
 __author__ = 'xiaoxiaoliu'
 import numpy as np
 
+# This feature names are updated according to Keith's feature calculation python scripts.
+# Commented-out features are non-important features or inaccurately-measured features, such as:
+# 1) anything related to diameters of the neurites are not accurate: average diameter, surface volume,  parent_daughter ratio, etc.
+# 2) number of nodes are highly dependent on the sampling rate, the total length is a better characterization 
+
+
 basal_features = [
        #u'basal_dendrite_average_diameter',
        u'basal_dendrite_bifurcation_angle_local',
@@ -98,6 +104,8 @@ apical_features = [
        #u'apical_dendrite_total_surface', u'apical_dendrite_total_volume',
        u'apical_dendrite_width']
 
+
+# Z direction has very few slices, features on Z are ignored
 axon_cloud_features = [
       # u'cloud_depth',
        u'cloud_first_compartment_moment_x',
