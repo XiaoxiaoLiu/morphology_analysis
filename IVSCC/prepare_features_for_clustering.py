@@ -22,7 +22,7 @@ import blast_neuron.blast_neuron_comp as bn
 
 import glob
 import pandas as pd
-import IVSCC_features as features
+import IVSCC_morph_features as features
 
 
 
@@ -85,15 +85,11 @@ def main():
     all_feature_file = feature_meta_file
     #########################################################
     df_features = pd.read_csv(all_feature_file)
-    cols = df_features.columns
 
-    basal_feature_names  = features.get_feature_names('basal')
-    axon_feature_names= features.get_feature_names('axon')
+
     apical_feature_names = features.get_feature_names('apical')
-    apical_no_z_feature_names = features.get_feature_names('apical_no_z')
 
-    spiny_feature_names =  features.get_feature_names('spiny_dendrite')
-    spiny_no_z_feature_names =  features.get_feature_names('spiny_dendrite_no_z')
+
 
     meta_feature_names = np.array(['specimen_name','specimen_id','dendrite_type','cre_line','region_info','layer','filename','swc_file_name'])
 
@@ -114,19 +110,18 @@ def main():
 
     # chose different sets of features
     df_w_spiny = df_spiny[np.append(meta_feature_names,apical_feature_names)]
-    print len(apical_feature_names)
     df_w_spiny.to_csv(data_DIR +'/spiny_apical_features.csv', index=False)
-
-    df_w_spiny = df_spiny[np.append(meta_feature_names,apical_no_z_feature_names)]
-    print len(apical_no_z_feature_names)
-    df_w_spiny.to_csv(data_DIR +'/spiny_apical_no_z_features.csv', index=False)
-
-
-    df_w_spiny = df_spiny[np.append(meta_feature_names,spiny_feature_names)]
-    df_w_spiny.to_csv(data_DIR +'/spiny_apical_basal_feature.csv', index=False)
-
-    df_w_spiny = df_spiny[np.append(meta_feature_names,spiny_no_z_feature_names)]
-    df_w_spiny.to_csv(data_DIR +'/spiny_apical_basal_no_z_feature.csv', index=False)
+    #
+    # df_w_spiny = df_spiny[np.append(meta_feature_names,apical_no_z_feature_names)]
+    # print len(apical_no_z_feature_names)
+    # df_w_spiny.to_csv(data_DIR +'/spiny_apical_no_z_features.csv', index=False)
+    #
+    #
+    # df_w_spiny = df_spiny[np.append(meta_feature_names,spiny_feature_names)]
+    # df_w_spiny.to_csv(data_DIR +'/spiny_apical_basal_feature.csv', index=False)
+    #
+    # df_w_spiny = df_spiny[np.append(meta_feature_names,spiny_no_z_feature_names)]
+    # df_w_spiny.to_csv(data_DIR +'/spiny_apical_basal_no_z_feature.csv', index=False)
 
 
 

@@ -141,13 +141,13 @@ axon_features = [
        u'axon_first_compartment_moment_x', u'axon_first_compartment_moment_y',
        u'axon_first_compartment_moment_z', u'axon_height',
        u'axon_max_branch_order', u'axon_max_euclidean_distance',
-       u'axon_max_path_distance', u'axon_mean_fragmentation',6
+       u'axon_max_path_distance', u'axon_mean_fragmentation',
        #u'axon_mean_parent_daughter_ratio',
        u'axon_neurites_over_branches',
        u'axon_num_bifurcations', u'axon_num_branches', u'axon_num_neurites',
        #u'axon_num_nodes',
        #u'axon_num_stems',
-       u'axon_num_tips'
+       u'axon_num_tips',
        #u'axon_parent_daughter_ratio',
        u'axon_second_bifurcation_moment_x',
        u'axon_second_bifurcation_moment_y',
@@ -168,24 +168,20 @@ def get_feature_names(type='basal'):
         all_dendrite_features.extend(apical_features)
         all_dendrite_features.extend(axon_features)
         return  all_dendrite_features
+
     if type == "basal":
         return basal_features
     if type == "apical":
         print "apical features:", len(apical_features)
         return apical_features
-    if type == "axon":
-        return axon_features
-    if type == "axon_cloud":
-        return axon_cloud_features
+
+
     if type =="spiny_dendrite":
         # apical + basal
        spiny_dendrite_features=[]
        spiny_dendrite_features.extend(basal_features)
        spiny_dendrite_features.extend(apical_features)
        return  spiny_dendrite_features
-    if type =="aspiny":
-       # np.append(gl_feature_names, gmi_feature_names)
-       return basal_features
     if type =="spiny_dendrite_no_z":
        spiny_dendrite_features=[]
        spiny_dendrite_features.extend(basal_features)
@@ -203,3 +199,12 @@ def get_feature_names(type='basal'):
                   print "remove ", feature
         print "apical( no z) features:", len(apical_no_z_features)
         return apical_no_z_features
+
+
+    if type =="aspiny":
+       # np.append(gl_feature_names, gmi_feature_names)
+       return basal_features
+    if type == "axon":
+        return axon_features
+    if type == "axon_cloud":
+        return axon_cloud_features
