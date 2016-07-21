@@ -2,13 +2,9 @@ __author__ = 'xiaoxiaoliu'
 
 
 
-
 import pandas as pd
-
 import numpy as np
 import os
-
-
 
 
 def generateLinkerFileFromCSV(result_dir, csvfile, column_name=None, strip_path=True, fpath='.',swc_postfix=None):
@@ -73,4 +69,3 @@ os.system("mkdir  "+output_dir+'/'+subfolder)
 
 #'AP.euc'
 generateLinkerFileFromCSV(output_dir+'/'+subfolder, default_all_feature_merged_file,'clusterID.all',strip_path=False,fpath=data_dir + "/../pia_swc", swc_postfix=".swc")
-#generateLinkerFileFromCSV(output_dir+'/selected', merged_file,'clusterID',strip_path=False,fpath=data_dir + "/../pia_swc")
