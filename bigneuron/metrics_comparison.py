@@ -33,11 +33,11 @@ def calculate_similarities(neuron_distance_csv,metric='neuron_distance', output_
     for image in all_images:
         df_image = dfg.get_group(image)
         #sample_size_per_image.append(df_image.shape[0])
-        # df_image['similarity'] = np.exp(-(df_image[metric] - df_image[metric].min()))
+
         # similarity == nan:  metric reports nan
         # similarity = 0 : missing entry ( missing recons)
-        df_image['similarity'] = np.exp(-(df_image[metric] - df_nd[metric].min())/(df_nd[metric].max()-df_nd[metric].min()+0.000000001))
-        #df_image['similarity'] = np.exp(-df_image[metric]/df_nd[metric].max())
+        #df_image['similarity'] = np.exp(-(df_image[metric] - df_nd[metric].min()+0.000000001)/(df_nd[metric].max()-df_nd[metric].min()+0.000000001))
+        df_image['similarity'] = (df_image[metric] - df_image[metric].min()+0.000000001)/(df_nd[metric].max()-df_nd[metric].min()+0.000000001)
 
 
         # construct a complete table, and fill the valid results
@@ -267,11 +267,12 @@ def order_algorithms_by_size(df_data):
 
 data_DIR="/data/mat/xiaoxiaol/data/big_neuron/BTU"
 
+#output
 result_csv_file = data_DIR+"/all_metrics.csv"
 nblast_csv_file =data_DIR+"/nblast/nblast_score_with_meta.csv"
 diadem_csv_file =data_DIR+"/diadem/diadem_score_with_meta.csv"
 
-df_diadem = pd.read_csv(data_DIR+"/diadem/Result_combined.csv")
+df_diadem = pd.read_csv(data_DIR+"/diadem/result_combined.csv")
 df_diadem.dropna(inplace=True)
 df_diadem = rp.parse_and_add_algorithm_info(df_diadem)
 df_diadem.to_csv(diadem_csv_file,index=False)
