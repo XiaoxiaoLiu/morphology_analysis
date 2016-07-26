@@ -317,7 +317,7 @@ def resample(inputswc_path, outputswc_path,step_len = 1, GEN_QSUB = 0, qsub_scri
         command.run(timeout=60*10)
     return
 
-def run_neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSUB = 0, qsub_script_dir= "."):
+def run_neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSUB = 0, qsub_script_dir= ".", id=None):
     #Distance between neuron 1 /home/xiaoxiaol/work/data/test_frog2-2.swc and neuron 2 /home/xiaoxiaol/work/data/test_frog2-2.swc is:
     #entire-structure-average = 8.20009e-07
     #differen-structure-average = 0
@@ -325,19 +325,10 @@ def run_neuron_dist(inputswc_path1, inputswc_path2, logfile='./test.log',GEN_QSU
 
     # log file format
     # file1 file2   8.20009e-07  0 0
-    arguments = " -x neuron_distance -f neuron_distance -i " + inputswc_path1 + " " + inputswc_path2 + " -o " + logfile + " >tmp.log"
+    arguments = " -x neuron_distance -f neuron_distance -i " + inputswc_path1 + " " + inputswc_path2 + " -o " + logfile
 
-    if GEN_QSUB :
-        cmd = QMasterV3D + arguments
-        print cmd
-        script_fn = qsub_script_dir +'/'+str(random.randint(1000000,9999999))+'.qsub'
-        jobname = qsub_script_dir+inputswc_path1.split('/')[-1]
-        gen_qsub_script(cmd, jobname, script_fn)
-    else:
-        cmd = V3D + arguments
-        #print cmd
-        command = Command(cmd)
-        command.run(timeout=60*5)
+    RUN_Vaa3d_Job(arguments, GEN_QSUB, qsub_script_dir, id)
+
     return
 
 

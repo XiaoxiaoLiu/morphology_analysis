@@ -139,7 +139,7 @@ def run_janelia_set(set_type = "set1_original", tag='consensus_0725'):
 
 
 
-run_janelia_set(set_type = "set1_original")
+run_janelia_set(set_type = "set1_original", tag="consensus_0725")
 # run_janelia_set(set_type = "set1_smooth")
 # run_janelia_set(set_type = "set2_original")
 # run_janelia_set(set_type = "set2_smooth")
