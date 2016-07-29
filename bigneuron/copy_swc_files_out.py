@@ -17,5 +17,5 @@ for recon_dir in subdirs[1:]:
                   print subfolderpath
                  # os.system('mkdir -p '+destnation_DIR+'/'+subfolderpath+'/processed' )
                  # os.system('cp '+ recon_dir+'/*.strict.swc  ' + destnation_DIR+'/'+subfolderpath+'/processed/')
-                  os.system('mkdir -p '+destnation_DIR+'/'+subfolderpath )
-                  os.system('cp '+ recon_dir+'/consensus3.strict.swc  ' + destnation_DIR+'/'+subfolderpath+'/')
+                 # os.system('mkdir -p '+destnation_DIR+'/'+subfolderpath )
+                  os.system('cp '+ recon_dir+'/../consensus3.strict.swc  ' + destnation_DIR+'/'+subfolderpath+'/')

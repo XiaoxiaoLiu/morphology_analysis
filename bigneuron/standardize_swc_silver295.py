@@ -31,6 +31,7 @@ import blast_neuron.blast_neuron_comp as bn
 
 ### main
 data_DIR = "/data/mat/xiaoxiaol/data/big_neuron/silver/20160113_merged_silver_gt"
+processed_folder = data_DIR+"/processed"
 output_dir = data_DIR
 
 silver_dir = "/data/mat/xiaoxiaol/data/big_neuron/silver/silver_295_swcs"
@@ -53,13 +54,14 @@ count = 0
 gap_threshold =1
 for recon_dir in subdirs[1:]:
         if 'auto_recons' in  recon_dir:
-                  folder_name = recon_dir.split('/')[-1]
-                  if '.v3d' in folder_name:
-                      print folder_name
+                  case_folder_name = recon_dir.split('/')[-1]
+                  if '.v3d' in case_folder_name:
+                      print case_folder_name
+
                   else:
                       continue
 
-                  image_id = int(folder_name.split(".")[0])
+                  image_id = int(case_folder_name.split(".")[0])
                   image_file_name = df_lookup_table.image_file_name[image_id-1]
 
 
@@ -73,8 +75,9 @@ for recon_dir in subdirs[1:]:
                   swc_files = glob.glob(recon_dir+'/*.swc')
                   for i in range(len(swc_files)) :
                       input = swc_files[i]
+
                       fn=(input.split('/')[-1]).split('.swc')[0]+'.strict.swc'
-                      out_fn=recon_dir+"/../processed/"+fn
+                      out_fn=processed_folder+"/"+case_folder_name+'/'+fn
                       if not os.path.exists(out_fn):
                            if os.path.getsize(input) < 5*1024*1024:
                               bn.standardize(input_swc_path=input, ref_swc_file=gs_swc_file,output_swc_path=out_fn, gap_threshold=1, new_type=3, GEN_QSUB = 1, qsub_script_dir= data_DIR+"/qsub", id=None)
