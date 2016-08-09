@@ -129,15 +129,23 @@ def run_collecting_neuron_distance():
 
 
 ### step 3: run blast neuron plugin ( does not need python scripting)
-### all_strict.nfb need to be generated manually using vaa3d plugin
-### convert all_strict.nfb to a meaningful table with meta
+### "features.nfb" need to be generated manually using vaa3d plugin
+### convert "features.nfb" to a cs table with meta
+def run_blastneuron_distance():
+    input_dir=data_DIR  # features.nfb should be generated under data_DIR
+    output_feature_csv = data_DIR+'/all_blastNeuron_features.csv'
+    rp.cal_bn_features(input_dir, output_feature_csv)
 
 
+    ###$ step4: calculate blastneuron SSD into a csv file
+    gold_dir = "/data/mat/xiaoxiaol/data/gold166/checked_final_swcs"
+    GOLD_CSV = "/data/mat/xiaoxiaol/data/gold166/gold.csv"  #manually generated
+    gold_feature_csv= "/data/mat/xiaoxiaol/data/gold166/features_with_tags.csv"
+    merged_csv = data_DIR+'/merged_all_blastNeuron_features.csv'
+    output_csv= data_DIR+'/final_blastNeuron_score.csv'
+    rp.cal_blastneuron_distance(output_feature_csv,gold_feature_csv, merged_csv, output_csv, 1)
 
-
-###$ step4: calculate blastneuron SSD into a csv file
-
-
-
+############### main ##############
 #run_neuron_distance()
 run_collecting_neuron_distance()
+run_blastneuron_distance()
